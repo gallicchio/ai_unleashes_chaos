@@ -131,7 +131,14 @@ itself — the trace is the real solution, integrated by `scripts/lorenz_curve.p
 4-layer [ground plane](docs/images/lorenz-4layer-in1-ground.png) and
 [+12 V plane](docs/images/lorenz-4layer-in2-power.png)
 
-Each board also gets a `.step` model and a `-stats.txt` in its `out/` folder,
+Every one of these is byte-reproducible except `lorenz-render-iso.png`: KiCad's
+renderer jitters a rotated camera, so that one image differs slightly from build
+to build even though the board has not changed. Everything a fab reads —
+gerbers, drill files, BOM, CPL — is reproducible, with timestamps pinned to the
+board date.
+
+Each board also gets a `.step` model (not tracked; it churns) and a
+`-stats.txt` in its `out/` folder,
 and PDFs of the schematic and both assembly drawings — the top one prints 1:1
 for checking footprints against real parts.
 

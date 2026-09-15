@@ -1,6 +1,6 @@
 PCB statistics report
 =====================
-- Date: Tue 15 Sep 2026 01:25:26 PM PDT
+- Date: 2026-09-15
 - Project: lorenz-4layer
 - Board name: lorenz-4layer
 
@@ -9,7 +9,7 @@ Board
 - Width: 100.0000 mm
 - Height: 100.0000 mm
 - Area: 9992.261 mm²
-- Front copper area: 9409.849 mm²
+- Front copper area: 9409.672 mm²
 - Back copper area: 9656.167 mm²
 - Min track clearance: 0.3000 mm
 - Min track width: 0.3000 mm

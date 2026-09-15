@@ -544,7 +544,26 @@ def route_board(geom, priority=()):
             for c in src:
                 cell_pad[c] = (nxt["x"], nxt["y"])
             blob_pts.append(g.cell(nxt["x"], nxt["y"]))
-        routes[net] = {"segments": segs_all, "vias": vias_all}
+        # A pad reached twice picks up the same escape stub twice; a doubled
+        # track is harmless but it is redundant copper and it makes two board
+        # items indistinguishable.
+        seen, uniq = set(), []
+        for sg in segs_all:
+            key = (sg["layer"],) + tuple(sorted(
+                [(round(sg["x1"], 4), round(sg["y1"], 4)),
+                 (round(sg["x2"], 4), round(sg["y2"], 4))]))
+            if key in seen:
+                continue
+            seen.add(key)
+            uniq.append(sg)
+        vseen, vuniq = set(), []
+        for v in vias_all:
+            key = (round(v["x"], 4), round(v["y"], 4))
+            if key in vseen:
+                continue
+            vseen.add(key)
+            vuniq.append(v)
+        routes[net] = {"segments": uniq, "vias": vuniq}
     return g, routes, failures
 
 

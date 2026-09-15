@@ -392,6 +392,65 @@ def add_silk(board):
     return missing
 
 
+# ------------------------------------------------------ reproducibility ---
+def stabilise_uuids(board):
+    """Give every board item a UUID derived from what it *is*.
+
+    pcbnew hands out random UUIDs, and writes some collections in UUID order,
+    so two builds of an identical design produce files that differ everywhere.
+    Deriving each UUID from a description of the item instead makes the build
+    reproducible, which is what lets `git diff` on a board file show real
+    changes rather than nine thousand lines of noise.
+    """
+    import uuid as _uuid
+
+    def kiid(key):
+        return pcbnew.KIID(str(_uuid.uuid5(_uuid.NAMESPACE_URL,
+                                           "lorenz-pcb://" + key)))
+
+    def mm2(pos):
+        return f"{pcbnew.ToMM(pos.x):.4f},{pcbnew.ToMM(pos.y):.4f}"
+
+    n = 0
+    for fp in board.GetFootprints():
+        ref = fp.GetReference()
+        fp.SetUuid(kiid(f"fp/{ref}"))
+        n += 1
+        for pad in fp.Pads():
+            pad.SetUuid(kiid(f"fp/{ref}/pad/{pad.GetNumber()}/"
+                             f"{mm2(pad.GetPosition())}/{n}"))
+            n += 1
+        for i, it in enumerate(fp.GraphicalItems()):
+            it.SetUuid(kiid(f"fp/{ref}/gfx/{i}/{it.GetClass()}"))
+            n += 1
+        for f in fp.GetFields():
+            f.SetUuid(kiid(f"fp/{ref}/field/{f.GetName()}"))
+            n += 1
+    # The index guards against two items that describe identically; without
+    # it KiCad rejects the duplicate UUID and hands out a random one instead.
+    for i, t in enumerate(board.GetTracks()):
+        if isinstance(t, pcbnew.PCB_VIA):
+            t.SetUuid(kiid(f"via/{mm2(t.GetPosition())}/{t.GetNetname()}/{i}"))
+        else:
+            t.SetUuid(kiid(f"trk/{t.GetLayerName()}/{mm2(t.GetStart())}/"
+                           f"{mm2(t.GetEnd())}/{t.GetNetname()}/{i}"))
+        n += 1
+    for i, z in enumerate(board.Zones()):
+        z.SetUuid(kiid(f"zone/{z.GetLayerName()}/{z.GetNetname()}/{i}"))
+        n += 1
+    for i, d in enumerate(board.GetDrawings()):
+        txt = d.GetText() if hasattr(d, "GetText") else ""
+        d.SetUuid(kiid(f"gfx/{d.GetLayerName()}/{d.GetClass()}/"
+                       f"{mm2(d.GetPosition())}/{txt[:40]}/{i}"))
+        n += 1
+    return n
+
+
+def save(board, path):
+    stabilise_uuids(board)
+    pcbnew.SaveBoard(path, board)
+
+
 def build(layers, netlist_path, out_path):
     global SHARE_FP
     SHARE_FP = find_share()
@@ -460,7 +519,7 @@ def build(layers, netlist_path, out_path):
     # files and the pick-and-place all share one frame with positive numbers.
     board.GetDesignSettings().SetAuxOrigin(pt(0, P.BOARD_H))
     board_outline(board)
-    pcbnew.SaveBoard(out_path, board)
+    save(board, out_path)
     return board, placed, netmap, nets
 
 
@@ -510,7 +569,7 @@ if __name__ == "__main__":
         b = pcbnew.LoadBoard(out)
         nt, nv = add_routes(b, routes, layers)
         missing = add_silk(b)
-        pcbnew.SaveBoard(out, b)
+        save(b, out)
         print(f"  routed {os.path.relpath(out)}: {nt} tracks, {nv} vias, "
               f"{len(list(b.Zones()))} ground zones")
         if missing:

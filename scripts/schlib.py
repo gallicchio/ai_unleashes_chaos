@@ -56,6 +56,22 @@ class Sheet:
         self.lib_symbols[lib_id] = node
         return node
 
+    def all_pin_numbers(self, lib_id):
+        """Every pin of a symbol, across all its units.
+
+        A placed symbol carries a uuid entry for each of them, not just the
+        unit on the sheet; emitting only the unit's pins leaves KiCad to invent
+        random ones for the rest, and the file stops being reproducible.
+        """
+        sym = self._resolve(lib_id)
+        out = []
+        for sub in sym.kids("symbol"):
+            for p in sub.kids("pin"):
+                num = p.first("number").atom(0)
+                if num not in out:
+                    out.append(num)
+        return out
+
     def pin_offsets(self, lib_id, unit):
         """{pin number: (px, py)} in library space for one unit."""
         key = (lib_id, unit)
@@ -114,7 +130,7 @@ class Sheet:
             s.add(field(k, v, 0, 0, True))
 
         pins = self.pin_offsets(lib_id, unit)
-        for num in pins:
+        for num in self.all_pin_numbers(lib_id):
             s.add(S("pin", q(num)).add(S("uuid", q(uid(f"pin/{ref}/{unit}/{num}")))))
         inst = S("instances").add(
             S("project", q("lorenz")).add(

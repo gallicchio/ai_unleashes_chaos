@@ -234,3 +234,8 @@ fp-info-cache
 /out/*.rpt
 /out/pcb_geom_*.json
 /out/routes_*.json
+
+# The STEP export is a convenience for mechanical work, and OpenCASCADE
+# numbers its entities differently on every run, so it churns by thousands of
+# lines without the design changing.  ./make.py writes it; git does not carry it.
+/out/*/*.step

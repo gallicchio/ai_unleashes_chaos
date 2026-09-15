@@ -26,6 +26,49 @@ IMAGES = os.path.join(ROOT, "docs", "images")
 PNG_DPI = 170
 
 
+# Every KiCad output stamps the moment it was written, so an unchanged design
+# produces different bytes on every build.  Pinning the stamp to the board's
+# own date makes the fab files reproducible, which is what lets a diff on this
+# repository mean something.  Fabs read the geometry, not the stamp.
+STAMP_DATE = parts.BOARD_DATE
+STAMP_TIME = f"{STAMP_DATE}T00:00:00+00:00"
+TIMESTAMP_PATTERNS = [
+    (re.compile(r"(%TF\.CreationDate,)[^*]*"), r"\g<1>" + STAMP_TIME),
+    (re.compile(r"(TF\.CreationDate,)[-\d:T+]+"), r"\g<1>" + STAMP_TIME),
+    (re.compile(r'("CreationDate":\s*")[^"]*'), r"\g<1>" + STAMP_TIME),
+    (re.compile(r"(date )\d{4}-\d\d-\d\d[T ][\d:]+"), r"\g<1>" + STAMP_DATE),
+    (re.compile(r"(- Date: ).*"), r"\g<1>" + STAMP_DATE),
+    (re.compile(r'(\(date ")[^"]*'), r"\g<1>" + STAMP_DATE),
+]
+
+
+# A PDF carries byte offsets in its cross-reference table, so its date can
+# only be replaced by something exactly as long.
+PDF_DATE = re.compile(rb"(/(?:Creation|Mod)Date \(D:)(\d{4}:\d\d:\d\d:)[\d:]{8}")
+STEP_DATE = re.compile(r"('[^']*\.step',')[\dT:-]+")
+
+
+def normalise_timestamps(path):
+    if path.endswith(".pdf"):
+        raw = open(path, "rb").read()
+        out = PDF_DATE.sub(rb"\g<1>\g<2>00:00:00", raw)
+        if out != raw:
+            open(path, "wb").write(out)
+        return True
+    try:
+        body = open(path, encoding="latin-1").read()
+    except OSError:
+        return False
+    out = body
+    for pat, repl in TIMESTAMP_PATTERNS:
+        out = pat.sub(repl, out)
+    if path.endswith(".step"):
+        out = STEP_DATE.sub(r"\g<1>" + STAMP_DATE + "T00:00:00", out)
+    if out != body:
+        open(path, "w", encoding="latin-1").write(out)
+    return True
+
+
 def board_files(stem):
     return (os.path.join(HW, stem + ".kicad_pcb"),
             os.path.join(HW, stem + ".kicad_sch"))
@@ -44,10 +87,17 @@ def export_fab(stem, layers):
               "--drill-origin", "plot", "--excellon-units", "mm",
               "--excellon-separate-th", "--generate-map", "--map-format", "gerberx2",
               "-o", gdir + os.sep, pcb)
+    for name in sorted(os.listdir(gdir)):
+        normalise_timestamps(os.path.join(gdir, name))
     zpath = os.path.join(OUT, stem, f"{stem}-gerbers.zip")
+    fixed = zipfile.ZipInfo.from_file  # noqa: F841  (documents the intent)
     with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:
         for name in sorted(os.listdir(gdir)):
-            z.write(os.path.join(gdir, name), name)
+            info = zipfile.ZipInfo(name, date_time=(2026, 9, 15, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o644 << 16
+            with open(os.path.join(gdir, name), "rb") as fh:
+                z.writestr(info, fh.read())
     return zpath, sorted(os.listdir(gdir))
 
 
@@ -139,6 +189,7 @@ def export_bom(stem):
 def export_prints(stem, layers):
     pcb, sch = board_files(stem)
     d = os.path.join(OUT, stem)
+    made = []
     kienv.cli("sch", "export", "pdf", "--black-and-white", "-o",
               os.path.join(d, f"{stem}-schematic.pdf"), sch)
     kienv.cli("pcb", "export", "pdf", "--mode-single", "--black-and-white",
@@ -149,6 +200,9 @@ def export_prints(stem, layers):
               "--include-border-title", "--mirror", "--layers",
               "B.Silkscreen,Edge.Cuts",
               "-o", os.path.join(d, f"{stem}-assembly-bottom.pdf"), pcb)
+    for name in os.listdir(d):
+        if name.endswith(".pdf"):
+            normalise_timestamps(os.path.join(d, name))
 
 
 def pdf_to_png(pdf, png, dpi=PNG_DPI):
@@ -206,15 +260,21 @@ def export_images(stem, layers):
                         "--rotate", "-28,0,-18", "--zoom", "0.66"]))
     for name, extra in renders:
         out = os.path.join(IMAGES, f"{stem}-{name}.png")
+        # "basic" rather than "high": the raytraced setting samples
+        # stochastically, so an unchanged board renders differently every time
+        # and the image churns in git.  The difference is soft shadows.
         kienv.cli("pcb", "render", "--width", "1400", "--height", "1150",
-                  "--quality", "high", "--background", "opaque",
+                  "--quality", "basic", "--background", "opaque",
                   *extra, "-o", out, pcb)
         made.append(name)
 
+    step = os.path.join(d, f"{stem}.step")
     kienv.cli("pcb", "export", "step", "--no-dnp", "--subst-models",
-              "-o", os.path.join(d, f"{stem}.step"), pcb, check=False)
-    kienv.cli("pcb", "export", "stats", "-o",
-              os.path.join(d, f"{stem}-stats.txt"), pcb, check=False)
+              "-o", step, pcb, check=False)
+    normalise_timestamps(step)
+    stats = os.path.join(d, f"{stem}-stats.txt")
+    kienv.cli("pcb", "export", "stats", "-o", stats, pcb, check=False)
+    normalise_timestamps(stats)
     return made, skipped
 
 
