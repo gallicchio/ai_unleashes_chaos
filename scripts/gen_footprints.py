@@ -17,6 +17,17 @@ FAB_W = 0.10
 CRT_W = 0.05
 
 
+MM_SCALE = 1.0 / 2.54       # KiCad VRML unit is 2.54 mm; models are drawn in mm
+
+
+def model(f, path, scale=1.0, rot=(0, 0, 0), offset=(0, 0, 0)):
+    m = S("model", q(path))
+    m.add(S("offset").add(S("xyz", n(offset[0]), n(offset[1]), n(offset[2]))),
+          S("scale").add(S("xyz", n(scale), n(scale), n(scale))),
+          S("rotate").add(S("xyz", n(rot[0]), n(rot[1]), n(rot[2]))))
+    f.add(m)
+
+
 def fp_header(name, descr, tags, attr, ref_y):
     f = S("footprint", q(name))
     f.add(S("version", FP_VERSION),
@@ -129,6 +140,8 @@ def bnc():
     rect_lines(f, -h - 0.25, -h - 0.25, BARREL_END + 0.25, h + 0.25,
                "F.CrtYd", CRT_W, f"{name}/crt")
     text_fab(f, "BNC", 0, 0, f"{name}/fabtxt")
+    model(f, "${KIPRJMOD}/lib/lorenz.3dshapes/BNC_KYWE_RightAngle.wrl",
+          scale=MM_SCALE)
     return name, f
 
 
@@ -165,6 +178,8 @@ def dcdc():
     rect_lines(f, bx1 - 0.25, by1 - 0.25, bx2 + 0.25, 1.5,
                "F.CrtYd", CRT_W, f"{name}/crt")
     text_fab(f, "+/-15V", (bx1 + bx2) / 2, -2.6, f"{name}/fabtxt")
+    model(f, "${KIPRJMOD}/lib/lorenz.3dshapes/DCDC_SIP_A05xxS.wrl",
+          scale=MM_SCALE)
     return name, f
 
 
@@ -202,6 +217,10 @@ def dipsw():
     rect_lines(f, -(ROW + PW / 2 + 0.25), -bl - 0.25, ROW + PW / 2 + 0.25, bl + 0.25,
                "F.CrtYd", CRT_W, f"{name}/crt")
     text_fab(f, "ON ->", 0, -bl + 1.2, f"{name}/fabtxt", size=0.7)
+    # close enough to the real DSIC06 to be worth showing: same six positions,
+    # 2.54 mm pitch, 8.61 mm rather than 8.8 mm between the rows
+    model(f, "${KICAD10_3DMODEL_DIR}/Button_Switch_SMD.3dshapes/"
+             "SW_DIP_SPSTx06_Slide_9.78x17.42mm_W8.61mm_P2.54mm.step")
     return name, f
 
 

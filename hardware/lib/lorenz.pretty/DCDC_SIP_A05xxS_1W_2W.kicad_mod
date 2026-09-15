@@ -240,4 +240,15 @@
 		(uuid "cee403d4-7474-5741-9a04-cb2d58f528bd")
 	)
 	(embedded_fonts no)
+	(model "${KIPRJMOD}/lib/lorenz.3dshapes/DCDC_SIP_A05xxS.wrl"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 0.393701 0.393701 0.393701)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
 )

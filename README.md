@@ -110,3 +110,46 @@ The BNC footprint is drawn from SAMZO's drawing, not from a connector in my
 hand. `out/lorenz/lorenz-assembly-top.pdf` prints 1:1 — please check it against
 a real BNC-KYWE before ordering. Everything else on the board is a stock KiCad
 footprint or dimensioned from a datasheet I read.
+
+### Pictures
+
+`./make.py` now writes these into `docs/images/` every build, so they cannot
+drift from the design.
+
+![The board, front](docs/images/lorenz-render-iso.png)
+
+The back carries the equations, your suggested parameters and the attractor
+itself — the trace is the real solution, integrated by `scripts/lorenz_curve.py`:
+
+![The board, back](docs/images/lorenz-render-bottom.png)
+
+[The schematic](docs/images/schematic.png) ·
+[front silkscreen](docs/images/lorenz-silk-top.png) ·
+[back silkscreen](docs/images/lorenz-silk-bottom.png) ·
+[front copper](docs/images/lorenz-top.png) ·
+[back copper](docs/images/lorenz-bottom.png) ·
+4-layer [ground plane](docs/images/lorenz-4layer-in1-ground.png) and
+[+12 V plane](docs/images/lorenz-4layer-in2-power.png)
+
+Each board also gets a `.step` model and a `-stats.txt` in its `out/` folder,
+and PDFs of the schematic and both assembly drawings — the top one prints 1:1
+for checking footprints against real parts.
+
+### Answering `next_prompt.md`
+
+**Do the schematics differ between 2-layer and 4-layer? Why are there two?**
+
+They do not differ — `lorenz-4layer.kicad_sch` is a byte-for-byte copy that
+`make.py` writes from `lorenz.kicad_sch` on every build, so the two cannot
+drift apart. It is purely a KiCad requirement: a project is one `.kicad_pro`,
+one `.kicad_sch` and one `.kicad_pcb` sharing a basename, and
+`kicad-cli pcb drc --schematic-parity` finds the schematic by that basename. No
+basename, no parity check — and the parity check is what guarantees the board
+you send to the fab really is the circuit that was verified. I kept the copy
+tracked rather than generated-only so that either project opens straight from a
+clone without running anything first.
+
+The only real differences between the two boards are the stackup and what is
+poured on it: two layers puts ground on both sides, four puts signals outside,
+a solid ground plane on In1 and a +12 V plane on In2. Same placement, same
+schematic, same BOM, same pick-and-place.

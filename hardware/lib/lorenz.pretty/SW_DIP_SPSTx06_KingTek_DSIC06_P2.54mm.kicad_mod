@@ -304,4 +304,15 @@
 		(uuid "9a961883-63be-50a1-b0ce-5f4a86c0e45c")
 	)
 	(embedded_fonts no)
+	(model "${KICAD10_3DMODEL_DIR}/Button_Switch_SMD.3dshapes/SW_DIP_SPSTx06_Slide_9.78x17.42mm_W8.61mm_P2.54mm.step"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
 )

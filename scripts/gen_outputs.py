@@ -4,7 +4,7 @@
 The BOM and CPL are written in the column layout JLCPCB expects, which
 NextPCB and CircuitHub also accept.
 """
-import csv, io, os, re, shutil, sys, zipfile
+import csv, io, os, re, shutil, subprocess, sys, zipfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import kienv, parts
 
@@ -22,6 +22,8 @@ GERBER_LAYERS_4 = ("F.Cu,In1.Cu,In2.Cu,B.Cu,F.Paste,B.Paste,"
 # anything that is not rotationally symmetric.
 ORIENTATION_SENSITIVE = ["U1", "U2", "U3", "U4", "U5", "U6", "U7",
                          "J1", "SW1", "D1"]
+IMAGES = os.path.join(ROOT, "docs", "images")
+PNG_DPI = 170
 
 
 def board_files(stem):
@@ -149,17 +151,89 @@ def export_prints(stem, layers):
               "-o", os.path.join(d, f"{stem}-assembly-bottom.pdf"), pcb)
 
 
+def pdf_to_png(pdf, png, dpi=PNG_DPI):
+    """Rasterise page 1.  Optional: skipped with a note if poppler is absent."""
+    if not shutil.which("pdftoppm"):
+        return False
+    stem = png[:-4] if png.endswith(".png") else png
+    subprocess.run(["pdftoppm", "-r", str(dpi), "-png", "-f", "1", "-l", "1",
+                    "-singlefile", pdf, stem], check=True,
+                   capture_output=True)
+    return os.path.exists(png)
+
+
+def export_images(stem, layers):
+    """PNGs of the sheet and both sides, plus 3D renders."""
+    pcb, sch = board_files(stem)
+    d = os.path.join(OUT, stem)
+    os.makedirs(IMAGES, exist_ok=True)
+    made, skipped = [], []
+
+    # Flat views, via PDF so the stroke font comes out right.  The four-layer
+    # board shares its outer layers and silkscreen with the two-layer one, so
+    # only its inner planes are worth a picture.
+    if layers == 4:
+        views = {f"{stem}-in1-ground": ("In1.Cu,Edge.Cuts", False),
+                 f"{stem}-in2-power": ("In2.Cu,Edge.Cuts", False)}
+    else:
+        views = {
+            f"{stem}-top": ("F.Cu,F.Silkscreen,Edge.Cuts", False),
+            f"{stem}-bottom": ("B.Cu,B.Silkscreen,Edge.Cuts", True),
+            f"{stem}-silk-top": ("F.Silkscreen,Edge.Cuts", False),
+            f"{stem}-silk-bottom": ("B.Silkscreen,Edge.Cuts", True),
+        }
+    for name, (lay, mirror) in views.items():
+        tmp = os.path.join(d, "_" + name + ".pdf")
+        args = ["pcb", "export", "pdf", "--mode-single", "--black-and-white",
+                "--layers", lay, "-o", tmp, pcb]
+        if mirror:
+            args.insert(-1, "--mirror")
+        kienv.cli(*args)
+        png = os.path.join(IMAGES, name + ".png")
+        (made if pdf_to_png(tmp, png) else skipped).append(name)
+        os.remove(tmp)
+
+    if stem == "lorenz":
+        png = os.path.join(IMAGES, "schematic.png")
+        (made if pdf_to_png(os.path.join(d, f"{stem}-schematic.pdf"), png, 110)
+         else skipped).append("schematic")
+
+    # 3D.  Both boards look identical from outside, so only render one.
+    renders = () if layers == 4 else (
+        ("render-top", ["--side", "top"]),
+        ("render-bottom", ["--side", "bottom"]),
+        ("render-iso", ["--side", "top", "--perspective",
+                        "--rotate", "-28,0,-18", "--zoom", "0.66"]))
+    for name, extra in renders:
+        out = os.path.join(IMAGES, f"{stem}-{name}.png")
+        kienv.cli("pcb", "render", "--width", "1400", "--height", "1150",
+                  "--quality", "high", "--background", "opaque",
+                  *extra, "-o", out, pcb)
+        made.append(name)
+
+    kienv.cli("pcb", "export", "step", "--no-dnp", "--subst-models",
+              "-o", os.path.join(d, f"{stem}.step"), pcb, check=False)
+    kienv.cli("pcb", "export", "stats", "-o",
+              os.path.join(d, f"{stem}-stats.txt"), pcb, check=False)
+    return made, skipped
+
+
 def run(stem, layers):
     os.makedirs(os.path.join(OUT, stem), exist_ok=True)
     zpath, names = export_fab(stem, layers)
     cpl, ncpl = export_cpl(stem)
     bom, costed, lines, total, unknown = export_bom(stem)
     export_prints(stem, layers)
+    made, skipped = export_images(stem, layers)
     print(f"  {stem}: {len(names)} gerber/drill files -> "
           f"{os.path.relpath(zpath, ROOT)}")
     print(f"  {stem}: {ncpl} placements -> {os.path.relpath(cpl, ROOT)}")
     print(f"  {stem}: {len(lines)} BOM lines, parts ${total:.2f}/board -> "
           f"{os.path.relpath(bom, ROOT)}")
+    print(f"  {stem}: {len(made)} images -> docs/images/, plus STEP and stats")
+    if skipped:
+        print(f"  .. {len(skipped)} PNG(s) skipped (pdftoppm not installed): "
+              f"{', '.join(skipped)}")
     if unknown:
         print(f"  !! no order code for: {'; '.join(unknown)}")
     return total, lines, unknown

@@ -351,6 +351,9 @@ def add_silk(board):
         if not place_field(fp.Reference(), space, fp, 1.0, True):
             missing.append(f"{ref} reference")
         val = fp.Value()
+        if ref.startswith("MH"):
+            val.SetVisible(False)       # "MountingHole" is not a legend
+            continue
         if val.GetText() and not place_field(val, space, fp, 0.9, True):
             val.SetVisible(False)
             missing.append(f"{ref} value ({val.GetText()})")
@@ -436,11 +439,21 @@ def build(layers, netlist_path, out_path):
             key = (ref, pad.GetNumber())
             if key in pad_net:
                 pad.SetNet(netmap[pad_net[key]])
+        # the bundled 3D library is a reduced set and has no model for these
+        local = {"J1": "USB_C_HRO_TYPE-C-31-M-12.wrl", "F1": "Fuse_1812.wrl"}
+        if ref in local:
+            fp.Models().clear()
+            m = pcbnew.FP_3DMODEL()
+            m.m_Filename = ("${KIPRJMOD}/lib/lorenz.3dshapes/" + local[ref])
+            m.m_Scale = pcbnew.VECTOR3D(1 / 2.54, 1 / 2.54, 1 / 2.54)
+            m.m_Show = True
+            fp.Models().push_back(m)
         if ref.startswith("MH"):
             # mechanical only: nothing to buy, nothing to place
             fp.SetAttributes(fp.GetAttributes()
                              | pcbnew.FP_EXCLUDE_FROM_BOM
                              | pcbnew.FP_EXCLUDE_FROM_POS_FILES)
+            fp.Value().SetVisible(False)    # "MountingHole" is not a legend
         placed[ref] = fp
 
     # Drill/place origin at the board's bottom-left corner, so gerbers, drill
