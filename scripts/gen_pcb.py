@@ -135,17 +135,22 @@ def add_routes(board, routes_path, layers):
             ntrack += 1
         for v in r["vias"]:
             nvia += add_via(board, v["x"], v["y"], ni, layers)
-    gnd = nets.get("GND")
     for v in data.get("stitches", []):
-        nvia += add_via(board, v["x"], v["y"], gnd, layers)
+        nvia += add_via(board, v["x"], v["y"], nets.get(v.get("net", "GND")),
+                        layers)
 
-    # ground planes on every copper layer, stitched by the vias above
+    # Two layers: ground poured on both.  Four: signal / ground / power /
+    # signal, with the second inner layer carrying +12 V.
     cu = list(board.GetEnabledLayers().CuStack())
+    plane_of = {l: "GND" for l in cu}
+    if layers == 4 and len(cu) == 4:
+        plane_of[cu[2]] = "+12V"
     for l in cu:
         z = pcbnew.ZONE(board)
         z.SetLayer(l)
-        if gnd:
-            z.SetNet(gnd)
+        zn = nets.get(plane_of[l])
+        if zn:
+            z.SetNet(zn)
         z.SetAssignedPriority(0)
         # Solid on SMD pads -- an 0805 or SOIC ground pad is too small for two
         # thermal spokes, and starving one is both an electrical and a DRC

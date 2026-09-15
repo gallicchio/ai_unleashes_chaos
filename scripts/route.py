@@ -35,7 +35,14 @@ PAD_HALO = CLEARANCE + POWER_TRACK / 2.0
 VIA_HALO = CLEARANCE + VIA_DIA / 2.0
 
 POWER_NETS = {"+5V", "+12V", "-12V", "+15V", "-15V"}
-NO_ROUTE = {"GND"}
+
+# Nets carried by a plane instead of tracks.  On two layers that is ground
+# alone; the four-layer stack adds +12 V on the second inner layer, which is
+# the classic signal / ground / power / signal arrangement.
+PLANES = {2: ["GND"], 4: ["GND"]}
+# Nets that also get a plane of their own, but are still routed normally: the
+# plane is tied to the routed copper by vias dropped onto its own tracks.
+PLANE_TIED = {4: ["+12V"]}
 
 STEP, DIAG = 10, 14
 OFF_AXIS = 3           # gentle bias toward the layer's preferred direction
@@ -53,6 +60,9 @@ class Grid:
         self.w, self.h = geom["board_w"], geom["board_h"]
         self.layers = list(geom["copper"])
         self.nl = len(self.layers)
+        # tracks only ever run on the outer layers; anything between them is
+        # a plane, and a via still passes through it
+        self.route_layers = [0] if self.nl == 1 else [0, self.nl - 1]
         self.nx = int(math.ceil(self.w / GRID)) + 1
         self.ny = int(math.ceil(self.h / GRID)) + 1
         shape = (self.nl, self.ny, self.nx)
@@ -277,6 +287,8 @@ def astar(g, nid, sources, target_set, target_pts, prefer_horiz, masks):
             break
         l, rem = divmod(cur, stride)
         iy, ix = divmod(rem, nx)
+        if l not in g.route_layers:
+            continue
         horiz = prefer_horiz[l]
         for (dx, dy) in DIRS:
             jx, jy = ix + dx, iy + dy
@@ -297,7 +309,7 @@ def astar(g, nid, sources, target_set, target_pts, prefer_horiz, masks):
                 prev[nf] = cur
                 heapq.heappush(heap, (nd + h(nf), nf))
         if via_room[iy * nx + ix]:
-            for l2 in range(g.nl):
+            for l2 in g.route_layers:
                 if l2 == l:
                     continue
                 nf = g.idx(l2, iy, ix)
@@ -387,7 +399,7 @@ def stamp_route(g, net, segs, vias):
         g.block_vias(v["x"] - k, v["y"] - k, v["x"] + k, v["y"] + k)
 
 
-def stitch_vias(g, pads, spacing=4.5):
+def stitch_vias(g, pads, net="GND", spacing=4.5, lattice=True):
     """Ground stitching vias wherever every layer is genuinely free.
 
     Signal tracks cut the front pour into islands; each one needs a via or it
@@ -395,7 +407,7 @@ def stitch_vias(g, pads, spacing=4.5):
     every ground pad that has room, which is what ties the local pour under a
     package back to the plane.
     """
-    nid = g.nid("GND")
+    nid = g.nid(net)
     step = max(1, int(round(spacing / GRID)))
     r = int(math.ceil(VIA_HALO / GRID))
     _, room = g.masks(nid)
@@ -406,16 +418,16 @@ def stitch_vias(g, pads, spacing=4.5):
         x, y = g.pos(ix, iy)
         out.append({"x": round(x, 3), "y": round(y, 3)})
         g.stamp_rect(list(range(g.nl)), x - VIA_DIA / 2, y - VIA_DIA / 2,
-                     x + VIA_DIA / 2, y + VIA_DIA / 2, "GND",
+                     x + VIA_DIA / 2, y + VIA_DIA / 2, net,
                      CLEARANCE + TRACK / 2.0)
         k = VIA_DRILL + HOLE_TO_HOLE
         g.block_vias(x - k, y - k, x + k, y + k)
         return g.masks(nid)[1].reshape(g.ny, g.nx)
 
     # one beside each ground pad first, so no pour island is left floating
-    reach = int(round(2.2 / GRID))
+    reach = int(round(2.4 / GRID))
     for p in pads:
-        if p["net"] != "GND":
+        if p["net"] != net:
             continue
         px, py = g.cell(p["x"], p["y"])
         best = None
@@ -432,11 +444,45 @@ def stitch_vias(g, pads, spacing=4.5):
         if best:
             room = place(best[1], best[2])
 
-    for iy in range(r, g.ny - r, step):
-        for ix in range(r, g.nx - r, step):
+    if lattice:
+        for iy in range(r, g.ny - r, step):
+            for ix in range(r, g.nx - r, step):
+                if not room[iy, ix]:
+                    continue
+                room = place(ix, iy)
+    return out
+
+
+def plane_ties(g, segments, net, want=6):
+    """Drop vias onto a net's own tracks so its plane is really connected.
+
+    A stitching via merely *near* a pad works for ground, because ground is
+    poured on the pad's own layer too.  A power plane on an inner layer is
+    not, so its vias have to land on copper that already belongs to the net.
+    """
+    nid = g.nid(net)
+    _, room = g.masks(nid)
+    room = room.reshape(g.ny, g.nx)
+    out = []
+    for s in sorted(segments, key=lambda s: -((s["x2"] - s["x1"]) ** 2
+                                              + (s["y2"] - s["y1"]) ** 2)):
+        if len(out) >= want:
+            break
+        for t in (0.5, 0.35, 0.65, 0.2, 0.8):
+            x = s["x1"] + t * (s["x2"] - s["x1"])
+            y = s["y1"] + t * (s["y2"] - s["y1"])
+            ix, iy = g.cell(x, y)
             if not room[iy, ix]:
                 continue
-            room = place(ix, iy)
+            gx, gy = g.pos(ix, iy)
+            out.append({"x": round(gx, 3), "y": round(gy, 3)})
+            g.stamp_rect(list(range(g.nl)), gx - VIA_DIA / 2, gy - VIA_DIA / 2,
+                         gx + VIA_DIA / 2, gy + VIA_DIA / 2, net,
+                         CLEARANCE + TRACK / 2.0)
+            k = VIA_DRILL + HOLE_TO_HOLE
+            g.block_vias(gx - k, gy - k, gx + k, gy + k)
+            room = g.masks(nid)[1].reshape(g.ny, g.nx)
+            break
     return out
 
 
@@ -450,8 +496,9 @@ def route_board(geom, priority=()):
 
     prefer_horiz = [True] * g.nl
     prefer_horiz[-1] = False                 # back layer runs vertically
+    planes = set(PLANES.get(g.nl, ["GND"]))
     todo = [(n, ps) for n, ps in by_net.items()
-            if n not in NO_ROUTE and len(ps) > 1]
+            if n not in planes and len(ps) > 1]
     prio = {n: i for i, n in enumerate(priority)}
 
     def key(item):
@@ -518,14 +565,22 @@ def main():
         priority = tuple(dict.fromkeys([n for (n, _) in failures] + list(priority)))
         print(f"  attempt {attempt + 1}: {len(failures)} unrouted, retrying")
     routes, failures = best
-    stitches = stitch_vias(best_g, best_pads)
+    stitches = []
+    for i, net in enumerate(PLANES.get(layers, ["GND"])):
+        stitches += [dict(v, net=net) for v in
+                     stitch_vias(best_g, best_pads, net=net, lattice=(i == 0))]
+    for net in PLANE_TIED.get(layers, []):
+        ties = plane_ties(best_g, routes.get(net, {}).get("segments", []), net)
+        stitches += [dict(v, net=net) for v in ties]
+        if not ties:
+            print(f"  !! no via could be placed on the {net} plane's tracks")
     nseg = sum(len(r["segments"]) for r in routes.values())
     nvia = sum(len(r["vias"]) for r in routes.values())
     path = os.path.join(out, f"routes_{layers}.json")
     json.dump({"routes": routes, "failures": failures, "stitches": stitches},
               open(path, "w"), indent=1)
     print(f"  routed {len(routes)} nets: {nseg} segments, {nvia} vias, "
-          f"{len(stitches)} ground stitches"
+          f"{len(stitches)} plane stitches"
           + (f"; {len(failures)} FAILED" if failures else ""))
     for (net, pad) in failures[:10]:
         print(f"     could not reach {pad} on net {net}")
