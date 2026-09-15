@@ -14,6 +14,10 @@ NextPCB and CircuitHub, so a board that passes DRC here passes everywhere:
 import json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import parts
+from sexp import uid
+
+# Must match the uuid schlib gives the root sheet.
+ROOT_SHEET_UUID = uid("sheet/root")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HW = os.path.join(HERE, "..", "hardware")
@@ -230,7 +234,10 @@ def project(board_stem):
             "subpart_first_id": 65,
             "subpart_id_separator": 0,
         },
-        "sheets": [], "text_variables": {},
+        # KiCad wants the root sheet listed here; without it the project and
+        # the schematic are not associated and cross-probing does not work.
+        "sheets": [[ROOT_SHEET_UUID, "Root"]],
+        "text_variables": {},
     }
 
 

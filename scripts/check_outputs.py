@@ -8,7 +8,8 @@ mentions, a drill file with no holes.
 """
 import csv, os, re, sys, zipfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import parts
+import parts, kienv
+from sexp_parse import parse_file
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 OUT = os.path.join(ROOT, "out")
@@ -108,6 +109,44 @@ def check(stem, layers, w, h, problems, notes):
                  f"lines, all with order codes")
 
 
+def check_models(stem, problems, notes):
+    """Every 3D model a footprint names must actually be on disk.
+
+    gen_models.py was once not wired into the build at all, so a fresh clone
+    had no models and half the board rendered as bare pads -- with nothing
+    complaining.
+    """
+    pcb = os.path.join(ROOT, "hardware", stem + ".kicad_pcb")
+    if not os.path.exists(pcb):
+        return
+    share = kienv.share_dir()
+    subs = {"${KIPRJMOD}": os.path.join(ROOT, "hardware"),
+            "${KICAD10_3DMODEL_DIR}": os.path.join(share, "3dmodels"),
+            "${KICAD9_3DMODEL_DIR}": os.path.join(share, "3dmodels"),
+            "${KISYS3DMOD}": os.path.join(share, "3dmodels")}
+    board = parse_file(pcb)
+    missing, ok = [], 0
+    for fp in board.kids("footprint"):
+        ref = next((p.atom(1) for p in fp.kids("property")
+                    if p.atom(0) == "Reference"), "?")
+        models = [m.atom(0) for m in fp.kids("model")]
+        if not models:
+            if not ref.startswith("MH"):
+                missing.append(f"{ref} has no 3D model")
+            continue
+        for m in models:
+            path = m
+            for k, v in subs.items():
+                path = path.replace(k, v)
+            if os.path.exists(path):
+                ok += 1
+            else:
+                missing.append(f"{ref} -> {os.path.basename(path)}")
+    for m in missing:
+        problems.append(f"{stem}: missing 3D model, {m}")
+    notes.append(f"{stem}: {ok} 3D model(s) resolve on disk")
+
+
 def check_stock(problems, notes):
     """Every chosen part had stock when the design was frozen."""
     low = []
@@ -128,6 +167,7 @@ def main():
     problems, notes = [], []
     check("lorenz", 2, 100.0, 100.0, problems, notes)
     check("lorenz-4layer", 4, 100.0, 100.0, problems, notes)
+    check_models("lorenz", problems, notes)
     check_stock(problems, notes)
     for n in notes:
         print(f"  ok   {n}")

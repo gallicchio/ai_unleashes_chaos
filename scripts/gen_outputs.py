@@ -24,6 +24,9 @@ ORIENTATION_SENSITIVE = ["U1", "U2", "U3", "U4", "U5", "U6", "U7",
                          "J1", "SW1", "D1"]
 IMAGES = os.path.join(ROOT, "docs", "images")
 PNG_DPI = 170
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pcb_place as _place
+P_BOARD = max(_place.BOARD_W, _place.BOARD_H)
 
 
 # Every KiCad output stamps the moment it was written, so an unchanged design
@@ -205,14 +208,23 @@ def export_prints(stem, layers):
             normalise_timestamps(os.path.join(d, name))
 
 
-def pdf_to_png(pdf, png, dpi=PNG_DPI):
-    """Rasterise page 1.  Optional: skipped with a note if poppler is absent."""
+def pdf_to_png(pdf, png, dpi=PNG_DPI, crop_mm=None):
+    """Rasterise page 1.  Optional: skipped with a note if poppler is absent.
+
+    KiCad plots the board at its own coordinates with the page origin at the
+    top-left, and this board starts at (0, 0), so cropping to the board is a
+    fixed rectangle rather than a hunt for ink -- which keeps it deterministic
+    and needs no image library.
+    """
     if not shutil.which("pdftoppm"):
         return False
     stem = png[:-4] if png.endswith(".png") else png
-    subprocess.run(["pdftoppm", "-r", str(dpi), "-png", "-f", "1", "-l", "1",
-                    "-singlefile", pdf, stem], check=True,
-                   capture_output=True)
+    cmd = ["pdftoppm", "-r", str(dpi), "-png", "-f", "1", "-l", "1",
+           "-singlefile"]
+    if crop_mm:
+        px = int(round(crop_mm * dpi / 25.4))
+        cmd += ["-x", "0", "-y", "0", "-W", str(px), "-H", str(px)]
+    subprocess.run(cmd + [pdf, stem], check=True, capture_output=True)
     return os.path.exists(png)
 
 
@@ -244,7 +256,8 @@ def export_images(stem, layers):
             args.insert(-1, "--mirror")
         kienv.cli(*args)
         png = os.path.join(IMAGES, name + ".png")
-        (made if pdf_to_png(tmp, png) else skipped).append(name)
+        (made if pdf_to_png(tmp, png, crop_mm=P_BOARD + 1.0)
+         else skipped).append(name)
         os.remove(tmp)
 
     if stem == "lorenz":

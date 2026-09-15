@@ -84,6 +84,7 @@ def count_violations(path):
 
 def stage_libs():
     banner("symbol and footprint libraries")
+    sys_py("gen_models.py")
     sys_py("gen_footprints.py")
     sys_py("gen_symbols.py")
     kienv.cli("sym", "upgrade", os.path.join(HW, "lib", "lorenz.kicad_sym"),
@@ -147,6 +148,18 @@ def stage_docs():
     sys_py("gen_docs.py")
 
 
+def stage_project():
+    """Rewrite the project file last.
+
+    Saving a board through pcbnew rewrites the .kicad_pro alongside it and
+    drops the root-sheet entry, which is what links the project to the
+    schematic for cross-probing.  Regenerating it here is simpler than trying
+    to stop pcbnew touching it.
+    """
+    banner("project files")
+    sys_py("gen_project.py")
+
+
 def stage_selftest():
     banner("self-tests")
     sys_py("selftest_rotation.py")
@@ -189,6 +202,7 @@ def clean():
 
 STAGES = {
     "libs": stage_libs,
+    "project": stage_project,
     "sch": stage_sch,
     "pcb2": lambda: stage_pcb(*BOARDS[0]),
     "pcb4": lambda: stage_pcb(*BOARDS[1]),
@@ -196,7 +210,7 @@ STAGES = {
     "docs": stage_docs,
     "selftest": stage_selftest,
 }
-ORDER = ["libs", "sch", "pcb2", "pcb4", "out", "docs"]
+ORDER = ["libs", "sch", "pcb2", "pcb4", "out", "docs", "project"]
 
 
 def main():

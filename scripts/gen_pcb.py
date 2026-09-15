@@ -60,10 +60,12 @@ def read_netlist(path):
                 val = f.atom(0)
                 if nm not in ("Footprint", "Datasheet", "Description") and val:
                     fields[nm] = val
+        ts = c.first("tstamps")
         comps[c.first("ref").atom(0)] = {
             "value": c.first("value").atom(0),
             "footprint": c.first("footprint").atom(0),
             "fields": fields,
+            "tstamp": ts.atom(0) if ts is not None else "",
         }
     nets = {}
     for n in root.first("nets").kids("net"):
@@ -348,11 +350,17 @@ def add_silk(board):
     # --- reference designator and value on every part ---------------------
     for fp in sorted(board.GetFootprints(), key=lambda f: f.GetReference()):
         ref = fp.GetReference()
+        if ref.startswith("MH"):
+            fp.Reference().SetVisible(False)
+            fp.Value().SetVisible(False)
+            continue
         if not place_field(fp.Reference(), space, fp, 1.0, True):
             missing.append(f"{ref} reference")
         val = fp.Value()
         if ref.startswith("MH"):
-            val.SetVisible(False)       # "MountingHole" is not a legend
+            # A mounting hole needs no legend: you can see it is a hole.
+            val.SetVisible(False)
+            fp.Reference().SetVisible(False)
             continue
         if val.GetText() and not place_field(val, space, fp, 0.9, True):
             val.SetVisible(False)
@@ -477,6 +485,14 @@ def build(layers, netlist_path, out_path):
         x, y, rot = P.PLACE[ref]
         fp = load_fp(info["footprint"])
         fp.SetFPIDAsString(info["footprint"])   # parity wants the full Lib:Name
+        # The link back to the schematic symbol.  Without it KiCad cannot
+        # cross-probe: clicking a part in one editor highlights nothing in the
+        # other, because nothing says which symbol this footprint came from.
+        if info["tstamp"]:
+            fp.SetPath(pcbnew.KIID_PATH("/" + info["tstamp"]))
+        fp.SetSheetname("/")
+        fp.SetSheetfile(os.path.basename(out_path).replace(".kicad_pcb",
+                                                           ".kicad_sch"))
         fp.SetReference(ref)
         fp.SetValue(info["value"])
         for fname, fval in info["fields"].items():

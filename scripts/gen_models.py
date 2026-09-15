@@ -94,6 +94,22 @@ def usbc():
     return "USB_C_HRO_TYPE-C-31-M-12.wrl", s
 
 
+def dipswitch():
+    """KingTek DSIC06LSGET: 15.24 x 6.00 mm body, 1.8 mm tall, six sliders.
+
+    Drawn here rather than borrowed from KiCad's bundled 3D set, which is a
+    reduced selection in the AppImage and may not have it.
+    """
+    s = HEAD
+    s += box(0, 0, 1.15, 6.00, 15.24, 1.80, BLACK)
+    # the six actuators, pushed to the "ON" side
+    for i in range(6):
+        y = -6.35 + i * 2.54
+        s += box(-1.1, y, 2.15, 1.30, 1.10, 0.70, WHITE)
+    s += box(2.55, 0, 1.15, 0.30, 15.24, 1.60, (0.55, 0.55, 0.55))
+    return "SW_DIP_x06_DSIC06.wrl", s
+
+
 def fuse1812():
     s = HEAD
     s += box(0, 0, 0.55, 4.5, 3.2, 1.1, CREAM)
@@ -102,7 +118,7 @@ def fuse1812():
 
 def main():
     os.makedirs(OUT, exist_ok=True)
-    for maker in (bnc, dcdc, usbc, fuse1812):
+    for maker in (bnc, dcdc, usbc, fuse1812, dipswitch):
         name, body = maker()
         with open(os.path.join(OUT, name), "w") as fh:
             fh.write(body)

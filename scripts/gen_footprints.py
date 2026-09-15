@@ -217,10 +217,8 @@ def dipsw():
     rect_lines(f, -(ROW + PW / 2 + 0.25), -bl - 0.25, ROW + PW / 2 + 0.25, bl + 0.25,
                "F.CrtYd", CRT_W, f"{name}/crt")
     text_fab(f, "ON ->", 0, -bl + 1.2, f"{name}/fabtxt", size=0.7)
-    # close enough to the real DSIC06 to be worth showing: same six positions,
-    # 2.54 mm pitch, 8.61 mm rather than 8.8 mm between the rows
-    model(f, "${KICAD10_3DMODEL_DIR}/Button_Switch_SMD.3dshapes/"
-             "SW_DIP_SPSTx06_Slide_9.78x17.42mm_W8.61mm_P2.54mm.step")
+    model(f, "${KIPRJMOD}/lib/lorenz.3dshapes/SW_DIP_x06_DSIC06.wrl",
+          scale=MM_SCALE)
     return name, f
 
 
