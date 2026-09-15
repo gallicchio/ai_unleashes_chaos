@@ -243,6 +243,37 @@ def main():
     need(nl.net("R11", 2) == "GND" and nl.net("R12", 2) == "GND",
          "both CC lines pulled down, so a USB-C source will turn 5 V on")
 
+    # --- the power-on lamp, the fuse, and the bypassing -------------------
+    anode = nl.net("D1", 2)
+    need(nl.net("D1", 1) == "GND" and nl.net("R13", 2) == anode
+         and nl.net("R13", 1) == "+12V",
+         "D1 anode fed from +12 V through R13, cathode to ground "
+         "(a lamp fitted backwards lights nothing)")
+    vbus = nl.net("J1", "A4")
+    need(nl.net("F1", 1) == vbus and nl.net("F1", 2) == "+5V",
+         "F1 in series between the USB-C VBUS pins and +5 V")
+    need(all(nl.net("J1", p) == vbus for p in ("A9", "B4", "B9")),
+         "all four VBUS pins tied together")
+
+    for (ref, vp, vn) in (("U1", 8, 4), ("U2", 8, 4),
+                          ("U3", 16, 10), ("U4", 16, 10)):
+        for (pin, rail) in ((vp, "+12V"), (vn, "-12V")):
+            caps = [r for (r, _) in nl.others(rail) if r.startswith("C")]
+            local = [c for c in caps
+                     if nl.other_pin(c, "1") == "GND"
+                     or nl.other_pin(c, "2") == "GND"]
+            need(bool(local), f"{rail} has bypass capacitors to ground")
+    bypass = sum(1 for (r, p) in nl.nets.get("GND", ())
+                 if r.startswith("C") and nl.value.get(r) == "100nF")
+    need(bypass >= 8, f"{bypass} x 100 nF from a rail to ground "
+                      "(one per supply pin, plus the input)")
+
+    # --- the series output resistors are the value the design intends ------
+    for res in ("R8", "R9", "R10"):
+        need(nl.value[res] == "100R",
+             f"{res} is 100 ohm -- enough to isolate coax capacitance, "
+             "0.01 % error into a 1 Mohm scope")
+
     # --- nothing left dangling -------------------------------------------
     # KiCad gives every deliberately-unconnected pin its own "unconnected-(...)"
     # net; anything else with one pin is a wiring mistake.
