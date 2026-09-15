@@ -32,6 +32,8 @@ class Sheet:
         self.items = []                # rendered S nodes, in file order
         self.symbols = []              # (ref, lib_id, x, y, rot, unit, pins)
         self._pin_cache = {}
+        self._segments = []            # ((x1,y1),(x2,y2)) for the junction pass
+        self._junctions = set()
         self._extra_libs = {}          # lib_id -> Node, for project-local symbols
 
     # ---------------------------------------------------------- libraries --
@@ -91,9 +93,13 @@ class Sheet:
               S("on_board", "yes" if on_board else "no"),
               S("dnp", "yes" if dnp else "no"), S("uuid", q(sid)))
 
+        # KiCad adds the symbol's rotation to a field's stored angle, so a
+        # field on a 90/270-rotated symbol needs 90 stored to read horizontally.
+        fang = 90 if int(rot) % 360 in (90, 270) else 0
+
         def field(name, val, dx, dy, hide, justify=None, size=1.27):
             p = S("property", q(name), q(val))
-            p.add(S("at", n(x + dx), n(y + dy), "0"))
+            p.add(S("at", n(x + dx), n(y + dy), n(fang)))
             if hide:
                 p.add(S("hide", "yes"))
             p.add(effects(size=size, justify=justify))
@@ -143,6 +149,7 @@ class Sheet:
                 S("stroke").add(S("width", "0"), S("type", "default")),
                 S("uuid", q(uid(f"wire/{x1},{y1},{x2},{y2}"))))
             self.items.append(w)
+            self._segments.append(((x1, y1), (x2, y2)))
 
     def elbow(self, p, q_, first="h"):
         """Two-segment wire between p and q_ (horizontal-then-vertical)."""
@@ -151,6 +158,9 @@ class Sheet:
         self.wire(p, mid, q_)
 
     def junction(self, x, y):
+        if (round(x, 3), round(y, 3)) in self._junctions:
+            return
+        self._junctions.add((round(x, 3), round(y, 3)))
         self.items.append(S("junction").add(
             S("at", n(x), n(y)), S("diameter", "0"),
             S("color", "0", "0", "0", "0"),
@@ -198,6 +208,68 @@ class Sheet:
             S("fill").add(S("type", fill)),
             S("uuid", q(uid(key or f"circ/{cx},{cy},{r}")))))
 
+    # --------------------------------------------------------- junctions --
+    def add_missing_junctions(self):
+        """Put a junction wherever a wire end or a pin lands mid-wire.
+
+        KiCad only bonds wires that share an endpoint or carry a junction dot;
+        a wire that stops against the middle of another one is *not* connected.
+        Two wires merely crossing must stay separate, so a point is only dotted
+        when something actually terminates there.
+        """
+        def key(p):
+            return (round(p[0], 3), round(p[1], 3))
+
+        ends = {}
+        for (a, b) in self._segments:
+            ends[key(a)] = ends.get(key(a), 0) + 1
+            ends[key(b)] = ends.get(key(b), 0) + 1
+
+        pins = set()
+        for (ref, lib_id, x, y, rot, unit, pin_map, mir) in self.symbols:
+            for num in pin_map:
+                pins.add(key(self.pin(ref, unit, num)))
+
+        added = 0
+        for pt in set(ends) | pins:
+            terminates = ends.get(pt, 0) > 0 or pt in pins
+            if not terminates:
+                continue
+            interior = 0
+            for (a, b) in self._segments:
+                ka, kb = key(a), key(b)
+                if pt in (ka, kb):
+                    continue
+                if _on_segment(pt, ka, kb):
+                    interior += 1
+            if interior and pt not in self._junctions:
+                self.junction(*pt)
+                added += 1
+        return added
+
+    def check_grid(self, grid=1.27, tol=1e-4):
+        """Every wire end and pin must sit on the connection grid.
+
+        Off-grid endpoints still *look* connected but KiCad flags them, and
+        they are the classic way to end up with a net that silently is not
+        joined.  Returns a list of offending points.
+        """
+        bad = []
+
+        def off(v):
+            return abs(v / grid - round(v / grid)) > tol
+
+        for (a, b) in self._segments:
+            for pt in (a, b):
+                if off(pt[0]) or off(pt[1]):
+                    bad.append(("wire end", pt))
+        for (ref, lib_id, x, y, rot, unit, pin_map, mir) in self.symbols:
+            for num in pin_map:
+                pt = self.pin(ref, unit, num)
+                if off(pt[0]) or off(pt[1]):
+                    bad.append((f"{ref}.{num}", pt))
+        return bad
+
     # ------------------------------------------------------------- output --
     def render(self):
         root = S("kicad_sch")
@@ -223,6 +295,16 @@ class Sheet:
     def write(self, path):
         with open(path, "w") as fh:
             fh.write(self.render())
+
+
+def _on_segment(p, a, b, tol=1e-6):
+    """True when p lies strictly between a and b on an axis-aligned segment."""
+    (px, py), (ax, ay), (bx, by) = p, a, b
+    if abs(ay - by) < tol and abs(py - ay) < tol:
+        return min(ax, bx) + tol < px < max(ax, bx) - tol
+    if abs(ax - bx) < tol and abs(px - ax) < tol:
+        return min(ay, by) + tol < py < max(ay, by) - tol
+    return False
 
 
 def _clone_with_id(sym, lib_id):

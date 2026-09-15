@@ -64,6 +64,11 @@ def effects(size=1.27, thickness=None, justify=None, hide=False, mirror=False):
     e.add(f)
     if justify:
         parts = justify if isinstance(justify, (list, tuple)) else [justify]
+        bad = [p for p in parts if p not in ("left", "right", "top", "bottom", "mirror")]
+        if bad:
+            raise ValueError(f"KiCad has no {bad} justification "
+                             "(valid: left right top bottom mirror; "
+                             "centred is the default)")
         e.add(S("justify", *parts))
     if mirror:
         e.add(S("justify", "mirror"))

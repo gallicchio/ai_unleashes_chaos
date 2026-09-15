@@ -1,0 +1,271 @@
+#!/usr/bin/env python3
+"""Read the exported netlist back and prove the board solves Lorenz.
+
+This does not trust the drawing.  It walks the real netlist, works out what
+every integrator actually computes from the resistors that are really attached
+to it, and compares the result with
+
+    dx/dt = s(y-x),  dy/dt = rx - y - xz,  dz/dt = xy - bz.
+
+It also checks the housekeeping that makes those equations true: the op-amps'
+non-inverting inputs at ground, the multipliers wired for A*B/10 with the sign
+inversions Paul gets by swapping inputs, matched capacitors across the three
+integrators, and every supply pin on the right rail.
+"""
+import os, sys, math
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from sexp_parse import parse_file
+
+S_TARGET, R_TARGET, B_TARGET = 10.0, 28.0, 8.0 / 3.0
+SCALE = 1.0e6            # every coefficient is 1 MEG / R
+TOL = 0.01               # 1 % on the resistor ratios
+
+
+# ------------------------------------------------------------ polynomials --
+def poly(**terms):
+    return {k: float(v) for k, v in terms.items() if v}
+
+
+def padd(a, b, k=1.0):
+    out = dict(a)
+    for mono, c in b.items():
+        out[mono] = out.get(mono, 0.0) + k * c
+        if abs(out[mono]) < 1e-12:
+            del out[mono]
+    return out
+
+
+def pmul(a, b):
+    out = {}
+    for m1, c1 in a.items():
+        for m2, c2 in b.items():
+            mono = "".join(sorted(m1 + m2))
+            out[mono] = out.get(mono, 0.0) + c1 * c2
+    return {k: v for k, v in out.items() if abs(v) > 1e-12}
+
+
+def pstr(p):
+    if not p:
+        return "0"
+    bits = []
+    for mono in sorted(p, key=lambda m: (len(m), m)):
+        c = p[mono]
+        bits.append(f"{c:+.4g} {mono or '1'}")
+    return " ".join(bits)
+
+
+def pclose(a, b, tol=TOL):
+    keys = set(a) | set(b)
+    for k in keys:
+        va, vb = a.get(k, 0.0), b.get(k, 0.0)
+        scale = max(abs(va), abs(vb), 1.0)
+        if abs(va - vb) / scale > tol:
+            return False
+    return True
+
+
+# ----------------------------------------------------------------- values --
+def ohms(text):
+    t = text.strip().upper().replace("OHM", "").replace("R", "" if text[-1] in "Rr" else "R")
+    t = text.strip().upper().rstrip("R")
+    mult = 1.0
+    if t.endswith("M"):
+        mult, t = 1e6, t[:-1]
+    elif t.endswith("K"):
+        mult, t = 1e3, t[:-1]
+    return float(t) * mult
+
+
+def farads(text):
+    t = text.strip().lower()
+    for suffix, mult in (("uf", 1e-6), ("nf", 1e-9), ("pf", 1e-12)):
+        if t.endswith(suffix):
+            return float(t[:-len(suffix)]) * mult
+    return float(t)
+
+
+# ---------------------------------------------------------------- netlist --
+class Net:
+    def __init__(self, path):
+        root = parse_file(path)
+        self.value = {}
+        for c in root.first("components").kids("comp"):
+            self.value[c.first("ref").atom(0)] = c.first("value").atom(0)
+        self.nets = {}
+        for n in root.first("nets").kids("net"):
+            name = n.first("name").atom(0).lstrip("/")
+            self.nets[name] = {(x.first("ref").atom(0), x.first("pin").atom(0))
+                               for x in n.kids("node")}
+        self.of = {}
+        for name, nodes in self.nets.items():
+            for node in nodes:
+                self.of[node] = name
+
+    def net(self, ref, pin):
+        return self.of.get((ref, str(pin)))
+
+    def others(self, name, exclude_ref=None):
+        return {(r, p) for (r, p) in self.nets.get(name, ())
+                if r != exclude_ref}
+
+    def other_pin(self, ref, pin):
+        """For a 2-pin part, the net on the opposite pin."""
+        pins = sorted(p for (r, p) in self.of if r == ref)
+        assert len(pins) == 2, f"{ref} is not a 2-pin part ({pins})"
+        other = pins[0] if str(pin) == pins[1] else pins[1]
+        return self.net(ref, other)
+
+
+def main():
+    path = sys.argv[1] if len(sys.argv) > 1 else "out/lorenz.net"
+    nl = Net(path)
+    problems, notes = [], []
+
+    def need(cond, msg):
+        (notes if cond else problems).append(("ok " if cond else "FAIL") + "  " + msg)
+
+    # --- what each signal net means, in normalised variables --------------
+    meaning = {"x": poly(x=1), "-y": poly(y=-1), "z": poly(z=1), "GND": {}}
+
+    # --- multipliers: W = (X1-X2)(Y1-Y2)/10 volts = ab/100 normalised ------
+    for ref in ("U3", "U4"):
+        x1, x2 = nl.net(ref, 1), nl.net(ref, 2)
+        y1, y2 = nl.net(ref, 6), nl.net(ref, 7)
+        w, z1, z2 = nl.net(ref, 14), nl.net(ref, 13), nl.net(ref, 12)
+        need(z1 == w, f"{ref} Z1 tied to its output (unity scale)")
+        need(z2 == "GND", f"{ref} Z2 to ground")
+        sf = nl.net(ref, 4)
+        need(sf is None or len(nl.nets.get(sf, ())) == 1,
+             f"{ref} SF left open -> x10 V scale factor")
+        need(nl.net(ref, 16) == "+12V" and nl.net(ref, 10) == "-12V",
+             f"{ref} powered from +/-12 V")
+        for nm in (x1, x2, y1, y2):
+            need(nm in meaning, f"{ref} input net '{nm}' is a known signal")
+        a = padd(meaning.get(x1, {}), meaning.get(x2, {}), -1)
+        b = padd(meaning.get(y1, {}), meaning.get(y2, {}), -1)
+        meaning[w] = {k: v / 100.0 for k, v in pmul(a, b).items()}
+        notes.append(f"      {ref}: W = ({pstr(a)}) x ({pstr(b)}) / 100 "
+                     f"= {pstr(meaning[w])}")
+
+    # --- the three integrators -------------------------------------------
+    integrators = [("U1", "2", "1"), ("U1", "6", "7"), ("U2", "2", "1")]
+    caps_seen = {}
+    results = {}
+    for (ref, inv, out) in integrators:
+        sj, outnet = nl.net(ref, inv), nl.net(ref, out)
+        plus = "3" if inv == "2" else "5"
+        need(nl.net(ref, plus) == "GND",
+             f"{ref} pin {plus} (+ input) at ground -- a true virtual earth")
+
+        expr, terms = {}, []
+        cap_total = 0.0
+        for (r, p) in sorted(nl.others(sj, exclude_ref=ref)):
+            kind = r[0]
+            if kind == "R":
+                src = nl.other_pin(r, p)
+                if src not in meaning:
+                    problems.append(f"FAIL  {r} feeds {sj} from unknown net '{src}'")
+                    continue
+                weight = SCALE / ohms(nl.value[r])
+                expr = padd(expr, meaning[src], -weight)
+                terms.append(f"{r}={nl.value[r]} (1M/R={weight:.4g}) from {src}")
+            elif kind == "C":
+                far = nl.other_pin(r, p)
+                cap_total += farads(nl.value[r])
+                if far != outnet:
+                    # the switched branches reach the output through one pole;
+                    # on a DIP switch pole k pairs with pin 13-k
+                    hop = [(rr, pp) for (rr, pp) in nl.others(far, exclude_ref=r)
+                           if rr.startswith("SW")]
+                    if not hop:
+                        problems.append(f"FAIL  {r} hangs off {far} with no switch")
+                        continue
+                    sw, swpin = hop[0]
+                    mate = str(13 - int(swpin))
+                    need(nl.net(sw, mate) == outnet,
+                         f"{r} reaches {ref}'s output through {sw} pole "
+                         f"{swpin}-{mate}")
+            else:
+                problems.append(f"FAIL  unexpected {r} on summing node {sj}")
+        results[outnet] = expr
+        caps_seen[outnet] = cap_total
+        notes.append(f"      {ref} ({outnet}): d/dt = {pstr(expr)}")
+        for t in terms:
+            notes.append(f"         <- {t}")
+
+    # --- compare with Lorenz ---------------------------------------------
+    want = {
+        "x":  poly(x=-S_TARGET, y=S_TARGET),                       # 10(y-x)
+        "-y": poly(x=-R_TARGET, y=1.0, xz=1.0),                    # -(28x - y - xz)
+        "z":  poly(xy=1.0, z=-B_TARGET),                           # xy - (8/3)z
+    }
+    labels = {"x": "dx/dt = s(y - x)",
+              "-y": "d(-y)/dt = -(r x - y - x z)",
+              "z": "dz/dt = x y - b z"}
+    for net, target in want.items():
+        got = results.get(net)
+        if got is None:
+            problems.append(f"FAIL  no integrator produces '{net}'")
+            continue
+        need(pclose(got, target), f"{labels[net]}   ->   {pstr(got)}")
+
+    # extract the realised constants for the report
+    s_got = results.get("x", {}).get("y", 0.0)
+    r_got = -results.get("-y", {}).get("x", 0.0)
+    b_got = -results.get("z", {}).get("z", 0.0)
+    notes.append(f"      realised constants: s = {s_got:.4g}, r = {r_got:.4g}, "
+                 f"b = {b_got:.5g}  (8/3 = {B_TARGET:.5g})")
+    need(abs(b_got - B_TARGET) / B_TARGET < 0.005,
+         f"b within 0.5 % of 8/3 ({100*abs(b_got-B_TARGET)/B_TARGET:.2f} % high)")
+
+    # --- the three time constants must match ------------------------------
+    vals = sorted(caps_seen.values())
+    need(abs(vals[0] - vals[-1]) < 1e-15,
+         f"all three integrators carry the same capacitance ({vals[0]*1e9:.1f} nF fitted)")
+
+    # --- outputs ----------------------------------------------------------
+    for (net, res, jack) in (("x", "R8", "J2"), ("-y", "R9", "J3"), ("z", "R10", "J4")):
+        need(nl.net(res, 1) == net, f"{res} takes {net} to {jack}")
+        need(nl.net(res, 2) == nl.net(jack, 1), f"{res} drives {jack} centre pin")
+        need(nl.net(jack, 2) == "GND", f"{jack} shell grounded")
+
+    # --- supplies ---------------------------------------------------------
+    for ref, vp, vn in (("U1", 8, 4), ("U2", 8, 4)):
+        need(nl.net(ref, vp) == "+12V" and nl.net(ref, vn) == "-12V",
+             f"{ref} powered from +/-12 V")
+    need(nl.net("U6", 3) == "+15V" and nl.net("U6", 1) == "+12V"
+         and nl.net("U6", 2) == "GND", "U6 78L12: +15 V in, +12 V out, tab to ground")
+    need(nl.net("U7", 2) == "-15V" and nl.net("U7", 3) == "-12V"
+         and nl.net("U7", 1) == "GND", "U7 79L12: -15 V in, -12 V out")
+    need(nl.net("U5", 1) == "+5V" and nl.net("U5", 2) == "GND"
+         and nl.net("U5", 6) == "+15V" and nl.net("U5", 5) == "GND"
+         and nl.net("U5", 4) == "-15V", "U5 converter: 5 V in, +/-15 V out, COM to ground")
+    need(nl.net("R11", 2) == "GND" and nl.net("R12", 2) == "GND",
+         "both CC lines pulled down, so a USB-C source will turn 5 V on")
+
+    # --- nothing left dangling -------------------------------------------
+    # KiCad gives every deliberately-unconnected pin its own "unconnected-(...)"
+    # net; anything else with one pin is a wiring mistake.
+    singles = [n for n, nodes in nl.nets.items()
+               if len(nodes) < 2 and not n.startswith("unconnected-")]
+    need(not singles, f"no accidental single-pin nets"
+         + ("" if not singles else ": " + str(singles)))
+    nc = sorted(n for n in nl.nets if n.startswith("unconnected-"))
+    expect_nc = 6 + 2 * 7            # USB D+/D-/SBU, then NC x6 + SF on each MPY634
+    need(len(nc) == expect_nc,
+         f"{len(nc)} deliberately unconnected pins (USB data lines, "
+         f"MPY634 NC pins and both SF pins)")
+
+    # --- report -----------------------------------------------------------
+    print("\n".join(notes))
+    print()
+    if problems:
+        print("\n".join(problems))
+        print(f"\n{len(problems)} circuit check(s) FAILED")
+        return 1
+    print(f"all circuit checks passed ({len(notes)} verified)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
