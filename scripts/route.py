@@ -387,31 +387,62 @@ def stamp_route(g, net, segs, vias):
         g.block_vias(v["x"] - k, v["y"] - k, v["x"] + k, v["y"] + k)
 
 
-def stitch_vias(g, spacing=7.0):
-    """Ground stitching vias wherever every layer is genuinely free."""
+def stitch_vias(g, pads, spacing=4.5):
+    """Ground stitching vias wherever every layer is genuinely free.
+
+    Signal tracks cut the front pour into islands; each one needs a via or it
+    floats, so this lays a fairly dense lattice and then adds a via beside
+    every ground pad that has room, which is what ties the local pour under a
+    package back to the plane.
+    """
     nid = g.nid("GND")
     step = max(1, int(round(spacing / GRID)))
     r = int(math.ceil(VIA_HALO / GRID))
     _, room = g.masks(nid)
     room = room.reshape(g.ny, g.nx)
     out = []
+
+    def place(ix, iy):
+        x, y = g.pos(ix, iy)
+        out.append({"x": round(x, 3), "y": round(y, 3)})
+        g.stamp_rect(list(range(g.nl)), x - VIA_DIA / 2, y - VIA_DIA / 2,
+                     x + VIA_DIA / 2, y + VIA_DIA / 2, "GND",
+                     CLEARANCE + TRACK / 2.0)
+        k = VIA_DRILL + HOLE_TO_HOLE
+        g.block_vias(x - k, y - k, x + k, y + k)
+        return g.masks(nid)[1].reshape(g.ny, g.nx)
+
+    # one beside each ground pad first, so no pour island is left floating
+    reach = int(round(2.2 / GRID))
+    for p in pads:
+        if p["net"] != "GND":
+            continue
+        px, py = g.cell(p["x"], p["y"])
+        best = None
+        for dy in range(-reach, reach + 1):
+            for dx in range(-reach, reach + 1):
+                iy, ix = py + dy, px + dx
+                if not (r <= iy < g.ny - r and r <= ix < g.nx - r):
+                    continue
+                if not room[iy, ix]:
+                    continue
+                d = dx * dx + dy * dy
+                if best is None or d < best[0]:
+                    best = (d, ix, iy)
+        if best:
+            room = place(best[1], best[2])
+
     for iy in range(r, g.ny - r, step):
         for ix in range(r, g.nx - r, step):
             if not room[iy, ix]:
                 continue
-            x, y = g.pos(ix, iy)
-            out.append({"x": round(x, 3), "y": round(y, 3)})
-            g.stamp_rect(list(range(g.nl)), x - VIA_DIA / 2, y - VIA_DIA / 2,
-                         x + VIA_DIA / 2, y + VIA_DIA / 2, "GND",
-                         CLEARANCE + TRACK / 2.0)
-            k = VIA_DRILL + HOLE_TO_HOLE
-            g.block_vias(x - k, y - k, x + k, y + k)
-            room = g.masks(nid)[1].reshape(g.ny, g.nx)
+            room = place(ix, iy)
     return out
 
 
 def route_board(geom, priority=()):
     g, pads = build_grid(geom)
+    g._pads = pads
     by_net = {}
     for p in pads:
         if p["net"] and not p["net"].startswith("unconnected-"):
@@ -480,13 +511,14 @@ def main():
         g, routes, failures = route_board(geom, priority)
         if best is None or len(failures) < len(best[1]):
             best, best_g = (routes, failures), g
+            best_pads = g._pads
         if not failures:
-            best_g = g
+            best_g, best_pads = g, g._pads
             break
         priority = tuple(dict.fromkeys([n for (n, _) in failures] + list(priority)))
         print(f"  attempt {attempt + 1}: {len(failures)} unrouted, retrying")
     routes, failures = best
-    stitches = stitch_vias(best_g)
+    stitches = stitch_vias(best_g, best_pads)
     nseg = sum(len(r["segments"]) for r in routes.values())
     nvia = sum(len(r["vias"]) for r in routes.values())
     path = os.path.join(out, f"routes_{layers}.json")
