@@ -223,6 +223,7 @@ __marimo__/
 # KiCad working files
 *-backups/
 *.kicad_prl
+~*.lck
 fp-info-cache
 *.kicad_pcb-bak
 *.kicad_sch-bak
