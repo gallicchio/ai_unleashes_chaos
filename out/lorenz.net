@@ -2,7 +2,7 @@
 	(version "E")
 	(design
 		(source "/home/jason/mnt/local4TB/2TBext4/frank/stuff/mudd/other/ai_unleashes_chaos/hardware/lorenz.kicad_sch")
-		(date "2026-09-15T13:02:23")
+		(date "2026-09-15T13:08:55")
 		(tool "Eeschema 10.0.6")
 		(sheet
 			(number "1")
@@ -2014,6 +2014,206 @@
 			)
 		)
 		(comp
+			(ref "MH1")
+			(value "MountingHole")
+			(footprint "MountingHole:MountingHole_3.2mm_M3")
+			(fields
+				(field
+					(name "Footprint") "MountingHole:MountingHole_3.2mm_M3")
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "Mechanical")
+				(part "MountingHole")
+				(description "Mounting Hole without connection")
+			)
+			(property
+				(name "Sheetname")
+				(value "lorenz")
+			)
+			(property
+				(name "Sheetfile")
+				(value "lorenz.kicad_sch")
+			)
+			(property
+				(name "exclude_from_bom")
+			)
+			(property
+				(name "ki_keywords")
+				(value "mounting hole")
+			)
+			(property
+				(name "ki_fp_filters")
+				(value "MountingHole*")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "cdf32a98-18b7-576c-a461-bb5c40089b45")
+			(units
+				(unit
+					(name "A")
+					(pins)
+				)
+			)
+		)
+		(comp
+			(ref "MH2")
+			(value "MountingHole")
+			(footprint "MountingHole:MountingHole_3.2mm_M3")
+			(fields
+				(field
+					(name "Footprint") "MountingHole:MountingHole_3.2mm_M3")
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "Mechanical")
+				(part "MountingHole")
+				(description "Mounting Hole without connection")
+			)
+			(property
+				(name "Sheetname")
+				(value "lorenz")
+			)
+			(property
+				(name "Sheetfile")
+				(value "lorenz.kicad_sch")
+			)
+			(property
+				(name "exclude_from_bom")
+			)
+			(property
+				(name "ki_keywords")
+				(value "mounting hole")
+			)
+			(property
+				(name "ki_fp_filters")
+				(value "MountingHole*")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "fd9da819-3868-5193-9e7e-90d25376be73")
+			(units
+				(unit
+					(name "A")
+					(pins)
+				)
+			)
+		)
+		(comp
+			(ref "MH3")
+			(value "MountingHole")
+			(footprint "MountingHole:MountingHole_3.2mm_M3")
+			(fields
+				(field
+					(name "Footprint") "MountingHole:MountingHole_3.2mm_M3")
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "Mechanical")
+				(part "MountingHole")
+				(description "Mounting Hole without connection")
+			)
+			(property
+				(name "Sheetname")
+				(value "lorenz")
+			)
+			(property
+				(name "Sheetfile")
+				(value "lorenz.kicad_sch")
+			)
+			(property
+				(name "exclude_from_bom")
+			)
+			(property
+				(name "ki_keywords")
+				(value "mounting hole")
+			)
+			(property
+				(name "ki_fp_filters")
+				(value "MountingHole*")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "ea1872fa-49e2-5c28-8b70-801cfc4fb8f6")
+			(units
+				(unit
+					(name "A")
+					(pins)
+				)
+			)
+		)
+		(comp
+			(ref "MH4")
+			(value "MountingHole")
+			(footprint "MountingHole:MountingHole_3.2mm_M3")
+			(fields
+				(field
+					(name "Footprint") "MountingHole:MountingHole_3.2mm_M3")
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "Mechanical")
+				(part "MountingHole")
+				(description "Mounting Hole without connection")
+			)
+			(property
+				(name "Sheetname")
+				(value "lorenz")
+			)
+			(property
+				(name "Sheetfile")
+				(value "lorenz.kicad_sch")
+			)
+			(property
+				(name "exclude_from_bom")
+			)
+			(property
+				(name "ki_keywords")
+				(value "mounting hole")
+			)
+			(property
+				(name "ki_fp_filters")
+				(value "MountingHole*")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "05b3497f-9661-54a9-a58c-e20267a5c7a2")
+			(units
+				(unit
+					(name "A")
+					(pins)
+				)
+			)
+		)
+		(comp
 			(ref "R1")
 			(value "100k")
 			(footprint "Resistor_SMD:R_0805_2012Metric")
@@ -2923,8 +3123,8 @@
 				(tstamps "/")
 			)
 			(tstamps "ada31971-1a24-57bf-ab3a-218edf317417" "c2d0f28c-6a3f-575f-bfe4-aaee257a5480"
-				"a77c4fd2-7587-52a2-b60c-e3adaae69a02" "e6619efc-8bc1-505f-98e7-de5985591e51"
-				"9383cc23-aa5e-5e49-8733-084c9844ee7a" "662d27e4-2dd6-57b8-96d2-21558bd37d3e"
+				"a77c4fd2-7587-52a2-b60c-e3adaae69a02" "9383cc23-aa5e-5e49-8733-084c9844ee7a"
+				"e6619efc-8bc1-505f-98e7-de5985591e51" "662d27e4-2dd6-57b8-96d2-21558bd37d3e"
 			)
 			(units
 				(unit
@@ -3923,6 +4123,28 @@
 			)
 		)
 		(libpart
+			(lib "Mechanical")
+			(part "MountingHole")
+			(description "Mounting Hole without connection")
+			(footprints
+				(fp "MountingHole*")
+			)
+			(fields
+				(field
+					(name "Reference") "H")
+				(field
+					(name "Value") "MountingHole")
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description") "Mounting Hole without connection")
+			)
+		)
+		(libpart
 			(lib "Regulator_Linear")
 			(part "L78L12_SOT89")
 			(description "Positive 100mA 30V Linear Regulator, Fixed Output 12V, SOT-89")
@@ -4310,6 +4532,10 @@
 		(library
 			(logical "Device")
 			(uri "${KICAD10_SYMBOL_DIR}/Device.kicad_symdir")
+		)
+		(library
+			(logical "Mechanical")
+			(uri "${KICAD10_SYMBOL_DIR}/Mechanical.kicad_symdir")
 		)
 		(library
 			(logical "Regulator_Linear")

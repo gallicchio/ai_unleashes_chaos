@@ -436,6 +436,11 @@ def build(layers, netlist_path, out_path):
             key = (ref, pad.GetNumber())
             if key in pad_net:
                 pad.SetNet(netmap[pad_net[key]])
+        if ref.startswith("MH"):
+            # mechanical only: nothing to buy, nothing to place
+            fp.SetAttributes(fp.GetAttributes()
+                             | pcbnew.FP_EXCLUDE_FROM_BOM
+                             | pcbnew.FP_EXCLUDE_FROM_POS_FILES)
         placed[ref] = fp
 
     # Drill/place origin at the board's bottom-left corner, so gerbers, drill

@@ -34,7 +34,7 @@ For the four-layer build use the matching files in `out/lorenz-4layer/`.
 
 ## Cost
 
-The board has **158 SMT joints** and **26 through-hole joints** on
+The board has **158 SMT joints** and **30 through-hole joints** on
 23 BOM lines (10 JLCPCB Basic, 13 Extended).
 Parts alone are **$71.69 per board**, of which
 $61.17 is the pair of MPY634 multipliers.
@@ -45,9 +45,9 @@ $61.17 is the pair of MPY634 multipliers.
 |---|---|
 | bare PCBs | $2.00 |
 | parts ($71.69 x 2) | $143.38 |
-| assembly: setup $8.00 + stencil $1.50 + 316 SMT joints + 13 extended parts + 52 THT joints | $64.64 |
+| assembly: setup $8.00 + stencil $1.50 + 316 SMT joints + 13 extended parts + 60 THT joints | $67.04 |
 | shipping (DHL, worldwide) | $22.00 |
-| **total** | **$232.02**  ($116.01 each) |
+| **total** | **$234.42**  ($117.21 each) |
 
 **5 boards, two layers, fully assembled including through-hole**
 
@@ -55,9 +55,9 @@ $61.17 is the pair of MPY634 multipliers.
 |---|---|
 | bare PCBs | $2.00 |
 | parts ($71.69 x 5) | $358.44 |
-| assembly: setup $8.00 + stencil $1.50 + 790 SMT joints + 13 extended parts + 130 THT joints | $88.84 |
+| assembly: setup $8.00 + stencil $1.50 + 790 SMT joints + 13 extended parts + 150 THT joints | $94.84 |
 | shipping (DHL, worldwide) | $22.00 |
-| **total** | **$471.29**  ($94.26 each) |
+| **total** | **$477.29**  ($95.46 each) |
 
 **10 boards, two layers, fully assembled including through-hole**
 
@@ -65,17 +65,17 @@ $61.17 is the pair of MPY634 multipliers.
 |---|---|
 | bare PCBs | $4.00 |
 | parts ($71.69 x 10) | $716.89 |
-| assembly: setup $8.00 + stencil $1.50 + 1580 SMT joints + 13 extended parts + 260 THT joints | $129.19 |
+| assembly: setup $8.00 + stencil $1.50 + 1580 SMT joints + 13 extended parts + 300 THT joints | $141.19 |
 | shipping (DHL, worldwide) | $22.00 |
-| **total** | **$872.08**  ($87.21 each) |
+| **total** | **$884.08**  ($88.41 each) |
 
-Five **four-layer** boards come to about $494.29 ($98.86 each): the only change is the bare-board price.
+Five **four-layer** boards come to about $500.29 ($100.06 each): the only change is the bare-board price.
 
 Two boards is the sensible order: one for Paul and one to keep.
 
 ## The through-hole parts
 
-5 parts are through-hole: **J1, J2, J3, J4, U5** -- the three BNC jacks, the DC/DC module and the USB-C shell tabs.
+9 parts are through-hole: **J1, J2, J3, J4, MH1, MH2, MH3, MH4, U5** -- the three BNC jacks, the DC/DC module and the USB-C shell tabs.
 They are included in the BOM and the CPL, so a fab that offers
 through-hole assembly will fit them.  If you would rather not pay for
 that, deselect them at checkout and solder them yourself: they are the

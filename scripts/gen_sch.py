@@ -303,8 +303,7 @@ def build():
     sh = s.pin("J1", 1, "SH")
     s.wire(sh, (sh[0], sh[1] + 5.08))
     gnd(sh[0], sh[1] + 5.08, key="shell")
-    s.text("shell grounded here only", sh[0] - 1.27, sh[1] + 10.16, size=1.4,
-           justify="right")
+    s.text("shell grounded here only", sh[0] - 1.27, sh[1] + 10.16, size=1.4)
 
     # CC pull-downs: without these a USB-C charger never turns 5 V on.
     for (ref, pin_name, cx) in (("R11", "A5", 74.93), ("R12", "B5", 87.63)):
@@ -568,6 +567,23 @@ def build():
     y += 4.2
     s.text("stocks a 3-pole 3-position switch; 2.2 nF is always fitted.",
            L, y, size=1.9)
+
+    # -------------------------------------------- mechanical --------------
+    # Four M3 holes.  Three BNCs on one edge means cables lever on the board;
+    # it wants feet or standoffs, not to sit loose on the bench.
+    s.text("MOUNTING", 292.1, 368.3, size=2.4)
+    s.text("Four M3 holes, one per board corner.  No electrical function,",
+           292.1, 373.4, size=1.6)
+    s.text("but with three BNCs along one edge the cables lever on the",
+           292.1, 377.2, size=1.6)
+    s.text("board, so it wants standoffs rather than a bare bench.",
+           292.1, 381.0, size=1.6)
+    for i in range(4):
+        s.place("Mechanical:MountingHole", f"MH{i + 1}", "MountingHole",
+                297.2 + i * 17.78, 394.0,
+                footprint="MountingHole:MountingHole_3.2mm_M3",
+                in_bom=False, ref_off=(0, -5.08), val_off=(0, 5.08),
+                hide_value=True)
 
     # ------------------------------- Paul's note, where Paul puts it -------
     s.text("C  =  0.47 uF   (slow!)", 20.32, 26.0, size=3.4)

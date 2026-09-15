@@ -91,6 +91,9 @@ def stage_sch():
     out = sys_py("check_circuit.py", net)
     if "all circuit checks passed" not in out:
         raise Fail("the netlist does not implement the Lorenz equations")
+    out = sys_py("check_schematic.py", sch)
+    if "no text overlaps" not in out:
+        raise Fail("the schematic sheet has overlapping or stray text")
     # the four-layer variant shares the schematic; keep the copy in step
     shutil.copyfile(sch, os.path.join(HW, "lorenz-4layer.kicad_sch"))
 
