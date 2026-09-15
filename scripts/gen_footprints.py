@@ -119,8 +119,10 @@ def bnc():
         "b1": (-h, h, -6.0 + h, h), "b2": (6.0 - h, h, h, h),
     }.items():
         f.add(line(x1, y1, x2, y2, "F.SilkS", SILK_W, f"{name}/silk/{key}"))
-    f.add(line(h, -BARREL_R, h + 3.0, -BARREL_R, "F.SilkS", SILK_W, f"{name}/silk/bt"),
-          line(h, BARREL_R, h + 3.0, BARREL_R, "F.SilkS", SILK_W, f"{name}/silk/bb"))
+    # the barrel overhangs the board edge, so it is shown on F.Fab only;
+    # a silk line there would be clipped by the edge and flagged by DRC
+    f.add(line(h, -BARREL_R, h + 1.5, -BARREL_R, "F.Fab", FAB_W, f"{name}/fab/bt2"),
+          line(h, BARREL_R, h + 1.5, BARREL_R, "F.Fab", FAB_W, f"{name}/fab/bb2"))
 
     rect_lines(f, -h - 0.25, -h - 0.25, BARREL_END + 0.25, h + 0.25,
                "F.CrtYd", CRT_W, f"{name}/crt")
