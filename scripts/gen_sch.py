@@ -552,9 +552,9 @@ def build():
         y += 4.2
     y += 1.0
     for line in (
-        "SW1-1,2,3 off   SW1-4,5,6 off   C = 2.2 nF     fast!   ~3 ms per lobe",
-        "SW1-1,2,3 ON    SW1-4,5,6 off   C = 102 nF     nice!   ~0.15 s per lobe",
-        "SW1-1,2,3 off   SW1-4,5,6 ON    C = 472 nF     slow!   ~0.7 s per lobe",
+        "SW1-1,2,3 off   SW1-4,5,6 off   C = 2.2 nF     fast!   tau = 2.2 ms",
+        "SW1-1,2,3 ON    SW1-4,5,6 off   C = 102 nF     nice!   tau = 102 ms",
+        "SW1-1,2,3 off   SW1-4,5,6 ON    C = 472 nF     slow!   tau = 472 ms",
     ):
         s.text(line, L + 4.0, y, size=1.9)
         y += 4.2

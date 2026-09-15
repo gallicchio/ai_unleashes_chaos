@@ -5288,7 +5288,7 @@
 		)
 		(uuid "3e45d179-b3e1-5ac9-b8a0-be6c1ebe3d49")
 	)
-	(text "SW1-1,2,3 ON    SW1-4,5,6 off   C = 102 nF     nice!   ~0.15 s per lobe"
+	(text "SW1-1,2,3 ON    SW1-4,5,6 off   C = 102 nF     nice!   tau = 102 ms"
 		(exclude_from_sim no)
 		(at 293 296 0)
 		(effects
@@ -5728,7 +5728,7 @@
 		)
 		(uuid "a64c7f55-6e93-5a60-a8c8-10fd9ed95079")
 	)
-	(text "SW1-1,2,3 off   SW1-4,5,6 ON    C = 472 nF     slow!   ~0.7 s per lobe"
+	(text "SW1-1,2,3 off   SW1-4,5,6 ON    C = 472 nF     slow!   tau = 472 ms"
 		(exclude_from_sim no)
 		(at 293 300.2 0)
 		(effects
@@ -5805,7 +5805,7 @@
 		)
 		(uuid "bba71a19-60fb-5204-9274-2e6d5b3ac7e3")
 	)
-	(text "SW1-1,2,3 off   SW1-4,5,6 off   C = 2.2 nF     fast!   ~3 ms per lobe"
+	(text "SW1-1,2,3 off   SW1-4,5,6 off   C = 2.2 nF     fast!   tau = 2.2 ms"
 		(exclude_from_sim no)
 		(at 293 291.8 0)
 		(effects

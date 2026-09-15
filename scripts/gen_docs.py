@@ -25,10 +25,12 @@ THT_PER_JOINT = 0.30        # JLCPCB's hand-soldering surcharge, if used
 
 
 def joint_counts(layers=2):
+    """Solder joints only: an unplated mounting hole is not one."""
     geom = json.load(open(os.path.join(OUT, f"pcb_geom_{layers}.json")))
-    smt = sum(1 for p in geom["pads"] if not p["through"])
-    tht = sum(1 for p in geom["pads"] if p["through"])
-    tht_refs = sorted({p["ref"] for p in geom["pads"] if p["through"]})
+    real = [p for p in geom["pads"] if p["net"]]
+    smt = sum(1 for p in real if not p["through"])
+    tht = sum(1 for p in real if p["through"])
+    tht_refs = sorted({p["ref"] for p in real if p["through"]})
     return smt, tht, tht_refs
 
 

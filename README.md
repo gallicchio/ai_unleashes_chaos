@@ -101,8 +101,9 @@ and the error into a 1 MΩ scope input is 0.01%.
 
 Parts are **$71.69/board**, of which $61.17 is the pair of MPY634s. Two boards
 fully assembled, two layers, including through-hole assembly and DHL: about
-**$220**, so roughly $110 each. Five is about $73 each. Four layers adds $23 to
-the order.
+**$231**, so roughly $115 each. Five is about $74 each. Four layers adds $23 to
+the order. `docs/MANUFACTURING.md` breaks it down and is regenerated from the
+same parts table the BOM comes from, so it cannot drift.
 
 ### Biggest risk
 
