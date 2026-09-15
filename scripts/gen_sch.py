@@ -367,19 +367,15 @@ def build():
     s.wire(von, (191.77, von[1]), (191.77, PY_BOT))
 
     # +/-15 V bulk, then the two regulators
-    for (ref, cx, ylev, tag) in (("C12", 205.74, PY_TOP, "+15V"),
-                                 ("C13", 205.74, PY_BOT, "-15V")):
-        dy = 11.43 if tag == "+15V" else -11.43
-        s.place("Device:C", ref, "10uF", cx, ylev + dy,
+    for (ref, cx, ylev) in (("C12", 205.74, PY_TOP), ("C13", 217.17, PY_BOT)):
+        s.place("Device:C", ref, "10uF", cx, ylev + 11.43,
                 footprint=parts.PARTS["C_0805"]["footprint"],
                 fields=passive_fields("10uF"),
                 ref_off=(2.54, -2.2), val_off=(2.54, 1.1),
                 ref_justify="left", val_justify="left")
-        s.wire((cx, ylev), (cx, ylev + dy - 3.81 * (1 if dy > 0 else -1)))
-        s.wire((cx, ylev + dy + 3.81 * (1 if dy > 0 else -1)),
-               (cx, ylev + dy + 7.62 * (1 if dy > 0 else -1)))
-        gnd(cx, ylev + dy + 7.62 * (1 if dy > 0 else -1), key=f"blk{ref}",
-            up=(dy < 0))
+        s.wire((cx, ylev), (cx, ylev + 7.62))
+        s.wire((cx, ylev + 15.24), (cx, ylev + 20.32))
+        gnd(cx, ylev + 20.32, key=f"blk{ref}")
         s.junction(cx, ylev)
     s.wire((186.69, PY_TOP), (228.6, PY_TOP))
     s.wire((191.77, PY_BOT), (228.6, PY_BOT))
@@ -407,18 +403,18 @@ def build():
         s.junction(262.89, ylev)
         cref = "C14" if sign > 0 else "C15"
         cx = 251.46
-        s.place("Device:C", cref, "10uF", cx, ylev + 11.43 * sign,
+        s.place("Device:C", cref, "10uF", cx, ylev + 11.43,
                 footprint=parts.PARTS["C_0805"]["footprint"],
                 fields=passive_fields("10uF"),
                 ref_off=(2.54, -2.2), val_off=(2.54, 1.1),
                 ref_justify="left", val_justify="left")
-        s.wire((cx, ylev), (cx, ylev + 7.62 * sign))
-        s.wire((cx, ylev + 15.24 * sign), (cx, ylev + 19.05 * sign))
-        gnd(cx, ylev + 19.05 * sign, key=f"out{cref}", up=(sign < 0))
+        s.wire((cx, ylev), (cx, ylev + 7.62))
+        s.wire((cx, ylev + 15.24), (cx, ylev + 20.32))
+        gnd(cx, ylev + 20.32, key=f"out{cref}")
         s.junction(cx, ylev)
 
     # rails-OK lamp, hung off +12 V so it proves the whole chain at a glance
-    LEDX = 276.86
+    LEDX = 271.78
     s.wire((262.89, PY_TOP), (LEDX, PY_TOP))
     s.junction(262.89, PY_TOP)
     s.place("Device:R_US", "R13", "4.7k", LEDX, 321.31, footprint=rfp(),
@@ -427,13 +423,13 @@ def build():
             ref_justify="right", val_justify="right")
     s.place("Device:LED", "D1", "green", LEDX, 334.01, rot=90,
             footprint=fp("LED"), fields=part_fields("LED"),
-            ref_off=(-3.81, -2.2), val_off=(-3.81, 1.1),
+            ref_off=(-6.35, -2.2), val_off=(-6.35, 1.1),
             ref_justify="right", val_justify="right")
     s.wire((LEDX, PY_TOP), (LEDX, 317.5))
     s.wire((LEDX, 325.12), (LEDX, 330.2))
     s.wire((LEDX, 337.82), (LEDX, 342.9))
     gnd(LEDX, 342.9, key="led")
-    s.text("rails OK", LEDX - 2.54, 347.0, size=1.6, justify="right")
+    s.text("rails OK", LEDX + 2.54, 340.0, size=1.6)
 
     s.text("POWER:  USB-C 5 V in, +/-12 V out", 20.32, 303.0, size=2.6)
     s.text("about 20 mA per rail; the 2 W module is rated +/-66 mA",
@@ -444,7 +440,7 @@ def build():
     s.text("SUPPLY PINS AND BYPASSING", 285.75, 26.0, size=2.6)
     s.text("one 0.1 uF at every supply pin, right at the package",
            285.75, 30.5, size=1.6)
-    s.polyline([(283.0, 19.0), (283.0, 178.0), (420.0, 178.0), (420.0, 19.0),
+    s.polyline([(283.0, 19.0), (283.0, 178.0), (411.48, 178.0), (411.48, 19.0),
                 (283.0, 19.0)], width=0.2, style="dash", key="bypbox")
     byp = [("U1", 3, "LF412", "U1  x and -y integrators"),
            ("U2", 3, "LF412", "U2  z integrator (B half spare)"),
@@ -500,12 +496,12 @@ def build():
     # ================================== the owl's face, and how it works ===
     pts = owl_xz(width=118.0, height=92.0, cx=487.68, cy=95.0)
     s.polyline(pts, width=0.2, key="owl")
-    s.polyline([(419.1, 145.0), (419.1, 38.0)], width=0.4, key="owlz")
-    s.polyline([(416.6, 43.0), (419.1, 38.0), (421.6, 43.0)], width=0.4, key="owlza")
-    s.polyline([(419.1, 145.0), (556.26, 145.0)], width=0.4, key="owlx")
+    s.polyline([(425.45, 145.0), (425.45, 38.0)], width=0.4, key="owlz")
+    s.polyline([(422.95, 43.0), (425.45, 38.0), (427.95, 43.0)], width=0.4, key="owlza")
+    s.polyline([(425.45, 145.0), (556.26, 145.0)], width=0.4, key="owlx")
     s.polyline([(551.26, 142.5), (556.26, 145.0), (551.26, 147.5)], width=0.4,
                key="owlxa")
-    s.text("z", 412.75, 40.0, size=3.2)
+    s.text("z", 419.1, 40.0, size=3.2)
     s.text("x", 551.0, 152.0, size=3.2)
     s.text("Hook x and z to a scope in X-Y and this is what you get: the attractor's",
            425.45, 23.0, size=1.9)
