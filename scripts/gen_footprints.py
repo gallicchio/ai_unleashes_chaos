@@ -112,11 +112,13 @@ def bnc():
 
     # Silkscreen: body outline, broken at the pads, plus a stub showing where
     # the barrel points so the assembler cannot fit it backwards.
+    # The four ground posts sit 2.7 to 5.3 mm out along each axis, so the
+    # outline is drawn only across the middle of each edge -- a continuous
+    # square would run straight through the pads.
+    m = 2.4
     for key, (x1, y1, x2, y2) in {
-        "l1": (-h, -h, -h, -6.0 + h), "l2": (-h, 6.0 - h, -h, h),
-        "r1": (h, -h, h, -6.0 + h), "r2": (h, 6.0 - h, h, h),
-        "t1": (-h, -h, -6.0 + h, -h), "t2": (6.0 - h, -h, h, -h),
-        "b1": (-h, h, -6.0 + h, h), "b2": (6.0 - h, h, h, h),
+        "t": (-m, -h, m, -h), "b": (-m, h, m, h),
+        "l": (-h, -m, -h, m), "r": (h, -m, h, m),
     }.items():
         f.add(line(x1, y1, x2, y2, "F.SilkS", SILK_W, f"{name}/silk/{key}"))
     # the barrel overhangs the board edge, so it is shown on F.Fab only;
@@ -156,10 +158,11 @@ def dcdc():
     bx1, bx2 = -2.21, -2.21 + 19.65
     by1, by2 = -6.1, 0.9
     rect_lines(f, bx1, by1, bx2, by2, "F.Fab", FAB_W, f"{name}/fab")
-    rect_lines(f, bx1, by1, bx2, by2, "F.SilkS", SILK_W, f"{name}/silk")
-    # Pin-1 marker outside the body outline.
-    f.add(circle(X0, 2.0, 0.3, "F.SilkS", SILK_W, f"{name}/silk/p1dot"))
-    rect_lines(f, bx1 - 0.25, by1 - 0.25, bx2 + 0.25, 2.6,
+    # Silk stops 1.3 mm above the pin row: the body really does reach y=+0.9,
+    # but an outline there crosses the pads.
+    rect_lines(f, bx1, by1, bx2, -1.3, "F.SilkS", SILK_W, f"{name}/silk")
+    f.add(circle(X0, -2.2, 0.3, "F.SilkS", SILK_W, f"{name}/silk/p1dot"))
+    rect_lines(f, bx1 - 0.25, by1 - 0.25, bx2 + 0.25, 1.5,
                "F.CrtYd", CRT_W, f"{name}/crt")
     text_fab(f, "+/-15V", (bx1 + bx2) / 2, -2.6, f"{name}/fabtxt")
     return name, f
@@ -195,7 +198,7 @@ def dipsw():
           line(bw, -bl, bw, -bl + 1.2, "F.SilkS", SILK_W, f"{name}/silk/r1"),
           line(-bw, bl - 1.2, -bw, bl, "F.SilkS", SILK_W, f"{name}/silk/l2"),
           line(bw, bl - 1.2, bw, bl, "F.SilkS", SILK_W, f"{name}/silk/r2"))
-    f.add(circle(-bw - 0.9, y0, 0.3, "F.SilkS", SILK_W, f"{name}/silk/p1dot"))
+    f.add(circle(-bw + 0.8, -bl + 0.8, 0.3, "F.SilkS", SILK_W, f"{name}/silk/p1dot"))
     rect_lines(f, -(ROW + PW / 2 + 0.25), -bl - 0.25, ROW + PW / 2 + 0.25, bl + 0.25,
                "F.CrtYd", CRT_W, f"{name}/crt")
     text_fab(f, "ON ->", 0, -bl + 1.2, f"{name}/fabtxt", size=0.7)

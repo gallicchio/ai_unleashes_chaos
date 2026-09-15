@@ -25,12 +25,17 @@ def trajectory(s=10.0, r=28.0, b=8.0 / 3.0, dt=0.002, n=60000, skip=4000,
     return pts
 
 
-def owl_xz(width, height, cx, cy, n_max=2600, y_down=True):
+def owl_xz(width, height, cx, cy, n_max=2600, y_down=True, n=60000):
     """The x-z projection -- the 'owl's face' -- fitted into a box.
+
+    `n` sets how much trajectory is drawn.  It has to be traded against
+    n_max: decimating a long run down to a few hundred points turns the
+    curve into a scribble of straight jumps, so a picture with a small
+    point budget should integrate for fewer turns instead.
 
     Returns a list of (x, y) in sheet/board millimetres, centred on (cx, cy).
     """
-    pts = trajectory()
+    pts = trajectory(n=n)
     xs = [p[0] for p in pts]
     zs = [p[2] for p in pts]
     x0, x1 = min(xs), max(xs)
