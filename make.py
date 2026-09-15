@@ -4,6 +4,7 @@
     ./make.py              build and check everything
     ./make.py --quick      skip the self-tests
     ./make.py --stage sch  run one stage only (libs, sch, pcb2, pcb4, out, docs)
+    ./make.py --clean      delete everything the build generates
 
 Every stage that can be checked is checked, and the build stops at the first
 failure, so a green run means the files in out/ can go straight to a fab.
@@ -18,6 +19,25 @@ sys.path.insert(0, SCRIPTS)
 import kienv                                     # noqa: E402
 
 BOARDS = [("lorenz", 2), ("lorenz-4layer", 4)]
+
+# Everything ./make.py writes.  Kept explicit rather than inferred so that
+# --clean doubles as the answer to "what in this repository is generated and
+# what has to live in git?"  Paths are relative to the repository root; a
+# trailing / means the whole directory.
+GENERATED = [
+    "hardware/lorenz.kicad_sch", "hardware/lorenz.kicad_pcb",
+    "hardware/lorenz.kicad_pro",
+    "hardware/lorenz-4layer.kicad_sch", "hardware/lorenz-4layer.kicad_pcb",
+    "hardware/lorenz-4layer.kicad_pro",
+    "hardware/sym-lib-table", "hardware/fp-lib-table",
+    "hardware/lib/lorenz.kicad_sym",
+    "hardware/lib/lorenz.pretty/", "hardware/lib/lorenz.3dshapes/",
+    "docs/images/", "docs/MANUFACTURING.md",
+    "out/",
+]
+# Written by KiCad itself while you have the project open, never by the build.
+ALSO_TRANSIENT = ["hardware/lorenz.kicad_prl", "hardware/lorenz-4layer.kicad_prl",
+                  "hardware/fp-info-cache"]
 
 
 class Fail(Exception):
@@ -132,6 +152,41 @@ def stage_selftest():
     sys_py("selftest_rotation.py")
 
 
+def clean():
+    banner("clean")
+    removed = kept = 0
+    # Do not disturb KiCad's own per-user state while it has the project open.
+    locked = any(n.startswith("~") and n.endswith(".lck")
+                 for n in os.listdir(os.path.join(ROOT, "hardware")))
+    targets = GENERATED + ([] if locked else ALSO_TRANSIENT)
+    if locked:
+        print("  KiCad has the project open; leaving its .kicad_prl state alone")
+    for rel in targets:
+        path = os.path.join(ROOT, rel.rstrip("/"))
+        if rel.endswith("/"):
+            if os.path.isdir(path):
+                n = sum(len(f) for _, _, f in os.walk(path))
+                shutil.rmtree(path)
+                print(f"  removed {rel} ({n} file(s))")
+                removed += n
+            else:
+                kept += 1
+        elif os.path.exists(path):
+            os.remove(path)
+            print(f"  removed {rel}")
+            removed += 1
+        else:
+            kept += 1
+    for name in os.listdir(os.path.join(ROOT, "hardware")):
+        if name.startswith("~") and name.endswith(".lck"):
+            print(f"  left alone hardware/{name} (KiCad has the project open)")
+    print(f"\n{removed} generated file(s) removed"
+          + (f", {kept} were already absent" if kept else "")
+          + ".\nEverything else in the repository is source: scripts/, docs/*.md,\n"
+          "README.md, LICENSE and .gitignore.  ./make.py rebuilds the rest.")
+    return 0
+
+
 STAGES = {
     "libs": stage_libs,
     "sch": stage_sch,
@@ -150,14 +205,19 @@ def main():
     ap.add_argument("--stage", choices=sorted(STAGES))
     ap.add_argument("--quick", action="store_true",
                     help="skip the self-tests")
+    ap.add_argument("--clean", action="store_true",
+                    help="delete everything the build generates, then stop")
     a = ap.parse_args()
+
+    if a.clean:
+        return clean()
 
     if kienv.APPRUN is None and kienv.PLAIN_CLI is None:
         print("KiCad 10 was not found.\n"
               "Install it, or point KICAD_APPRUN at an extracted KiCad\n"
               "AppImage's AppRun -- see docs/MANUFACTURING.md.")
         return 2
-    print(f"KiCad {kienv.version()}")
+    print(kienv.describe())
 
     t0 = time.time()
     try:

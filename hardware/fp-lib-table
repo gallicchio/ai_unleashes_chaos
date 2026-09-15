@@ -1,4 +1,0 @@
-(fp_lib_table
-  (version 7)
-  (lib (name "lorenz")(type "KiCad")(uri "${KIPRJMOD}/lib/lorenz.pretty")(options "")(descr "Footprints drawn for this project"))
-)

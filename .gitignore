@@ -228,6 +228,11 @@ fp-info-cache
 *.kicad_pcb-bak
 *.kicad_sch-bak
 
+# Datasheets are downloaded by scripts/get_datasheets.py for reference while
+# working on the design.  They are other people's copyrighted documents and do
+# not belong in this repository.
+/datasheets/
+
 # Build intermediates: ./make.py regenerates all of these.  The uploadable
 # deliverables under out/<board>/ are kept in the repository on purpose, so
 # the boards can be ordered without installing KiCad.
