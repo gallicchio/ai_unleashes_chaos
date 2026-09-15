@@ -438,6 +438,9 @@ def build(layers, netlist_path, out_path):
                 pad.SetNet(netmap[pad_net[key]])
         placed[ref] = fp
 
+    # Drill/place origin at the board's bottom-left corner, so gerbers, drill
+    # files and the pick-and-place all share one frame with positive numbers.
+    board.GetDesignSettings().SetAuxOrigin(pt(0, P.BOARD_H))
     board_outline(board)
     pcbnew.SaveBoard(out_path, board)
     return board, placed, netmap, nets

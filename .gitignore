@@ -8,18 +8,18 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
+/build/
+/develop-eggs/
+/dist/
+/downloads/
+/eggs/
+/.eggs/
+/lib/
+/lib64/
+/parts/
+/sdist/
+/var/
+/wheels/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
@@ -216,3 +216,21 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --------------------------------------------------------------------------
+# This project
+# --------------------------------------------------------------------------
+# KiCad working files
+*-backups/
+*.kicad_prl
+fp-info-cache
+*.kicad_pcb-bak
+*.kicad_sch-bak
+
+# Build intermediates: ./make.py regenerates all of these.  The uploadable
+# deliverables under out/<board>/ are kept in the repository on purpose, so
+# the boards can be ordered without installing KiCad.
+/out/*.net
+/out/*.rpt
+/out/pcb_geom_*.json
+/out/routes_*.json

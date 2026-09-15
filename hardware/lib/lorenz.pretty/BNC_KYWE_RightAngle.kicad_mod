@@ -1,0 +1,282 @@
+(footprint "BNC_KYWE_RightAngle"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "BNC jack, right angle, 4 ground pins on 8x8mm + centre pin, SAMZO BNC-KYWE-295-W4-N / HenryTech HL2-BNC-KYWE (LCSC C41416668)")
+	(tags "BNC coaxial jack right-angle 50ohm")
+	(property "Reference" "REF**"
+		(at 0 7.4 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "ab726692-67fa-5416-925d-fe68f4dbf35c")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "BNC_KYWE_RightAngle"
+		(at 0 -7.4 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "ed92adcf-e661-5354-b584-173248031b70")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 -7.4 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "0cbb861d-525d-58e5-8c83-16887ca4269a")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" "BNC jack, right angle, 4 ground pins on 8x8mm + centre pin, SAMZO BNC-KYWE-295-W4-N / HenryTech HL2-BNC-KYWE (LCSC C41416668)"
+		(at 0 -7.4 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "86da2da9-fa51-5681-92b1-58b6d56b4e9b")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_line
+		(start -5 -2.4)
+		(end -5 2.4)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "77c9c9f4-5403-58b7-bbae-9f883e977ebd")
+	)
+	(fp_line
+		(start -2.4 -5)
+		(end 2.4 -5)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "a7087643-e679-5f84-8dae-d94db14b4e21")
+	)
+	(fp_line
+		(start -2.4 5)
+		(end 2.4 5)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "65174768-b8bf-5ea6-880e-c9ad77bc8afa")
+	)
+	(fp_line
+		(start 5 -2.4)
+		(end 5 2.4)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "faea746e-157a-5194-9582-698258231b91")
+	)
+	(fp_line
+		(start -5.25 -5.25)
+		(end 24.75 -5.25)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "b603d739-6281-5f99-9242-acfda783f23e")
+	)
+	(fp_line
+		(start -5.25 5.25)
+		(end -5.25 -5.25)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "1016465e-1cd0-5b7f-80c6-f87d4cab0421")
+	)
+	(fp_line
+		(start 24.75 -5.25)
+		(end 24.75 5.25)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "24bda017-5da0-52ee-bf81-96411c428a5a")
+	)
+	(fp_line
+		(start 24.75 5.25)
+		(end -5.25 5.25)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "48fdb4ee-3e2a-585e-8c35-c4e6ebebcd3e")
+	)
+	(fp_line
+		(start -5 -5)
+		(end 5 -5)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "f591caee-c64e-5de2-bba5-423463d54ab1")
+	)
+	(fp_line
+		(start -5 5)
+		(end -5 -5)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "1ddb2455-e87f-522f-a3e0-f3660f22e1b5")
+	)
+	(fp_line
+		(start 5 -5)
+		(end 5 5)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "2123a1f9-4554-5386-b17d-000a006512df")
+	)
+	(fp_line
+		(start 5 -4.8)
+		(end 6.5 -4.8)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "8157de62-fa4c-5b04-9194-ad8102b90d85")
+	)
+	(fp_line
+		(start 5 -4.8)
+		(end 24.5 -4.8)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "25b9cbaf-ccc7-5bbd-9aa8-58e12d9ca9d7")
+	)
+	(fp_line
+		(start 5 4.8)
+		(end 6.5 4.8)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "592f350d-4189-555e-b739-df5cd631b82e")
+	)
+	(fp_line
+		(start 5 4.8)
+		(end 24.5 4.8)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "f206041b-9228-50c3-9965-c2b6ffc20ea5")
+	)
+	(fp_line
+		(start 5 5)
+		(end -5 5)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "420fc10d-ebe7-59a6-9223-b0cc9d6a8d90")
+	)
+	(fp_line
+		(start 24.5 -4.8)
+		(end 24.5 4.8)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "9d48e106-5bc6-53fd-9be0-8699c8554d8b")
+	)
+	(fp_text user "BNC"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(uuid "ad3ce2f6-ee59-5c3f-b502-30049342552e")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
+	)
+	(pad "1" thru_hole circle
+		(at 0 0)
+		(size 2.4 2.4)
+		(drill 1.3)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "78d634d8-2020-586e-bdd4-799d423bf5cc")
+	)
+	(pad "2" thru_hole circle
+		(at -4 -4)
+		(size 2.6 2.6)
+		(drill 1.4)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "d4f3b041-a536-5060-8ec1-e5e4b6308a64")
+	)
+	(pad "2" thru_hole circle
+		(at -4 4)
+		(size 2.6 2.6)
+		(drill 1.4)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "39d2babd-0892-5280-841e-a7d28c9c67ee")
+	)
+	(pad "2" thru_hole circle
+		(at 4 -4)
+		(size 2.6 2.6)
+		(drill 1.4)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "61ad8870-7972-56fe-9951-b237f4cf98f1")
+	)
+	(pad "2" thru_hole circle
+		(at 4 4)
+		(size 2.6 2.6)
+		(drill 1.4)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "6bd8d0a7-1bc9-578a-af09-b7c37dcef4b4")
+	)
+	(embedded_fonts no)
+)
