@@ -166,12 +166,40 @@ def dcdc():
                   [(1, body)], ref_at=(-10.16, 10.16), val_at=(-10.16, -12.7))
 
 
+# ------------------------------------------------------- speed switch -----
+def dipsw():
+    """6-way DIP switch split into six one-pole units.
+
+    The stock Switch:SW_DIP_x06 is a single 12-pin unit, which would force all
+    six poles into one place on the sheet.  Splitting it into units lets each
+    integrator show the two poles that belong to *its* capacitor bank, right
+    beside them.  Pole k uses pins k and 13-k, which is how DIP switches are
+    numbered.
+    """
+    units = []
+    for k in range(1, 7):
+        body = [
+            pin("passive", "line", -5.08, 0, 0, 2.54, "", str(k)),
+            pin("passive", "line", 5.08, 0, 180, 2.54, "", str(13 - k)),
+            circ(-2.286, 0, 0.254, fill="outline"),
+            circ(2.286, 0, 0.254, fill="outline"),
+            poly([(-2.286, 0.254), (2.032, 2.032)]),
+        ]
+        units.append((k, body))
+    return symbol("SW_DIP_x06_Poles", "SW", "SW_DIP_x06",
+                  "https://www.lcsc.com/product-detail/C54952.html",
+                  "6-way DIP switch, one SPST pole per unit",
+                  "switch DIP SPST",
+                  "SW_DIP*",
+                  units, ref_at=(0, 3.81), val_at=(0, -3.81))
+
+
 def main():
     lib = S("kicad_symbol_lib")
     lib.add(S("version", SYM_VERSION),
             S("generator", q("lorenz-gen")),
             S("generator_version", q("10.0")))
-    for maker in (lf412, mpy634, dcdc):
+    for maker in (lf412, mpy634, dcdc, dipsw):
         lib.add(maker())
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w") as fh:
