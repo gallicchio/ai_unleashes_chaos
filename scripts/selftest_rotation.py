@@ -18,14 +18,13 @@ def main():
     expect = {}
     # An asymmetric symbol is needed: a resistor's pins sit on x = 0, so a
     # mirror about the vertical axis would move nothing and prove nothing.
-    sch.add_local_lib(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                   "..", "hardware", "lib", "lorenz.kicad_sym"),
-                      "lorenz")
+    # A stock symbol, so that this test depends on nothing the build generates.
     cases = [(r, m) for r in (0, 90, 180, 270) for m in (None, "x", "y")]
     for i, (rot, mir) in enumerate(cases):
         x, y = 40.0 + (i % 4) * 60, 45.0 + (i // 4) * 55
         ref = f"U{i+1}"
-        sch.place("lorenz:LF412", ref, "LF412", x, y, rot=rot, mirror=mir, unit=1)
+        sch.place("Amplifier_Operational:LM2904", ref, "LM2904", x, y,
+                  rot=rot, mirror=mir, unit=1)
         for pin_no in ("1", "2", "3"):
             px, py = sch.pin(ref, 1, pin_no)
             name = f"N{rot}{mir or 'n'}P{pin_no}"
