@@ -31,3 +31,82 @@ Make a KiCAD 10 project, schematic, and PCB to implement [Paul's Lorenz Attracto
 * I will open the schematic and PCB in KiCAD and give you feedback after you've worked on it for many hours.
 
 Record your response below in this document. Do this regularly, and check things into git as you go.
+
+## Response 1
+
+Built. `./make.py` regenerates everything from scratch in about 40 seconds and
+refuses to finish unless every check passes. Current state:
+
+| check | result |
+|---|---|
+| ERC | 0 violations |
+| DRC + schematic parity, 2-layer | 0 violations |
+| DRC + schematic parity, 4-layer | 0 violations |
+| circuit checker (reads the netlist, not the drawing) | 75 checks pass |
+| schematic layout (205 text items) | no overlaps, nothing outside the frame |
+| fab package | all checks pass |
+
+Open `hardware/lorenz.kicad_pro`. The 4-layer variant is `lorenz-4layer.kicad_pro`
+and shares the schematic.
+
+### What it is
+
+Your circuit, unchanged: three lossy integrators built from **LF412s** and two
+**MPY634s**, with the resistor values exactly as you drew them — 100k, 100k,
+35.7k, 10k, 1M, 10k, 374k. The sign inversions still come free from swapping the
+multipliers' differential inputs. `scripts/check_circuit.py` walks the exported
+netlist, works out what each integrator actually computes from the resistors
+really attached to it, and recovers **s = 10, r = 28.01, b = 2.6738** — 8/3 plus
+0.27%, which is the 374k. It also checks the virtual earths, the multiplier
+hookup, the matched capacitors, the outputs and every supply pin.
+
+Both of your parts are still stocked at JLCPCB: LF412CDR (1037) and MPY634KU
+(874). Being able to keep them is why the schematic looks like yours.
+
+### The three things that had to change
+
+**USB-C power.** 5 V in → `A0515S-2WR2` isolated module → ±15 V → 78L12/79L12 →
+**±12 V**. The module alone is unregulated and climbs toward ±17 V at this
+board's light load, which is too close to the MPY634's ±18 V absolute maximum
+to trust across vendors; the regulators pin the rails and strip the converter's
+100 kHz ripple. MPY634 is specified from ±8 V, and the largest signal on the
+board is z at 4.8 V, so ±12 V is not tight.
+
+**Speed switching.** No supplier stocks a 3-pole 3-position switch, and the three
+integrators have to change together. So 2.2 nF C0G is always fitted and a 6-way
+DIP switch adds 100 nF (poles 1–3) or 470 nF (poles 4–6) to all three at once:
+2.2 nF fast, 102 nF nice, 472 nF slow. The table is on the silkscreen next to
+the switch. This is the part of the design I like least — see the review.
+
+**100 Ω in series with each BNC.** A JFET-input op-amp driving a metre of RG-58
+will ring. They sit outside the summing network, so the equations are untouched,
+and the error into a 1 MΩ scope input is 0.01%.
+
+### What to look at when you open it
+
+- **Schematic** (A2, one page): three integrator rows the way you stack them,
+  multipliers on the left, your `C = 0.47 µF (slow!)…` note in the top-left
+  corner, and the owl's face top-right — that trace is the real solution,
+  integrated by `scripts/lorenz_curve.py`, not clip art. Supply pins and
+  bypassing are grouped in their own dashed box, which is the job your "IC
+  Pinouts (DIP)" box was doing.
+- **PCB**: 100 × 100 mm, inside the discounted size everywhere. Front silkscreen
+  is legends, port labels and the speed table; **turn it over** — the back
+  carries the equations, your suggested parameters and a large owl.
+- **`docs/DESIGN_REVIEW.md`** — what I think is wrong with it, including four
+  router bugs the checks caught that each produce a board that *looks* right.
+- **`docs/MANUFACTURING.md`** — what to upload, what to select, what it costs.
+
+### Cost
+
+Parts are **$71.69/board**, of which $61.17 is the pair of MPY634s. Two boards
+fully assembled, two layers, including through-hole assembly and DHL: about
+**$220**, so roughly $110 each. Five is about $73 each. Four layers adds $23 to
+the order.
+
+### Biggest risk
+
+The BNC footprint is drawn from SAMZO's drawing, not from a connector in my
+hand. `out/lorenz/lorenz-assembly-top.pdf` prints 1:1 — please check it against
+a real BNC-KYWE before ordering. Everything else on the board is a stock KiCad
+footprint or dimensioned from a datasheet I read.
