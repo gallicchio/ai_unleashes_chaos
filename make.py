@@ -206,7 +206,8 @@ def clean():
     print(f"\n{removed} generated file(s) removed"
           + (f", {kept} were already absent" if kept else "")
           + ".\nEverything else in the repository is source: scripts/, docs/*.md,\n"
-          "README.md, LICENSE and .gitignore.  ./make.py rebuilds the rest.")
+          "README.md, CLAUDE_CODE_CHAT.md, LICENSE and .gitignore.\n"
+          "./make.py rebuilds the rest.")
     return 0
 
 
@@ -247,9 +248,14 @@ def main():
         if a.stage:
             STAGES[a.stage]()
         else:
+            # The self-tests check the generated symbol and footprint
+            # libraries against the data sheets, so they run straight after
+            # the stage that writes them -- which is what lets a tree that has
+            # just been --cleaned build in one go.
+            order = list(ORDER)
             if not a.quick:
-                stage_selftest()
-            for name in ORDER:
+                order.insert(1, "selftest")
+            for name in order:
                 STAGES[name]()
     except Fail as e:
         print(f"\nBUILD FAILED: {e}")

@@ -203,6 +203,109 @@ Comfortable inside +/-12 V rails.
    through 100 ohm by 0.5 %, so the scope on the other leg of the splitter
    sees no difference.
 
+## Choosing the chaos lamp
+
+The RGB lamp is the one part of this board that is not Paul's.  It is also the
+only part whose value could not be derived from the equations, so it was
+chosen by building a model of the lamp and looking at every wiring of it.
+
+### Why it is not obvious
+
+An LED is a threshold device and the three signals swing either side of zero,
+so "drive the LED from x" has no obvious meaning.  Four things have to be
+decided together, and they interact:
+
+1. **common anode or common cathode** -- which end of the dies the reference
+   holds, and therefore whether a die lights when its signal goes *up* or
+   *down*;
+2. **which signal drives which die** -- six permutations of x, -y, z onto red,
+   green, blue;
+3. **the reference voltage** -- where the threshold sits inside each signal's
+   swing;
+4. **the three series resistors** -- which set both the peak brightness and,
+   because luminous efficiency is nonlinear in current, the *shape* of each
+   die's response.
+
+Get these wrong and the lamp is a two-colour lamp with a third die soldered on
+for decoration, or a white blur, or dark.
+
+### The model:  `scripts/lamp_model.py`
+
+Rather than guess, the board's colour is computed from the data sheet:
+
+* **I-V per die**, as an ideal diode with a series resistance, back-solved so
+  that each die passes exactly its data-sheet 20 mA at its data-sheet forward
+  voltage:  `i_s = 0.020 exp(-(Vf20 - 0.020 Rs) / (n VT))`.
+* **Luminous intensity**, `mcd = Iv20 (i / 20 mA)^gamma`, with gamma from the
+  data sheet's own relative-intensity curve -- it is not linear, which is why
+  equal-current resistors do not give equal brightness.
+* **Spectrum**, a Gaussian from each die's peak wavelength and FWHM.
+* **Colour**, by integrating that spectrum against the **CIE 1931 2-degree
+  observer** (the real table, embedded at 5 nm) to get XYZ, then the D65 sRGB
+  matrix to get a screen colour.
+* **Adaptation**, a luminance compression before the sRGB gamma, because a
+  dark-adapted eye looking at a small lamp does the same thing.  Without it
+  the picture is a hard on/off and every shade in between is lost.
+
+The model is self-checked, 13 assertions, run by `./make.py` before anything
+else: equal-energy white must land on x = y = 1/3; the luminosity function
+must peak at 555 nm; four published monochromatic chromaticities must come
+back right; each die's computed dominant wavelength must be within 5 nm of the
+data sheet's; the I-V must return 20 mA at the quoted Vf; and D65 must map to
+neutral sRGB.  A colour model that cannot reproduce those is not worth
+pointing at a circuit.
+
+### The search:  `scripts/lamp_gallery.py`
+
+The Lorenz system is integrated for real -- the same RK4 trajectory that draws
+the owl on the back of the board -- and the three node voltages are fed into
+the model sample by sample.  The result is rendered as a strip of time: left
+to right, wrapping at the end of each row, about four minutes of the lamp at
+the `slow!` setting in one picture.
+
+**660 wirings** were rendered: 2 lamp parts x 6 permutations x 11 reference
+voltages x 5 resistor rules.  Options that came out black, white or one flat
+colour were dropped, and the rest thinned by a greedy max-min pass to the
+**100 most different from each other**, written to `docs/lamp/` with an index
+page to flip through.
+
+### The pick, and what it has in common
+
+Option **038** was chosen by eye from that gallery.  Measuring the nine
+favourites against the other ninety-one afterwards showed what the eye had
+been doing:
+
+| | the nine | the other 91 |
+|---|---|---|
+| hue coverage (of a 24-segment wheel) | **0.71** | 0.42 |
+| brightness balance (dimmest peak / brightest) | **0.375** | 0.056 |
+| mean saturation | **0.269** | 0.347 |
+| fraction of the time the lamp is lit | **1.00** | 0.91 |
+| fraction of the time the *dimmest* die is lit | **0.19** | 0.00 |
+
+The last row is the whole story: in **47 of the 100**, one of the three dies
+never comes on at all.  None of the nine favourites was one of those.  The two
+resistor rules that aim for equal *perceived* brightness rather than equal
+current are 26 of the 100 options but 7 of the 9 favourites.  Ranked by
+`hue coverage x sqrt(balance) x lit`, the nine come in at 1, 4, 5, 7, 11, 16,
+22, 25 and 42 out of 100 -- and 038 comes first.
+
+### What that settled
+
+* **Common anode**, MHPA3528CRGBCT, held at **+3.20 V** by the spare half of
+  U2 -- so each die lights on the way *down*, and the lamp is never dark.
+* **z to red through 470 ohm, x to green through 3.9k, -y to blue through
+  1.5k.**
+* Peak brightnesses of 38.1, 36.3 and 38.9 mcd -- within 8 % of each other,
+  which is what makes the colour a mix rather than one die with hints of the
+  others.
+
+What you see: mostly deep blue, with a fast swirl through the colour wheel
+every time the trajectory changes wings, and a red flash at the bottom of each
+z excursion.  Turning the r knob changes it -- at the counter-clockwise stop
+the lamp stops changing colour altogether, because the attractor has collapsed
+to a fixed point.
+
 ## Part selection (JLCPCB stock checked 2026-09-15)
 
 | Ref | Part | LCSC | Package | Stock | Unit |
