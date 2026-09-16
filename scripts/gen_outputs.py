@@ -219,6 +219,45 @@ def export_bom(stem):
     return path, full, lines, total, unknown
 
 
+ASSEMBLY_NOTES = """AI UNLEASHES CHAOS -- notes for the assembler
+=============================================
+
+PLACEMENTS
+  Use {stem}-cpl_jlc_corrected.csv for JLCPCB.  It is {stem}-cpl.csv with
+  JLCPCB's own per-part rotations applied; use the plain file anywhere else.
+
+D1 -- MHPA3528CRGBCT, common-anode RGB LED, PLCC-4.
+  Your placement preview may have no drawing for this part.  Pin 1 is the
+  ANODE.  On the board it is the corner the filled silkscreen triangle points
+  at, at the bottom left of the part in {stem}-assembly-top.pdf, which prints
+  1:1.  Anticlockwise from there: 1 anode, 2 blue, 3 green, 4 red.
+  If that is not enough to place it with confidence, leave D1 off and we will
+  hand-solder it; nothing else on the board depends on it.
+
+U5, RV1, RV2 -- through-hole, and keyed by their own hole patterns.  Each of
+  them fits the board in exactly one orientation, so however the preview
+  draws them they cannot be fitted turned.
+    U5   pin 1 is the left-hand hole of the row of five; the row has a gap
+         where pin 3 would be, which is what keys it.
+    RV1  terminal 1 is the hole the silkscreen triangle points at.  The
+    RV2  adjusting screw is on top.
+
+J2, J3, J4, J5 -- BNC jacks.  The barrel points OFF the board edge: J2, J3 and
+  J4 off the right-hand edge, J5 off the left-hand edge.
+
+J1 -- USB-C receptacle.  It sits at the board edge on purpose, with its body
+  flush so that a cable with a moulded body can seat.  If a 3D preview shows
+  it overhanging the edge, that is correct.
+"""
+
+
+def export_assembly_notes(stem):
+    path = os.path.join(OUT, stem, f"{stem}-assembly-notes.txt")
+    with open(path, "w") as fh:
+        fh.write(ASSEMBLY_NOTES.format(stem=stem))
+    return path
+
+
 def export_prints(stem, layers):
     pcb, sch = board_files(stem)
     d = os.path.join(OUT, stem)
@@ -339,6 +378,7 @@ def run(stem, layers):
     zpath, names = export_fab(stem, layers)
     bom, costed, lines, total, unknown = export_bom(stem)
     cpl, jlc_cpl, ncpl, turned = export_cpl(stem, lines)
+    notes_path = export_assembly_notes(stem)
     export_prints(stem, layers)
     made, skipped = export_images(stem, layers)
     print(f"  {stem}: {len(names)} gerber/drill files -> "
@@ -346,6 +386,7 @@ def run(stem, layers):
     print(f"  {stem}: {ncpl} placements -> {os.path.relpath(cpl, ROOT)}")
     print(f"  {stem}: {len(turned)} of them turned for JLCPCB -> "
           f"{os.path.relpath(jlc_cpl, ROOT)}")
+    print(f"  {stem}: assembler's notes -> {os.path.relpath(notes_path, ROOT)}")
     print(f"  {stem}: {len(lines)} BOM lines, parts ${total:.2f}/board -> "
           f"{os.path.relpath(bom, ROOT)}")
     print(f"  {stem}: {len(made)} images -> docs/images/, plus STEP and stats")

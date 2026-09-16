@@ -179,7 +179,9 @@ def dcdc():
     # Silk stops 1.3 mm above the pin row: the body really does reach the
     # pads, but an outline there crosses them.
     rect_lines(f, bx1, by1, bx2, PY - 1.3, "F.SilkS", SILK_W, f"{name}/silk")
-    f.add(circle(X0, PY - 2.2, 0.3, "F.SilkS", SILK_W, f"{name}/silk/p1dot"))
+    # No pin-1 dot inside the outline: the board draws a filled triangle
+    # outside it, pointing at the pad itself, which is the mark somebody can
+    # actually line up against a fab's preview.
     rect_lines(f, bx1 - 0.25, by1 - 0.25, bx2 + 0.25, PY + 0.6,
                "F.CrtYd", CRT_W, f"{name}/crt")
     text_fab(f, "+/-15V", 0.0, PY - 2.6, f"{name}/fabtxt")

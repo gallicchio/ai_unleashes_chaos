@@ -1713,3 +1713,99 @@ silkscreen has the two trimmer designators pinned under their own squares,
 which the anchor move had scattered:
 
 ![front](docs/history/response-8/render-top.png)
+
+## Prompt 9
+
+*(with four screenshots of JLCPCB's Component Placements viewer: D1 drawn as
+a checkerboard between its four pads, U5's model sitting down and to the right
+of its outline with JLCPCB's purple pin-1 dot at its top-left, RV1 and RV2
+with their models offset, and J1 hanging over the board edge)*
+
+I'll paste in some of what I see in their tool. U5 is still wrong. There's no
+way to shift it or move it to make that dot appear over your circle. USB seems
+too low. And RV1 and RV2 are still confusing. Do I just leave a note?
+
+## Response 9
+
+Short answer: **you don't even need the note for U5, RV1 and RV2 — they
+physically cannot go in wrong** — and there is now a file to paste anyway.
+The long answer is that I owe you two corrections.
+
+### First: my "circle" was not on pin 1
+
+You were trying to line JLCPCB's purple pin-1 dot up against my mark, and that
+test could never have worked, because my mark was in the wrong place. U5's
+silkscreen pin-1 dot was drawn **2.2 mm above pin 1**, inside the body
+outline, where it could not collide with anything. Their dot marks the actual
+pin; mine marked a spot near it. That is my bug and it wasted your time.
+
+U5 now gets the same filled triangle as the lamp, the switch and the two
+trimmers: printed outside the outline, pointing straight at the pad, generated
+from the real pad position. The dot inside the outline is gone, so there is
+one mark, and lining their dot up against it is now a fair test.
+
+### Second: the offset is JLCPCB's model origin, and I won't fudge it
+
+Their viewer draws a part from **their** model, and that model carries its own
+idea of where the middle of the part is. For several of ours it is not the
+middle of the body, so their drawing sits beside the pads no matter what the
+placement file says. There is nothing in a CPL that can say *use your origin,
+not mine* — the only lever is the coordinate, and moving that to flatter a
+preview would put a number in the file that is wrong for every other fab and
+wrong for their machine.
+
+I checked my U5 footprint against the data sheet again before saying that:
+body 19.65 x 7.00 mm, pin 1 2.21 mm in from the left end, pin row 0.9 mm from
+the edge, 2.54 pitch with a gap where pin 3 would be. It matches, and the CPL
+now gives the middle of that body.
+
+### The part that actually answers your question
+
+I should have led with this. Ask whether each through-hole part's *hole
+pattern* maps onto itself under a quarter turn. If it does not, the holes are
+their own key and there is exactly one way the part goes into the board:
+
+| part | holes | fits at |
+|---|---|---|
+| U5, the DC/DC module | 5, with a gap where pin 3 would be | **one orientation** |
+| RV1, RV2, the trimmers | 3 in an L | **one orientation** |
+| J2–J5, the BNCs | 4 symmetric posts + centre pin | 0, 90, 180, 270 |
+
+So however JLCPCB's preview chooses to draw U5 and the trimmers, an operator
+putting legs through holes cannot fit them turned — the legs do not reach.
+That is why no rotation made their dot line up: there was nothing to fix. The
+BNCs *are* free to turn, which is exactly why they were in the correction
+table, and why "barrel points off the board edge" is worth one glance.
+
+`check_outputs.py` now re-derives that keying from the board file on every
+build, so it is a fact the build keeps proving rather than a claim I made once.
+
+### The USB-C is not too low
+
+That one is deliberate, from prompt 4: its body is **flush with the board
+edge** so a cable with a fat moulded body can seat. It was 2.35 mm inside the
+laminate before, which is the fault you asked me to fix. A 3D preview showing
+it overhang the edge is showing it correctly.
+
+### So: what to send them
+
+`./make.py` now also writes **`out/lorenz/lorenz-assembly-notes.txt`** — paste
+it into the order notes. It covers D1's pin 1, the keying on U5 and the
+trimmers, which way the BNC barrels point, and the USB-C overhang.
+
+**D1 remains the one real risk.** It is the only part whose orientation
+matters, which their preview cannot draw, and which is not keyed by anything
+mechanical. Either the note carries it, or deselect D1 and hand-solder it —
+one PLCC-4 on four pads, and a lamp fitted backwards simply never lights, so
+it is a cheap thing to get wrong and an easy thing to fix.
+
+Everything else in their viewer looked right to me in your screenshots: D1's
+checkerboard is centred between its own four pads, so its *position* is fine,
+and no surface-mount part is drawn off its land.
+
+### What changed on the board
+
+Only the front silkscreen, and only around U5 — the dot inside its outline
+became a triangle beside pin 1. The schematic and the back are unchanged.
+
+![front](docs/history/response-9/render-top.png)

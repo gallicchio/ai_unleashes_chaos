@@ -140,10 +140,9 @@ JLC_ROTATION = {
 # instead of the middle of the body.  That is fixed, but the angles have still
 # never been seen, so they are left alone and called out in MANUFACTURING.md.
 JLC_UNVERIFIED = {
-    "C2962095":  "D1, the RGB lamp -- JLC draws it as an unknown-part "
-                 "checkerboard, so its rotation cannot be read off the preview",
-    "C116287":   "RV1 and RV2, the trimmers -- were drawn off their pads",
-    "C19272710": "U5, the DC/DC module -- was drawn off its pads",
+    "C2962095": "D1, the RGB lamp -- JLCPCB has no drawing of this part, so "
+                "it appears as an unknown-part checkerboard and its rotation "
+                "cannot be read off the preview at all",
 }
 
 PASSIVES = {

@@ -81,6 +81,7 @@ Two boards is the sensible order: one for Paul and one to keep.
 | gerbers | `lorenz-gerbers.zip` |
 | BOM | `lorenz-bom.csv` |
 | placements | **`lorenz-cpl_jlc_corrected.csv`** |
+| paste into the order notes | `lorenz-assembly-notes.txt` |
 
 Use the *corrected* placement file for JLCPCB, and the plain
 `lorenz-cpl.csv` for anyone else.  JLCPCB places from its own model of
@@ -102,41 +103,47 @@ Everything else -- every resistor, every capacitor -- is symmetric or
 already agrees, and is left alone.  `check_outputs.py` proves the two
 files differ in nothing but those angles.
 
+### What the preview gets wrong, and why it does not matter
+
+JLCPCB draws each part from its own model, and that model has its own
+idea of where the middle of the part is.  For some of ours it does not
+agree with the middle of the body, so the preview draws the part beside
+its pads however the placement file is written.  There is nothing in a
+CPL that can say *use your origin, not mine* -- the only lever is the
+coordinate itself, and moving that to flatter a preview would put a
+wrong number in the file for everybody else.
+
+Three of the parts that look wrong there cannot go in wrong at all:
+
+| part | holes | fits at |
+|---|---|---|
+| U5, the DC/DC module | 5, with a gap where pin 3 would be | one orientation |
+| RV1, RV2, the trimmers | 3 in an L | one orientation |
+
+A hole pattern that does not map onto itself under a quarter turn is
+its own key: there is exactly one way the part goes into the board, and
+an operator putting legs through holes cannot do anything else with it.
+`check_outputs.py` re-derives that from the board file on every build,
+so it stays true rather than merely having been true once.
+
+The BNCs are *not* keyed -- four symmetric ground posts and a centre
+pin -- which is why their 90 degree correction is in the table above,
+and why the barrel pointing off the board edge is worth a glance.
+
+J1, the USB-C receptacle, sits at the board edge deliberately: its body
+is flush with the edge so a cable with a moulded body can seat.  A 3D
+preview showing it overhang the edge is showing it correctly.
+
 ### Still unverified
 
-These could not be read off JLC's preview and are **not** corrected.
-Check them in the Component Placements view before paying, and if any
-of them is turned, say so and it goes in the table above:
+One rotation has never actually been seen, because JLCPCB has no
+drawing of the part to turn:
 
-* **C116287** -- RV1 and RV2, the trimmers -- were drawn off their pads.
-* **C19272710** -- U5, the DC/DC module -- was drawn off its pads.
-* **C2962095** -- D1, the RGB lamp -- JLC draws it as an unknown-part checkerboard, so its rotation cannot be read off the preview.
+* **C2962095** -- D1, the RGB lamp -- JLCPCB has no drawing of this part, so it appears as an unknown-part checkerboard and its rotation cannot be read off the preview at all.
 
-### The unknown-part checkerboards
-
-A checkerboard in the Component Placements view means JLCPCB has no
-drawing of that part to show you.  It does not mean the part is
-unavailable -- that would show up in the BOM tab -- and it does not
-stop the order.  What it costs you is the ability to check that part's
-orientation in the preview, which matters for exactly one of the two
-this board hits:
-
-* **R7 (374k, C2933427)** -- harmless.  It is an 0805 resistor: it has
-  no orientation to get wrong.  Any 374k 1 % 0805 would do, since only
-  the value matters (b = 1M/374k = 2.674), so swap it for one JLC can
-  draw if the checkerboard bothers you.
-* **D1 (MHPA3528CRGBCT, C2962095)** -- not harmless: it is the RGB lamp
-  and it is polarised.  Two ways to cover it:
-
-  1. Put a note on the order: *"D1 is a common-anode RGB LED; pin 1
-     (the anode) is the corner marked by the filled triangle on the
-     front silkscreen, at the bottom left of the part in
-     lorenz-assembly-top.pdf."*  That drawing prints 1:1 and the
-     triangle is in the gerbers, so both sides are looking at the same
-     picture.
-  2. Or deselect D1 from the assembly and solder it by hand.  It is one
-     PLCC-4 on four pads and takes a minute; the rest of the board is
-     unaffected, and a lamp fitted backwards simply never lights.
+It is left uncorrected.  D1 is the one part on this board where a
+preview you cannot read costs you something, so it gets its own
+paragraph below and its own line in the assembler's notes.
 
 ## Check these before you pay
 

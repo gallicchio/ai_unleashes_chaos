@@ -515,7 +515,7 @@ def add_speed_table(board, space, missing):
 # 0.2 mm dot inside their own courtyards, which is there for anyone reusing
 # the footprint but is not legible on a board; the trimmers have a square pad
 # 1 and a chamfered corner, which are shape cues, not marks.
-PIN1_MARKS = ["D1", "SW1", "RV1", "RV2"]
+PIN1_MARKS = ["D1", "SW1", "RV1", "RV2", "U5"]
 
 
 def add_pin1_marks(board, space, missing):

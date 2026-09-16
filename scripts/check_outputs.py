@@ -142,6 +142,50 @@ def check(stem, layers, w, h, problems, notes):
                  f"and moves none")
 
 
+# Through-hole parts whose hole pattern must be its own key: each of these
+# has to fit the board in exactly one orientation, so that however a fab's
+# preview chooses to draw them, they cannot be soldered in turned.  The
+# assembler's notes say so in as many words, and this is what makes that
+# true rather than hopeful.
+KEYED_THT = ["U5", "RV1", "RV2"]
+
+
+def check_keying(stem, problems, notes):
+    """A hole pattern that maps onto itself under a quarter turn is not a key."""
+    import math
+    pcb = os.path.join(ROOT, "hardware", stem + ".kicad_pcb")
+    if not os.path.exists(pcb):
+        return
+    board = parse_file(pcb)
+    for fp in board.kids("footprint"):
+        ref = next((p.atom(1) for p in fp.kids("property")
+                    if p.atom(0) == "Reference"), "?")
+        if ref not in KEYED_THT:
+            continue
+        holes = set()
+        for pad in fp.kids("pad"):
+            if pad.atom(1) != "thru_hole":
+                continue
+            at = pad.first("at")
+            holes.add((round(float(at.atom(0)), 3), round(float(at.atom(1)), 3)))
+        if len(holes) < 2:
+            problems.append(f"{stem}: {ref} has no through-holes to key it")
+            continue
+        loose = []
+        for deg in (90, 180, 270):
+            c, s_ = round(math.cos(math.radians(deg))), round(math.sin(math.radians(deg)))
+            if {(round(x * c - y * s_, 3), round(x * s_ + y * c, 3))
+                    for x, y in holes} == holes:
+                loose.append(deg)
+        if loose:
+            problems.append(f"{stem}: {ref} also fits at {loose} degrees, so "
+                            f"its holes do not key it and it could be fitted "
+                            f"turned")
+        else:
+            notes.append(f"{stem}: {ref}'s {len(holes)} holes fit only one "
+                         f"way round, so no preview can mislead it")
+
+
 def check_models(stem, problems, notes):
     """Every 3D model a footprint names must actually be on disk.
 
@@ -252,6 +296,7 @@ def main():
     problems, notes = [], []
     check("lorenz", 2, 100.0, 100.0, problems, notes)
     check_qr("lorenz", problems, notes)
+    check_keying("lorenz", problems, notes)
     check_models("lorenz", problems, notes)
     check_stock(problems, notes)
     for n in notes:
