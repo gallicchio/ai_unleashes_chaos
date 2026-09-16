@@ -1004,6 +1004,15 @@ ground when nothing is plugged in (100 k of open wire on a virtual earth is an
 aerial otherwise). Splitter from board 1's x BNC, one side to the scope, the
 other side to board 2's SYNC IN: that is the demonstration.
 
+Two practical notes. **The two boards need a ground in common**, and both of
+them float on purpose — that is the whole point of the isolated converter — so
+a bare wire from the BNC centre to the pad does nothing at all. A coax from the
+splitter does both jobs at once, because its screen is board 1's ground; if you
+use clip leads, run a second wire between a SCOPE GND loop on each board. The
+schematic says so next to the pad. **Loading is negligible**: 100 k (and the
+1 M to ground) hanging off an output that drives through 100 Ω is a 0.1 %
+error, and the scope on the other leg of the splitter does not notice either.
+
 **Why that junction, and not the others.** The summing junction inverts, so
 whatever you inject arrives with a *minus* sign. Diffusive coupling
 `g(u₁ − u₂)` is therefore only available where the local term already carries a
@@ -1031,7 +1040,8 @@ y-weight has to drop from s to s − g. There is no knob for s, so the receiving
 board would need R1 changed from 100 k to 1M/(10 − g) — 167 k for g = 4 — and
 g can never reach 10. Not worth a second pad.
 
-*z* cannot be done on this board, and the reason is the sign, not stability.
+*z* cannot be done on this board at all, and the reason is the sign, not
+stability.
 The junction inverts, so injecting z₁ gives `−g·z₁`, which is *anti*-diffusive:
 simulated, the error does not shrink, it grows with g (at g = 2 it ends at 37,
 at g = 40 at 180). The sign-correct version — `+g(z₁ − z₂)` — does lock in

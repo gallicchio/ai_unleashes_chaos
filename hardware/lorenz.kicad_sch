@@ -10,7 +10,7 @@
 		(rev "A")
 		(company "Circuit by Paul Horowitz  |  PCB by Jason Gallicchio and Claude")
 		(comment 1 "dx/dt = s(y-x)   dy/dt = rx - y - xz   dz/dt = xy - bz")
-		(comment 2 "s = 10,  r = 28,  b = 8/3")
+		(comment 2 "s = 10,  b = 8/3,  r = 21.3 to 37.0 on the knob RV1 (28 at 56 %)")
 		(comment 3 "Every coefficient is 1 MEG / R;  signals are 0.1 V per unit")
 		(comment 4 "Open source -- https://github.com/gallicchio/ai_unleashes_chaos")
 	)
@@ -5463,7 +5463,7 @@
 	)
 	(polyline
 		(pts
-			(xy 292 186) (xy 578 186) (xy 578 356) (xy 292 356) (xy 292 186)
+			(xy 292 186) (xy 578 186) (xy 578 366) (xy 292 366) (xy 292 186)
 		)
 		(stroke
 			(width 0.3)
@@ -6056,6 +6056,17 @@
 		)
 		(uuid "0006227a-7787-5bd3-9505-3d4f69145eee")
 	)
+	(text "One lamp, three colours, driven from the three outputs."
+		(exclude_from_sim no)
+		(at 19.05 269 0)
+		(effects
+			(font
+				(size 1.4 1.4)
+			)
+			(justify left)
+		)
+		(uuid "0064ffd2-eaa3-5b89-811a-74868fce6b7c")
+	)
 	(text "z"
 		(exclude_from_sim no)
 		(at 232.41 237.49 0)
@@ -6077,39 +6088,6 @@
 			(justify left)
 		)
 		(uuid "01cc544c-a2ff-52bb-9c5f-abb88473c89f")
-	)
-	(text "saturated primaries.  The taps are on the output side of each"
-		(exclude_from_sim no)
-		(at 19.05 291.9 0)
-		(effects
-			(font
-				(size 1.4 1.4)
-			)
-			(justify left)
-		)
-		(uuid "0284bca9-76db-5b12-96ca-07a091b416ff")
-	)
-	(text "the three come within 5 % of the same peak brightness, so the"
-		(exclude_from_sim no)
-		(at 19.05 286.5 0)
-		(effects
-			(font
-				(size 1.4 1.4)
-			)
-			(justify left)
-		)
-		(uuid "0520659e-7e32-53e2-9cbb-14f3cf333687")
-	)
-	(text "term, so it also adds 10 to the receiving board's r: set the driver"
-		(exclude_from_sim no)
-		(at 458 317.3 0)
-		(effects
-			(font
-				(size 1.7 1.7)
-			)
-			(justify left)
-		)
-		(uuid "05bb868b-4d51-5943-a317-d45247287dd0")
 	)
 	(text "572 nF"
 		(exclude_from_sim no)
@@ -6143,16 +6121,16 @@
 		)
 		(uuid "066c2baa-7921-5993-a24f-4db98553e6ae")
 	)
-	(text "CHAOS LAMP"
+	(text "x gets the pad because the knob absorbs that offset.  -y would lock"
 		(exclude_from_sim no)
-		(at 19.05 268 0)
+		(at 458 344.6 0)
 		(effects
 			(font
-				(size 2.4 2.4)
+				(size 1.7 1.7)
 			)
 			(justify left)
 		)
-		(uuid "086efb0d-209e-5557-8098-7f67d76ca3ae")
+		(uuid "08486bf4-3d5a-543a-9a13-51454eb932ef")
 	)
 	(text "1/2 LF412"
 		(exclude_from_sim no)
@@ -6175,17 +6153,6 @@
 			(justify left)
 		)
 		(uuid "0bdcdf52-138e-5706-a436-2fe50fd18428")
-	)
-	(text "offset.  -y would lock too, into the top of R1, but there is no knob"
-		(exclude_from_sim no)
-		(at 458 336.8 0)
-		(effects
-			(font
-				(size 1.7 1.7)
-			)
-			(justify left)
-		)
-		(uuid "0d305cbe-da0d-5e26-9735-d4dd49d48852")
 	)
 	(text "USB-C source to supply 5 V"
 		(exclude_from_sim no)
@@ -6219,17 +6186,6 @@
 		)
 		(uuid "0e505dde-0aef-5062-a3da-8c5a4f544c42")
 	)
-	(text "R19 = 100k sets the coupling to 1M/100k = 10.  It lands on the r x"
-		(exclude_from_sim no)
-		(at 458 313.4 0)
-		(effects
-			(font
-				(size 1.7 1.7)
-			)
-			(justify left)
-		)
-		(uuid "103c7b40-5525-545c-b8b1-b16e045852bf")
-	)
 	(text "ON"
 		(exclude_from_sim no)
 		(at 344 302.8 0)
@@ -6250,6 +6206,17 @@
 			(justify left)
 		)
 		(uuid "105459f4-423d-5548-8656-bd6e01ec7e13")
+	)
+	(text "Within a few seconds the second board is drawing the first board's"
+		(exclude_from_sim no)
+		(at 458 305.6 0)
+		(effects
+			(font
+				(size 1.7 1.7)
+			)
+			(justify left)
+		)
+		(uuid "112137dc-a1a0-58ad-8491-86377ddc08aa")
 	)
 	(text "terminal 1 tied to the wiper.  That short is the point: if grit ever"
 		(exclude_from_sim no)
@@ -6327,6 +6294,17 @@
 		)
 		(uuid "182c3bd1-2e91-53ae-8ad0-e9f1fc825f97")
 	)
+	(text "sign would need a -z output, and this circuit does not make one."
+		(exclude_from_sim no)
+		(at 458 360.2 0)
+		(effects
+			(font
+				(size 1.7 1.7)
+			)
+			(justify left)
+		)
+		(uuid "1a98b655-4fea-5717-be73-0e1231d28299")
+	)
 	(text "shell and cable screen stay"
 		(exclude_from_sim no)
 		(at 36.83 373.38 0)
@@ -6337,6 +6315,17 @@
 			(justify left)
 		)
 		(uuid "1cc0209d-5106-50e5-9c1d-a0d3122674bd")
+	)
+	(text "term, so it also adds 10 to the receiving board's r: drive at"
+		(exclude_from_sim no)
+		(at 458 329 0)
+		(effects
+			(font
+				(size 1.7 1.7)
+			)
+			(justify left)
+		)
+		(uuid "1de276bf-2c06-50dd-97f1-c1e310957e34")
 	)
 	(text "but with three BNCs along one edge the cables lever on the"
 		(exclude_from_sim no)
@@ -6349,6 +6338,17 @@
 		)
 		(uuid "1de7afc7-4b2a-5be8-8619-67e3ef4855f7")
 	)
+	(text "arrives with a minus sign and drives the two boards apart.  The plus"
+		(exclude_from_sim no)
+		(at 458 356.3 0)
+		(effects
+			(font
+				(size 1.7 1.7)
+			)
+			(justify left)
+		)
+		(uuid "1f73ba23-c257-5c39-b43c-2dca451e7566")
+	)
 	(text "-y"
 		(exclude_from_sim no)
 		(at 232.41 148.59 0)
@@ -6359,17 +6359,6 @@
 			(justify left)
 		)
 		(uuid "1fe9024d-149a-52b6-99d2-7ec9fdeaca63")
-	)
-	(text "within a minute.  That is the demonstration, and it needs no switch."
-		(exclude_from_sim no)
-		(at 458 305.6 0)
-		(effects
-			(font
-				(size 1.7 1.7)
-			)
-			(justify left)
-		)
-		(uuid "231ec719-9ac7-5e37-98c3-c9bca1b7c789")
 	)
 	(text "-y"
 		(exclude_from_sim no)
@@ -6425,16 +6414,16 @@
 		)
 		(uuid "2676a38b-3043-50c3-aba5-667232a8d15c")
 	)
-	(text "One lamp, three colours, driven from the three outputs."
+	(text "too, but only with R1 changed as well, and there is no knob for s."
 		(exclude_from_sim no)
-		(at 19.05 273 0)
+		(at 458 348.5 0)
 		(effects
 			(font
-				(size 1.4 1.4)
+				(size 1.7 1.7)
 			)
 			(justify left)
 		)
-		(uuid "270ab4c7-e7c0-5387-aa27-0944d728d190")
+		(uuid "26b8d552-5284-518c-b0b9-4b98d3ae7058")
 	)
 	(text "Hook x and z to a scope in X-Y and this is what you get: the attractor's"
 		(exclude_from_sim no)
@@ -6446,6 +6435,17 @@
 			(justify left)
 		)
 		(uuid "271e50bb-58ff-5811-aca3-f5e3d245beb9")
+	)
+	(text "wanders through mixed hues rather than blinking between"
+		(exclude_from_sim no)
+		(at 19.05 285.2 0)
+		(effects
+			(font
+				(size 1.4 1.4)
+			)
+			(justify left)
+		)
+		(uuid "277ceeac-d536-50ed-b885-4cebe5427710")
 	)
 	(text "through the signal ground.  1 M drains"
 		(exclude_from_sim no)
@@ -6620,17 +6620,6 @@
 		)
 		(uuid "36bd1567-84af-5c2c-85c4-f6a9d39153ed")
 	)
-	(text "Within a few seconds the second board is drawing the first board's"
-		(exclude_from_sim no)
-		(at 458 290 0)
-		(effects
-			(font
-				(size 1.7 1.7)
-			)
-			(justify left)
-		)
-		(uuid "39af7539-871e-569a-aba9-84e8585ec930")
-	)
 	(text "The time scale is tau = 1 MEG x C, and C is switchable:"
 		(exclude_from_sim no)
 		(at 298 286.6 0)
@@ -6641,6 +6630,16 @@
 			(justify left)
 		)
 		(uuid "39d57d3f-6c99-586a-b1c5-340a260d5f79")
+	)
+	(text "r knob"
+		(exclude_from_sim no)
+		(at 122.81 142.24 0)
+		(effects
+			(font
+				(size 2 2)
+			)
+		)
+		(uuid "39f6076d-d5f1-5580-ada9-211aa5821672")
 	)
 	(text "ISOLATION BARRIER"
 		(exclude_from_sim no)
@@ -6728,6 +6727,28 @@
 			(justify left)
 		)
 		(uuid "4064d436-8266-5f18-b1bf-b0a52213ecef")
+	)
+	(text "wire off and the two drift apart again from states that agree to a"
+		(exclude_from_sim no)
+		(at 458 313.4 0)
+		(effects
+			(font
+				(size 1.7 1.7)
+			)
+			(justify left)
+		)
+		(uuid "40b5f33e-7539-5de1-9c05-b5a763396fe1")
+	)
+	(text "integrator, ahead of the 100 ohm series resistor, so no lamp"
+		(exclude_from_sim no)
+		(at 19.05 290.6 0)
+		(effects
+			(font
+				(size 1.4 1.4)
+			)
+			(justify left)
+		)
+		(uuid "4275d8df-c3db-5bcd-bff1-fd1b370d9f6b")
 	)
 	(text "x"
 		(exclude_from_sim no)
@@ -6848,6 +6869,17 @@
 		)
 		(uuid "4c2ad8f4-a979-5bc1-873f-b32cb69a28df")
 	)
+	(text "That offset is why the knob spans more than 10."
+		(exclude_from_sim no)
+		(at 458 336.8 0)
+		(effects
+			(font
+				(size 1.7 1.7)
+			)
+			(justify left)
+		)
+		(uuid "4dbb44b5-abd8-5d72-a706-4e07a7e06452")
+	)
 	(text "static; 2.2 nF takes the converter's"
 		(exclude_from_sim no)
 		(at 165.1 368.2 0)
@@ -6869,6 +6901,17 @@
 			(justify right)
 		)
 		(uuid "4fd6ecfa-d1a5-57b4-8ccd-52654b4d4158")
+	)
+	(text "1M holds the pad at 0 V"
+		(exclude_from_sim no)
+		(at 133.35 189.23 0)
+		(effects
+			(font
+				(size 1.4 1.4)
+			)
+			(justify left)
+		)
+		(uuid "506976cd-815c-5d6c-870d-4799723121eb")
 	)
 	(text "ON adds a fourth speed Paul never had, slow enough to watch by eye."
 		(exclude_from_sim no)
@@ -6966,6 +7009,28 @@
 			(justify left)
 		)
 		(uuid "5cc0c67c-f8b5-5a42-9de4-2ee95466a813")
+	)
+	(text "anode.  Each die then lights when its own signal goes low, and"
+		(exclude_from_sim no)
+		(at 19.05 279.8 0)
+		(effects
+			(font
+				(size 1.4 1.4)
+			)
+			(justify left)
+		)
+		(uuid "5d5976ad-2191-5a09-848a-7c74ab57d681")
+	)
+	(text "pad, and tie the two analog grounds together -- a coax screen does"
+		(exclude_from_sim no)
+		(at 458 290 0)
+		(effects
+			(font
+				(size 1.7 1.7)
+			)
+			(justify left)
+		)
+		(uuid "5e344992-f030-59cf-b483-f73547017064")
 	)
 	(text "C  =  0.47 uF   (slow!)"
 		(exclude_from_sim no)
@@ -7160,6 +7225,17 @@
 		)
 		(uuid "7a7ab3a6-2e91-5d66-ac7c-225f80dafa5a")
 	)
+	(text "with nothing plugged in"
+		(exclude_from_sim no)
+		(at 133.35 191.93 0)
+		(effects
+			(font
+				(size 1.4 1.4)
+			)
+			(justify left)
+		)
+		(uuid "7af02184-e7ca-5d3a-b8f9-bf8d13bee724")
+	)
 	(text "C"
 		(exclude_from_sim no)
 		(at 171.45 47.5 0)
@@ -7225,27 +7301,16 @@
 		)
 		(uuid "84cd1afd-20c8-5a3d-bd04-a39c6febc7e4")
 	)
-	(text "anode.  Each die then lights when its own signal goes low, and"
+	(text "z cannot be done at all: the junction inverts, so an injected z"
 		(exclude_from_sim no)
-		(at 19.05 283.8 0)
+		(at 458 352.4 0)
 		(effects
 			(font
-				(size 1.4 1.4)
+				(size 1.7 1.7)
 			)
 			(justify left)
 		)
-		(uuid "8666eb3a-532d-5a6b-9f4a-4e411547b8e2")
-	)
-	(text "current flows in the BNC output impedance."
-		(exclude_from_sim no)
-		(at 19.05 297.3 0)
-		(effects
-			(font
-				(size 1.4 1.4)
-			)
-			(justify left)
-		)
-		(uuid "86a155fc-1f39-58b2-9795-a5eaa161c8c3")
+		(uuid "853e68e7-b3ed-5584-aeb3-a650437cdfe6")
 	)
 	(text "Paul's original ran on a bench +/-15 V supply and used 2000 pF, 0.1 uF and"
 		(exclude_from_sim no)
@@ -7279,17 +7344,6 @@
 		)
 		(uuid "87615675-fe65-5d70-8010-3f7ae43d6b1a")
 	)
-	(text "trajectory, whatever state it was in when you connected it.  Pull the"
-		(exclude_from_sim no)
-		(at 458 293.9 0)
-		(effects
-			(font
-				(size 1.7 1.7)
-			)
-			(justify left)
-		)
-		(uuid "878fc425-30ba-5bf5-bfee-7e49207a9bcf")
-	)
 	(text "degree, so a few percent of knob is a visible change and you can"
 		(exclude_from_sim no)
 		(at 458 244.9 0)
@@ -7322,7 +7376,7 @@
 		)
 		(uuid "8acc2587-641e-59d2-9c25-1d2d44381837")
 	)
-	(text "Run a wire from one board's x output to a second board's SYNC IN pad."
+	(text "Run a wire from one board's x output to a second board's SYNC IN"
 		(exclude_from_sim no)
 		(at 458 286.1 0)
 		(effects
@@ -7355,6 +7409,28 @@
 		)
 		(uuid "8e902934-b6d8-5a5e-adad-2ee49b265467")
 	)
+	(text "happens at all."
+		(exclude_from_sim no)
+		(at 458 297.8 0)
+		(effects
+			(font
+				(size 1.7 1.7)
+			)
+			(justify left)
+		)
+		(uuid "8fe1c94b-0d31-53bb-8dbc-4941f503169e")
+	)
+	(text "r = 32, receive at r = 22, and both are solving the same equations."
+		(exclude_from_sim no)
+		(at 458 332.9 0)
+		(effects
+			(font
+				(size 1.7 1.7)
+			)
+			(justify left)
+		)
+		(uuid "904d6553-43da-5239-b86e-9e4fe8e2cca1")
+	)
 	(text "dz/dt = x y - 2.674 z"
 		(exclude_from_sim no)
 		(at 167.64 257.81 0)
@@ -7365,6 +7441,17 @@
 			(justify right)
 		)
 		(uuid "916d93ff-17cc-510e-9971-d78d256a6c5d")
+	)
+	(text "saturated primaries.  The taps are on the output side of each"
+		(exclude_from_sim no)
+		(at 19.05 287.9 0)
+		(effects
+			(font
+				(size 1.4 1.4)
+			)
+			(justify left)
+		)
+		(uuid "93766bde-a54a-5ecf-bef9-818b8857cbbf")
 	)
 	(text "off"
 		(exclude_from_sim no)
@@ -7396,16 +7483,6 @@
 			)
 		)
 		(uuid "96c64b11-ecd7-529d-a414-d6a8047e07b6")
-	)
-	(text "r knob"
-		(exclude_from_sim no)
-		(at 130.81 139.4 0)
-		(effects
-			(font
-				(size 2 2)
-			)
-		)
-		(uuid "96e59a9b-1fda-5ea8-b7e4-301e46e9e0d6")
 	)
 	(text "102 ms"
 		(exclude_from_sim no)
@@ -7440,17 +7517,6 @@
 		)
 		(uuid "99a86c74-4131-5545-aadd-e48d2a4c1fb0")
 	)
-	(text "pair driven by z keeps a positive conditional Lyapunov exponent, the"
-		(exclude_from_sim no)
-		(at 458 344.6 0)
-		(effects
-			(font
-				(size 1.7 1.7)
-			)
-			(justify left)
-		)
-		(uuid "9a96a4eb-496e-5553-b36d-1711c16eb70f")
-	)
 	(text "JP1 open: the analog ground floats,"
 		(exclude_from_sim no)
 		(at 165.1 357.4 0)
@@ -7471,6 +7537,28 @@
 			)
 		)
 		(uuid "a128e812-7ad0-5e4b-85f9-cd38a4d1fff7")
+	)
+	(text "trajectory, whatever state it was in when you connected it.  Pull the"
+		(exclude_from_sim no)
+		(at 458 309.5 0)
+		(effects
+			(font
+				(size 1.7 1.7)
+			)
+			(justify left)
+		)
+		(uuid "a1299670-ec4e-5122-b917-1cb333e9634d")
+	)
+	(text "+12 V x 12k / (12k + 33k) = +3.2 V, buffered by U2B -- the half"
+		(exclude_from_sim no)
+		(at 19.05 274.4 0)
+		(effects
+			(font
+				(size 1.4 1.4)
+			)
+			(justify left)
+		)
+		(uuid "a2f3db32-e4bd-55d5-ae20-06974892a3cf")
 	)
 	(text "5"
 		(exclude_from_sim no)
@@ -7515,17 +7603,6 @@
 		)
 		(uuid "a7f047e8-629d-593a-a388-24498b682a2f")
 	)
-	(text "colour wanders through mixed hues rather than blinking between"
-		(exclude_from_sim no)
-		(at 19.05 289.2 0)
-		(effects
-			(font
-				(size 1.4 1.4)
-			)
-			(justify left)
-		)
-		(uuid "a80726cf-3841-5eb1-bf5d-f08822cac93f")
-	)
 	(text "and a scope's ground clip is what sets"
 		(exclude_from_sim no)
 		(at 165.1 360.1 0)
@@ -7537,17 +7614,6 @@
 		)
 		(uuid "a8d10802-42a6-5ccb-b36f-1a85a28a85bc")
 	)
-	(text "when nothing is plugged in"
-		(exclude_from_sim no)
-		(at 133.35 186.85 0)
-		(effects
-			(font
-				(size 1.4 1.4)
-			)
-			(justify left)
-		)
-		(uuid "a91f9792-a635-5f8c-9097-bc23ee80ad5f")
-	)
 	(text "dx/dt = 10 (y - x)"
 		(exclude_from_sim no)
 		(at 167.64 80.01 0)
@@ -7558,28 +7624,6 @@
 			(justify right)
 		)
 		(uuid "a95acbee-c3c1-5456-abe4-56ebbb46d6ce")
-	)
-	(text "wire off and the two drift apart again: the same equations, states"
-		(exclude_from_sim no)
-		(at 458 297.8 0)
-		(effects
-			(font
-				(size 1.7 1.7)
-			)
-			(justify left)
-		)
-		(uuid "a96c242f-b0ef-5634-80bb-cc21e063abc7")
-	)
-	(text "that agree to a few millivolts, and completely different futures"
-		(exclude_from_sim no)
-		(at 458 301.7 0)
-		(effects
-			(font
-				(size 1.7 1.7)
-			)
-			(justify left)
-		)
-		(uuid "a9b2eaa4-f525-5ada-a4c2-7ec61b8c96e5")
 	)
 	(text "slow!"
 		(exclude_from_sim no)
@@ -7603,16 +7647,16 @@
 		)
 		(uuid "ad803aa5-6cc7-5fcc-a293-5c62b42cdf91")
 	)
-	(text "of the LF412 Paul never needed -- and held on the lamp's common"
+	(text "CHAOS LAMP"
 		(exclude_from_sim no)
-		(at 19.05 281.1 0)
+		(at 19.05 265 0)
 		(effects
 			(font
-				(size 1.4 1.4)
+				(size 2.4 2.4)
 			)
 			(justify left)
 		)
-		(uuid "b3fbfa82-a7cc-5e2b-b6fb-793980a0d6d1")
+		(uuid "b0e02c25-ee66-5180-89d2-9feb11900bcd")
 	)
 	(text "Clockwise raises r, and 310 degrees of screw covers 21.3 to 37.0:"
 		(exclude_from_sim no)
@@ -7724,17 +7768,6 @@
 		)
 		(uuid "c98e49ad-73db-5af7-825c-21bd387b4153")
 	)
-	(text "+12 V x 12k / (12k + 33k) = +3.2 V, buffered by U2B -- the half"
-		(exclude_from_sim no)
-		(at 19.05 278.4 0)
-		(effects
-			(font
-				(size 1.4 1.4)
-			)
-			(justify left)
-		)
-		(uuid "ccfc70a1-8953-5a73-8270-54d70716515b")
-	)
 	(text "Z1 to output, Z2 to ground:"
 		(exclude_from_sim no)
 		(at 90.17 129.54 0)
@@ -7777,17 +7810,6 @@
 			)
 		)
 		(uuid "d0c3b93c-2826-51a0-99bf-840aafa88a65")
-	)
-	(text "x is the channel that gets a pad because the knob can absorb the"
-		(exclude_from_sim no)
-		(at 458 332.9 0)
-		(effects
-			(font
-				(size 1.7 1.7)
-			)
-			(justify left)
-		)
-		(uuid "d15bd340-688e-5bf5-84c2-1dc9c101263a")
 	)
 	(text "off"
 		(exclude_from_sim no)
@@ -7841,6 +7863,17 @@
 			(justify left)
 		)
 		(uuid "d6ffbf2f-087f-56db-bde1-40ae676152bd")
+	)
+	(text "the three peaks land within 8 % of each other, so the colour"
+		(exclude_from_sim no)
+		(at 19.05 282.5 0)
+		(effects
+			(font
+				(size 1.4 1.4)
+			)
+			(justify left)
+		)
+		(uuid "d93d91b9-0387-545c-98cb-62439d327793")
 	)
 	(text "glacial!"
 		(exclude_from_sim no)
@@ -7917,6 +7950,17 @@
 		)
 		(uuid "ddeac1fb-0626-535f-bbdb-9ad9818682c8")
 	)
+	(text "R19 = 100k makes the coupling 1M/100k = 10.  It lands on the r x"
+		(exclude_from_sim no)
+		(at 458 325.1 0)
+		(effects
+			(font
+				(size 1.7 1.7)
+			)
+			(justify left)
+		)
+		(uuid "de078b78-3ff6-5405-af19-bfd1cc6b55a7")
+	)
 	(text "switched in by SW1.  See the notes at the right of the sheet."
 		(exclude_from_sim no)
 		(at 20.32 51.5 0)
@@ -7939,17 +7983,6 @@
 		)
 		(uuid "e004e879-bb05-546b-ac01-2387c1a33e71")
 	)
-	(text "one case Pecora and Carroll's 1990 paper says must fail.  Try it."
-		(exclude_from_sim no)
-		(at 458 348.5 0)
-		(effects
-			(font
-				(size 1.7 1.7)
-			)
-			(justify left)
-		)
-		(uuid "e00ceec2-7b51-5ce1-8b5b-2ab964cdd468")
-	)
 	(text "x"
 		(exclude_from_sim no)
 		(at 44.11 208.25 0)
@@ -7971,6 +8004,17 @@
 			(justify left)
 		)
 		(uuid "e05ec111-6b73-5350-86a1-786095459bba")
+	)
+	(text "both at once.  Both boards float, so with no common ground nothing"
+		(exclude_from_sim no)
+		(at 458 293.9 0)
+		(effects
+			(font
+				(size 1.7 1.7)
+			)
+			(justify left)
+		)
+		(uuid "e06f7fff-7abf-5742-bae8-4fe4c41d6d43")
 	)
 	(text "POWER:  USB-C 5 V in, +/-12 V out"
 		(exclude_from_sim no)
@@ -8005,6 +8049,17 @@
 		)
 		(uuid "e9bd027b-5286-54d3-94aa-ed8b99eba491")
 	)
+	(text "few millivolts.  That is the demonstration, and it needs no switch."
+		(exclude_from_sim no)
+		(at 458 317.3 0)
+		(effects
+			(font
+				(size 1.7 1.7)
+			)
+			(justify left)
+		)
+		(uuid "eae38cec-9ee3-57da-a215-2c1079073160")
+	)
 	(text "GNDU"
 		(exclude_from_sim no)
 		(at 147.95 392.1 0)
@@ -8025,6 +8080,17 @@
 			)
 		)
 		(uuid "ee19da49-9d45-5c1a-8aea-2d666193a87f")
+	)
+	(text "current flows in the BNC output impedance."
+		(exclude_from_sim no)
+		(at 19.05 293.3 0)
+		(effects
+			(font
+				(size 1.4 1.4)
+			)
+			(justify left)
+		)
+		(uuid "ee8cca30-51d3-54e8-bf1b-c4abfbfeeec4")
 	)
 	(text "RV1 is the only control that changes the shape of the attractor."
 		(exclude_from_sim no)
@@ -8059,17 +8125,6 @@
 		)
 		(uuid "f2f0f19e-6e6a-5669-a0c1-d13385bcf32a")
 	)
-	(text "for s to absorb it with.  z never locks at any strength -- the x, y"
-		(exclude_from_sim no)
-		(at 458 340.7 0)
-		(effects
-			(font
-				(size 1.7 1.7)
-			)
-			(justify left)
-		)
-		(uuid "f4a7517a-d8da-5553-bd2a-b92c1a525ad0")
-	)
 	(text "0.47 uF.  Here the three values are built up in parallel because no supplier"
 		(exclude_from_sim no)
 		(at 298 329 0)
@@ -8080,17 +8135,6 @@
 			(justify left)
 		)
 		(uuid "f4a9f2e2-6395-5621-bd0f-db9df2a064c6")
-	)
-	(text "1M holds the pad at 0 V"
-		(exclude_from_sim no)
-		(at 133.35 184.15 0)
-		(effects
-			(font
-				(size 1.4 1.4)
-			)
-			(justify left)
-		)
-		(uuid "f520c6b0-b41d-5ed4-af84-355b1c4365c8")
 	)
 	(text "a plated hole for a probe tip, one per rail, plus three wire"
 		(exclude_from_sim no)
@@ -8103,28 +8147,6 @@
 		)
 		(uuid "f5afbd17-d093-56ab-a002-d5399cb331a3")
 	)
-	(text "equations.  That offset is why the knob spans more than 10."
-		(exclude_from_sim no)
-		(at 458 325.1 0)
-		(effects
-			(font
-				(size 1.7 1.7)
-			)
-			(justify left)
-		)
-		(uuid "f6706619-ff2e-5f15-95de-8dc4f4e9c828")
-	)
-	(text "to r = 32 and the receiver to r = 22 and both are solving the same"
-		(exclude_from_sim no)
-		(at 458 321.2 0)
-		(effects
-			(font
-				(size 1.7 1.7)
-			)
-			(justify left)
-		)
-		(uuid "f9b95e10-5cf8-552c-b751-d4a02ea303bd")
-	)
 	(text "dy/dt = r x - y - x z      r = 28"
 		(exclude_from_sim no)
 		(at 302 211.5 0)
@@ -8136,6 +8158,17 @@
 		)
 		(uuid "f9f668e9-4876-599f-8fe7-dceed44a7c66")
 	)
+	(text "of the LF412 Paul never needed -- and held on the lamp's common"
+		(exclude_from_sim no)
+		(at 19.05 277.1 0)
+		(effects
+			(font
+				(size 1.4 1.4)
+			)
+			(justify left)
+		)
+		(uuid "fa2a4a9f-cc0a-5ffc-b545-1f7835879af6")
+	)
 	(text "Bridge JP1 to give the isolation up."
 		(exclude_from_sim no)
 		(at 165.1 373.6 0)
@@ -8146,17 +8179,6 @@
 			(justify left)
 		)
 		(uuid "faf350fe-1b99-54a3-8cc2-ada37e24fea1")
-	)
-	(text "integrator, ahead of the 100 ohm series resistor, so no lamp"
-		(exclude_from_sim no)
-		(at 19.05 294.6 0)
-		(effects
-			(font
-				(size 1.4 1.4)
-			)
-			(justify left)
-		)
-		(uuid "fb24633e-2635-588d-8f4f-5b9c71ed9083")
 	)
 	(text "2.2 ms"
 		(exclude_from_sim no)
@@ -8243,12 +8265,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "10b8f006-4d4e-5f4b-b9b9-c43287acbfa1")
-	)
-	(junction
-		(at 127 177.8)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "14b94fee-62de-5ce3-8fc2-4518a29d5df5")
 	)
 	(junction
 		(at 201.93 21.59)
@@ -8459,6 +8475,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "818d719a-edca-53f6-acb3-1b3bc4b865a0")
+	)
+	(junction
+		(at 127 182.88)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "84fc5a46-a607-5de2-a746-2fed3e6a115f")
 	)
 	(junction
 		(at 251.46 332.74)
@@ -9036,16 +9058,6 @@
 	)
 	(wire
 		(pts
-			(xy 127 187.96) (xy 127 191.77)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "235d09b5-e54c-5390-a6ba-ee6f1d17ee54")
-	)
-	(wire
-		(pts
 			(xy 201.93 203.2) (xy 201.93 199.39)
 		)
 		(stroke
@@ -9103,16 +9115,6 @@
 			(type default)
 		)
 		(uuid "2b599c94-8cc9-53f5-9d98-193c7998e0f1")
-	)
-	(wire
-		(pts
-			(xy 127 177.8) (xy 127 180.34)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "2ba15ef6-86ed-5c53-9b62-d5d0f4a3c134")
 	)
 	(wire
 		(pts
@@ -9606,16 +9608,6 @@
 	)
 	(wire
 		(pts
-			(xy 168.91 165.1) (xy 168.91 177.8)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "532dc4a5-9835-5154-aa41-99deb27994b6")
-	)
-	(wire
-		(pts
 			(xy 173.99 31.75) (xy 173.99 21.59)
 		)
 		(stroke
@@ -9823,16 +9815,6 @@
 			(type default)
 		)
 		(uuid "640498a6-4360-5727-b034-03cb758f0374")
-	)
-	(wire
-		(pts
-			(xy 127 177.8) (xy 142.24 177.8)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "64915b11-4eb2-5c42-8808-871678cd71d9")
 	)
 	(wire
 		(pts
@@ -10063,6 +10045,16 @@
 			(type default)
 		)
 		(uuid "795abaf9-9c9a-5ac1-b685-fda66d66863d")
+	)
+	(wire
+		(pts
+			(xy 168.91 165.1) (xy 168.91 182.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "796b3071-3348-5ff8-a891-e98579d17da3")
 	)
 	(wire
 		(pts
@@ -10356,13 +10348,13 @@
 	)
 	(wire
 		(pts
-			(xy 149.86 177.8) (xy 168.91 177.8)
+			(xy 127 193.04) (xy 127 196.85)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "a4f48d7c-6a4e-5128-8667-d9ea8478b41f")
+		(uuid "a09338f9-409c-5fae-98c8-65fa98e4cec6")
 	)
 	(wire
 		(pts
@@ -10616,6 +10608,16 @@
 	)
 	(wire
 		(pts
+			(xy 127 182.88) (xy 127 176.53)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b98f086d-8a6c-557f-995c-e9495cccfbc1")
+	)
+	(wire
+		(pts
 			(xy 41.91 105.41) (xy 69.85 105.41)
 		)
 		(stroke
@@ -10623,6 +10625,16 @@
 			(type default)
 		)
 		(uuid "ba6ff6fb-b77a-5103-ba86-7fb98c9623de")
+	)
+	(wire
+		(pts
+			(xy 149.86 182.88) (xy 168.91 182.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "baf590dd-bb08-50a1-b995-824e470e2dbd")
 	)
 	(wire
 		(pts
@@ -10643,16 +10655,6 @@
 			(type default)
 		)
 		(uuid "bdf15055-44d2-5865-91e2-95ec6d9ee2e7")
-	)
-	(wire
-		(pts
-			(xy 127 177.8) (xy 127 171.45)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "bfb753da-b313-5c7d-a190-c9783e37cae8")
 	)
 	(wire
 		(pts
@@ -10856,6 +10858,16 @@
 	)
 	(wire
 		(pts
+			(xy 127 182.88) (xy 142.24 182.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "da3bbeef-f76b-5533-931f-fb70bf8058a9")
+	)
+	(wire
+		(pts
 			(xy 340.36 60.96) (xy 326.39 60.96)
 		)
 		(stroke
@@ -11053,6 +11065,16 @@
 			(type default)
 		)
 		(uuid "e8f71386-0622-5cba-9149-2075af800458")
+	)
+	(wire
+		(pts
+			(xy 127 182.88) (xy 127 185.42)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "eb10cc67-114a-5861-9297-f9c216e8c5ea")
 	)
 	(wire
 		(pts
@@ -13444,7 +13466,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 127 191.77 0)
+		(at 127 196.85 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -13454,7 +13476,7 @@
 		(dnp no)
 		(uuid "26b0007b-0c5c-5fc4-9295-050e79b3071b")
 		(property "Reference" "#PWR07"
-			(at 127 184.15 0)
+			(at 127 189.23 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -13465,7 +13487,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 127 199.39 0)
+			(at 127 204.47 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -13476,7 +13498,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 127 191.77 0)
+			(at 127 196.85 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -13487,7 +13509,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 127 191.77 0)
+			(at 127 196.85 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -13498,7 +13520,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 127 191.77 0)
+			(at 127 196.85 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -21152,7 +21174,7 @@
 	)
 	(symbol
 		(lib_id "Device:R_US")
-		(at 146.05 177.8 90)
+		(at 146.05 182.88 90)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -21162,7 +21184,7 @@
 		(dnp no)
 		(uuid "a8f7e43b-5865-56e5-94f6-f8a805295e91")
 		(property "Reference" "R19"
-			(at 146.05 170.8 90)
+			(at 146.05 175.88 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -21172,7 +21194,7 @@
 			)
 		)
 		(property "Value" "100k"
-			(at 146.05 174.1 90)
+			(at 146.05 179.18 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -21182,7 +21204,7 @@
 			)
 		)
 		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
-			(at 146.05 177.8 90)
+			(at 146.05 182.88 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -21193,7 +21215,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 146.05 177.8 90)
+			(at 146.05 182.88 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -21204,7 +21226,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 146.05 177.8 90)
+			(at 146.05 182.88 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -21215,7 +21237,7 @@
 			)
 		)
 		(property "LCSC" "C149504"
-			(at 146.05 177.8 90)
+			(at 146.05 182.88 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -21226,7 +21248,7 @@
 			)
 		)
 		(property "MPN" "0805W8F1003T5E"
-			(at 146.05 177.8 90)
+			(at 146.05 182.88 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -22133,7 +22155,7 @@
 	)
 	(symbol
 		(lib_id "Connector:TestPoint")
-		(at 127 171.45 180)
+		(at 127 176.53 180)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -22143,7 +22165,7 @@
 		(dnp no)
 		(uuid "c27d5bb4-f470-56f2-955c-6de8127bb812")
 		(property "Reference" "TP4"
-			(at 127 163.83 0)
+			(at 127 168.91 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -22154,7 +22176,7 @@
 			)
 		)
 		(property "Value" "SYNC IN"
-			(at 124.8 170.45 0)
+			(at 124.8 175.53 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -22165,7 +22187,7 @@
 			)
 		)
 		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.5mm_Drill0.7mm"
-			(at 127 171.45 0)
+			(at 127 176.53 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -22176,7 +22198,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 127 171.45 0)
+			(at 127 176.53 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -22187,7 +22209,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 127 171.45 0)
+			(at 127 176.53 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24060,7 +24082,7 @@
 	)
 	(symbol
 		(lib_id "Device:R_US")
-		(at 127 184.15 0)
+		(at 127 189.23 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -24070,7 +24092,7 @@
 		(dnp no)
 		(uuid "e1798a49-9949-5579-8e4d-eb5b5bfb9d2a")
 		(property "Reference" "R20"
-			(at 129.54 181.95 0)
+			(at 129.54 187.03 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -24081,7 +24103,7 @@
 			)
 		)
 		(property "Value" "1M"
-			(at 129.54 185.25 0)
+			(at 129.54 190.33 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -24092,7 +24114,7 @@
 			)
 		)
 		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
-			(at 127 184.15 0)
+			(at 127 189.23 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24103,7 +24125,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 127 184.15 0)
+			(at 127 189.23 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24114,7 +24136,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 127 184.15 0)
+			(at 127 189.23 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24125,7 +24147,7 @@
 			)
 		)
 		(property "LCSC" "C17514"
-			(at 127 184.15 0)
+			(at 127 189.23 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24136,7 +24158,7 @@
 			)
 		)
 		(property "MPN" "0805W8F1004T5E"
-			(at 127 184.15 0)
+			(at 127 189.23 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)

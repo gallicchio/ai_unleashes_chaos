@@ -146,11 +146,20 @@ Comfortable inside +/-12 V rails.
    boards lock together within a few seconds; pull the wire off and they drift
    apart again from states that agreed to a few millivolts.
 
+   Both boards float, so they also need a ground in common before any of that
+   works: a coax from a BNC splitter carries board 1's ground on its screen and
+   does both jobs, or run a second wire between a SCOPE GND loop on each board.
+   The 100k (and the 1M to ground) load an output that drives through 100 ohm
+   by 0.1 %, so the scope on the other leg of the splitter sees no difference.
+
    It has to be that junction.  The junction inverts, so an injected voltage
    always arrives with a minus sign, and diffusive coupling `g(x1 - x2)` is
    only available where the local term already carries a plus -- which is the
-   `+ r x` term of dy/dt and, through R1, the `+ s y` term of dx/dt.  z has no
-   such term, and driving z does not lock at any strength.
+   `+ r x` term of dy/dt and, through R1, the `+ s y` term of dx/dt.  dz/dt has
+   no such term: an injected z arrives as `-g z1`, which is anti-diffusive, and
+   simulated, the error grows with g rather than shrinking.  Sign-correct
+   coupling on z *does* lock, so this is not a conditional-Lyapunov
+   obstruction -- it just needs a `-z` output this circuit does not make.
 
    1M/100k = 10 is the coupling strength, and because it lands on the `r x`
    term it also adds 10 to the receiving board's own r.  Turn the receiver's
