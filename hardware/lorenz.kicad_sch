@@ -6294,17 +6294,6 @@
 		)
 		(uuid "1cc0209d-5106-50e5-9c1d-a0d3122674bd")
 	)
-	(text "but with three BNCs along one edge the cables lever on the"
-		(exclude_from_sim no)
-		(at 292.1 377.2 0)
-		(effects
-			(font
-				(size 1.6 1.6)
-			)
-			(justify left)
-		)
-		(uuid "1de7afc7-4b2a-5be8-8619-67e3ef4855f7")
-	)
 	(text "-y"
 		(exclude_from_sim no)
 		(at 232.41 148.59 0)
@@ -6618,6 +6607,17 @@
 			)
 		)
 		(uuid "3af6b98a-5429-5c9f-81f3-753ad89bccbd")
+	)
+	(text "but with four BNCs around the edges the cables lever on the"
+		(exclude_from_sim no)
+		(at 292.1 377.2 0)
+		(effects
+			(font
+				(size 1.6 1.6)
+			)
+			(justify left)
+		)
+		(uuid "3e0f2f68-f482-56b8-8314-398ad120f1a2")
 	)
 	(text "z"
 		(exclude_from_sim no)

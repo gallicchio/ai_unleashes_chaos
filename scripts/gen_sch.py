@@ -953,7 +953,7 @@ def build():
     s.text("MOUNTING", 292.1, 368.3, size=2.4)
     s.text("Four M3 holes, one per board corner.  No electrical function,",
            292.1, 373.4, size=1.6)
-    s.text("but with three BNCs along one edge the cables lever on the",
+    s.text("but with four BNCs around the edges the cables lever on the",
            292.1, 377.2, size=1.6)
     s.text("board, so it wants standoffs rather than a bare bench.",
            292.1, 381.0, size=1.6)
