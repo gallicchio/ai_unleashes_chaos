@@ -1,0 +1,248 @@
+(footprint "Potentiometer_Bourns_3386P_Vertical"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "Bourns 3386P, 9.53 mm square single-turn cermet trimmer, top adjust (LCSC C116287)")
+	(tags "potentiometer trimmer trimpot Bourns 3386P vertical")
+	(property "Reference" "REF**"
+		(at 0 3.6 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "0fe5e76d-939a-5796-86e8-289ca419333e")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "Potentiometer_Bourns_3386P_Vertical"
+		(at 0 -3.6 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "6015714b-e407-5f40-b0cd-3f5c32178032")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 -3.6 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "a84df5f8-4467-5201-b5c8-76f59735cecd")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" "Bourns 3386P, 9.53 mm square single-turn cermet trimmer, top adjust (LCSC C116287)"
+		(at 0 -3.6 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "0b08021c-272c-5eb0-8e25-a0b1d5181728")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_line
+		(start -4.87 -7.41)
+		(end 4.87 -7.41)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "0826d077-4592-5906-a298-5085c1651a80")
+	)
+	(fp_line
+		(start -4.87 1.4)
+		(end -3.5 2.33)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "76eb365d-0f3e-5f0d-86fd-ee004632d4bd")
+	)
+	(fp_line
+		(start -4.87 2.33)
+		(end -4.87 -7.41)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "d1b19ecc-3b62-54df-a0c2-ff416760269e")
+	)
+	(fp_line
+		(start 4.87 -7.41)
+		(end 4.87 2.33)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "83a9a31f-8a7b-5017-9e6a-ff1187cfea10")
+	)
+	(fp_line
+		(start 4.87 2.33)
+		(end -4.87 2.33)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "eb4d860e-2c7d-5280-8db6-dfcf573f5487")
+	)
+	(fp_line
+		(start -5.12 -7.66)
+		(end 5.12 -7.66)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "f2a0b1ff-b62d-5375-b390-9a6bcb14da58")
+	)
+	(fp_line
+		(start -5.12 2.58)
+		(end -5.12 -7.66)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "7bfcbdee-06c1-55ee-ae50-d9bf04e2ed0d")
+	)
+	(fp_line
+		(start 5.12 -7.66)
+		(end 5.12 2.58)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "cf07ebb2-f572-59e6-93a3-78c2d8f5fdcb")
+	)
+	(fp_line
+		(start 5.12 2.58)
+		(end -5.12 2.58)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "382ba7ae-2656-566f-96a2-fe0370fbaf80")
+	)
+	(fp_line
+		(start -4.765 -7.305)
+		(end 4.765 -7.305)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "6b986e1a-8eca-5cae-8c57-206a3b7ebbdd")
+	)
+	(fp_line
+		(start -4.765 2.225)
+		(end -4.765 -7.305)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "a24b5f00-0fd5-5444-b1e1-29da7a34e776")
+	)
+	(fp_line
+		(start 4.765 -7.305)
+		(end 4.765 2.225)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "4c8f50ea-9d13-571f-bcfb-a7e71cf89c7f")
+	)
+	(fp_line
+		(start 4.765 2.225)
+		(end -4.765 2.225)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "40ad3083-7bae-5c49-961b-208302920b21")
+	)
+	(fp_circle
+		(center 0 -2.54)
+		(end 1.6 -2.54)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.Fab")
+		(uuid "f6821213-3e1c-5f06-85fc-524a9eb38752")
+	)
+	(fp_text user "1"
+		(at -2.2 0 0)
+		(layer "F.Fab")
+		(uuid "b7ce57ef-a30a-5ebb-8ebb-161a4dc2dbe1")
+		(effects
+			(font
+				(size 0.9 0.9)
+				(thickness 0.12)
+			)
+		)
+	)
+	(pad "1" thru_hole rect
+		(at 0 0)
+		(size 1.6 1.6)
+		(drill 0.8)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "d21193b9-48e7-5968-9973-ffe80d091d60")
+	)
+	(pad "2" thru_hole circle
+		(at 2.54 -2.54)
+		(size 1.6 1.6)
+		(drill 0.8)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "3446c489-cd0c-5eaa-b275-90d18b9089a7")
+	)
+	(pad "3" thru_hole circle
+		(at 0 -5.08)
+		(size 1.6 1.6)
+		(drill 0.8)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "996a2401-73e6-580d-a51c-14b2e54da38d")
+	)
+	(embedded_fonts no)
+	(model "${KIPRJMOD}/lib/lorenz.3dshapes/Potentiometer_3386P.wrl"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 0.393701 0.393701 0.393701)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
+)

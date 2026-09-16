@@ -173,7 +173,7 @@ def check_qr(stem, problems, notes):
         rects.append((float(a.atom(0)), float(a.atom(1)),
                       float(b.atom(0)), float(b.atom(1))))
     mod = SILK.QR_MODULE
-    for (qx, qy, key, _cap) in SILK.QR_CODES:
+    for (qx, qy, key, _cap_y, _cap) in SILK.QR_CODES:
         want = SILK.URLS[key]
         n = len(qrcode_gen.encode(want, "M"))
         x0, y0 = qx - n * mod / 2.0, qy - n * mod / 2.0

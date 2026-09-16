@@ -507,6 +507,67 @@ def add_speed_table(board, space, missing):
                      max(x1, x2) + 0.1, max(y1, y2) + 0.1))
 
 
+# Every part here can be fitted the wrong way round, and on most of them the
+# package gives no clue: a SOIC's own dimple is under the plastic, a SOT-89
+# looks the same both ways, and a DIP switch fitted backwards silently swaps
+# "nice!" for "slow!".  So the board says where pin 1 goes.
+PIN1_MARKS = ["U1", "U2", "U3", "U4", "U5", "U6", "U7", "D1", "SW1", "RV1"]
+
+
+def add_pin1_marks(board, space, missing):
+    """A filled triangle on the silkscreen, pointing at pad 1 of every part
+    that can be fitted the wrong way round.
+
+    Placed from the real pad and the real courtyard, not from a table: the
+    mark goes just outside whichever courtyard edge pad 1 is nearest and
+    points back at it, so it says which *end* of the part is pin 1 even when
+    the pads are in a line and the package is symmetrical.
+    """
+    for fp in board.GetFootprints():
+        ref = fp.GetReference()
+        if ref not in PIN1_MARKS:
+            continue
+        pad = next((p for p in fp.Pads() if p.GetNumber() == "1"), None)
+        poly = fp.GetCourtyard(pcbnew.F_CrtYd)
+        if pad is None or not poly.OutlineCount():
+            missing.append(f"{ref} pin-1 mark (no pad 1 or no courtyard)")
+            continue
+        bb = poly.BBox()
+        x0, y0 = pcbnew.ToMM(bb.GetLeft()), pcbnew.ToMM(bb.GetTop())
+        x1, y1 = pcbnew.ToMM(bb.GetRight()), pcbnew.ToMM(bb.GetBottom())
+        px = pcbnew.ToMM(pad.GetPosition().x)
+        py = pcbnew.ToMM(pad.GetPosition().y)
+        dx, dy = px - (x0 + x1) / 2.0, py - (y0 + y1) / 2.0
+        if abs(dx) >= abs(dy):                       # off one of the ends
+            spots = [((x0 - 0.9, py, 1, 0) if dx < 0 else (x1 + 0.9, py, -1, 0))]
+        else:                                        # off the top or bottom
+            spots = [((px, y0 - 0.9, 0, 1) if dy < 0 else (px, y1 + 0.9, 0, -1))]
+        # a second choice on the other axis, for a part boxed in on one side
+        spots.append((x0 - 0.9 if dx < 0 else x1 + 0.9,
+                      y0 - 0.9 if dy < 0 else y1 + 0.9,
+                      1 if dx < 0 else -1, 0))
+        for (mx, my, ux, uy) in spots:
+            box = (mx - 0.6, my - 0.6, mx + 0.6, my + 0.6)
+            if not space.free(box):
+                continue
+            tip = (mx + 0.5 * ux, my + 0.5 * uy)
+            back = (mx - 0.3 * ux, my - 0.3 * uy)
+            side = (-uy * 0.5, ux * 0.5)
+            tri = pcbnew.PCB_SHAPE(board)
+            tri.SetShape(pcbnew.SHAPE_T_POLY)
+            tri.SetPolyPoints([pt(*tip),
+                               pt(back[0] + side[0], back[1] + side[1]),
+                               pt(back[0] - side[0], back[1] - side[1])])
+            tri.SetFilled(True)
+            tri.SetWidth(mm(0.12))
+            tri.SetLayer(pcbnew.F_SilkS)
+            board.Add(tri)
+            space.claim(box)
+            break
+        else:
+            missing.append(f"{ref} pin-1 mark (no room beside pad 1)")
+
+
 def add_silk(board):
     """Legends on the front, the equations, the owl and the codes on the back."""
     from lorenz_curve import owl_xz
@@ -515,6 +576,9 @@ def add_silk(board):
     back.pads = pad_boxes(board, through_only=True)
     back.taken = []
     missing = []
+
+    # --- pin 1, marked before anything else can take the space -----------
+    add_pin1_marks(board, space, missing)
 
     # --- whose circuit it is, and where to find it -----------------------
     for (x, y, txt, size, thick) in SILK.FRONT_NOTES:
@@ -569,16 +633,18 @@ def add_silk(board):
     # The codes go down first and claim their space, because they are the one
     # thing on this board that cannot be nudged: a QR code is only a QR code
     # at exactly the size and spacing it was generated at.
-    for (qx, qy, key, caption) in SILK.QR_CODES:
+    for (qx, qy, key, cap_y, caption) in SILK.QR_CODES:
         n, rects = add_qr(board, SILK.URLS[key], qx, qy, SILK.QR_MODULE,
                           missing, key)
         half = n * SILK.QR_MODULE / 2.0
         back.claim((qx - half - 0.3, qy - half - 0.3,
                     qx + half + 0.3, qy + half + 0.3))
-        for i, line in enumerate(caption):
-            if add_text(board, back, qx, SILK.QR_CAPTION_Y + i * 2.1, line,
-                        1.0, layer=pcbnew.B_SilkS) is None:
+        cy = cap_y
+        for (size, line) in caption:
+            if add_text(board, back, qx, cy, line, size,
+                        layer=pcbnew.B_SilkS) is None:
                 missing.append(f"QR caption {line!r}")
+            cy += size * 1.5 + 0.7
     for (x, y, txt, size, thick) in SILK.BACK_TITLE:
         if add_text(board, back, x, y, txt, size, layer=pcbnew.B_SilkS,
                     thickness=thick) is None:
@@ -590,7 +656,13 @@ def add_silk(board):
                         thickness=0.25 if size > 2 else 0.15,
                         justify="left") is None:
                 missing.append(f"back line {line!r}")
-        y += (size * 1.5 + 0.9) if line else 1.4
+        y += (size * 1.5 + 0.6) if line else 1.2
+    bx, y = SILK.BACK_FOOT_AT
+    for (size, line) in SILK.BACK_FOOT:
+        if add_text(board, back, bx, y, line, size, layer=pcbnew.B_SilkS,
+                    justify="left") is None:
+            missing.append(f"back foot line {line!r}")
+        y += size * 1.5 + 0.6
     ox, oy, ocap, osize = SILK.OWL_CAPTION[0], SILK.OWL_CAPTION[1], \
         SILK.OWL_CAPTION[2], SILK.OWL_CAPTION[3]
     if add_text(board, back, ox, oy, ocap, osize,

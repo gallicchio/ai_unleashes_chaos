@@ -824,3 +824,349 @@ experiment, and the freeze switch turns a picture into a proof.
 ### Still rev A
 
 It stays rev A until you pay a fab. I have not looked at `next_prompt.md`.
+
+
+## Prompt 4
+
+
+My favorite patterns are listed below, with things I like about it followed by things that made me ultimately pick a different one:
+```
+018 a nice range, but I liked others more
+038 mostly dark blue with occasional fast swirl through the color wheel. Normally I think I like the ones that are a bit more balanced in huge, but I'll go with this one. Paul likes blue LEDs.
+054 mostly red/green with occasional blue. more gradual swirl around color wheel
+065 blue with a bit of magenta. not enough green.
+072 mostly green with the occasional blue or red. too much green.
+079 cool easter colors. doesn't say "Paul" to me.
+080 more green than 079, so a fuller range. Similar to 085, which I like slightly better.
+085 mostly purple with the occasional green or red. doesn't get blue enough.
+088 mostly red with some green and blue. less good than 085. doesn't get blue enough
+```
+
+Can you figure out what these all have in common that made me prefer them over the others? Within these, my choice of 038 was ultimately a whim.
+
+As for your ideas of things to add:
+1. A fourth output: the multiplier products, on a header: if the things that allow you to "watch the nonlinearity itself" are already on test points, that can be good enough.
+2. A "freeze" switch: Not worth it. There's no reasonable way that you can get two of these in the same state and watch them diverge without a lot of extra connections. Maybe I'm not seeing the vision. This seems like a demonstration that is easy to do in simulation, but would require "overriding" X, Y, and Z. Besides, if the synchronisation thing below works, wouldn't disconnecting the place where one circuit nudges the second circuit accomplish this "start from nearly identical initial conditions and watch them diverge" demonstration?
+3. An r knob: Let's do it. Paul does not like potentiometers because the wiper always degrades and causes problems. Tom Hayes likes them. And I like the physics demonstration. Let's potentially annoy Paul by putting this in. Be sure to tie the "3rd end" of the potentiometer to the center tap, such that if grit gets under the wiper, it only jumps to its maximum resistance rather than to infinity. My other worry would be that a potentiometer would be too sensitive to get much out of. If you are convinced that someone can turn this thing through different interesting behaviors while  jiggling the knob by a few percent, do it. In the chaotic region, it will probably change the colors on the RGB LED. As long as the knob isn't so sensitive that people can't return to their favorite suite of colors, let's do it…. I mean, go ahead and do it.
+4. A second board's worth of x, on a 3.5 mm jack: If we had a whole second copy of this board, could do the "synchronisation-of-chaotic- systems demonstration" by taking one of the BNC outputs (like X) and feeding it into one of the test points (maybe a new testpoint that includes a series resistor? If so, do it. Just to confirm: all of the test points are meant to either be poked at or to have something like a resistor lead soldered through them to grab onto, right? If you take the X output of one, put it through a BNC splitter, send one side to a scope and the other side to your designated testpoint on the other board, could we see the "synchronisation-of-chaotic- systems demonstration"? Is it just "X", or does this work equally well with "-Y" and "Z" for our particular values of components?
+5. A photodiode on the lamp: that sounds like it was stray too far afield for this board.
+6. A slower "very slow" setting: yes, label it as such, but come up with a cute synonym for "very slow"
+
+
+To address the "part rotation at the assembler" issue, make sure that each of these components which can be poorly rotated has a clear "pin 1" mark, often a triangle or a dot. If something like this is not in the silk screen, add it either to the footprint of the silkscreen of the board.
+
+Minor:
+* Is the USB-C connector close enough to the edge of the board to accommodate nearly all USB-C cables? Some cables have a large plastic body just behind the connector. If you've put it in the official, recommended place, great.
+* If a resistor is drawn horizontally in the schematic (as a series resistor), why isn't it placed horizontally on the board? Same with vertical shunt resistors capacitors, which should be vertical. If this poses a serious routing problem, I might understand, but I don't see how it could. I even specifically asked that the 100R resistors that go to the BNCs be horizontal and you even claimed in your last response that "100 Ω lying horizontally," which is not true. (At least the traces are more horizontal.)
+* In the schematic, the 3 text labels like "z -> blue" go into the adjacent large text box. That text box can be shrunk (its left border can be moved right, along with the text inside) to accommodate a little more room in this lower right part of the schematic.
+* This information like "z -> blue" about how x, y, and z map to R, G, and B should be on the front silkscreen near the RGB LED. If you move things up, you'll have more room.
+* The paragraph on the back silkscreen that contains "100k is s, R3 = 35.7k is r, R7 = 374k is b." should be split up into lines in a more readable way. One line, for example, might say, "b is R7 = 374k". It will add a line, but you have room to move the QR code down. Similarly, for two lines "minus signs from swapped inputs.  0.1 V" and "per unit; time scale tau = 1 MEG x C." You should move the "0.1 V" to the next line to keep lines as full sentences where possible.
+* The QR codes on the back lost their URLs. These should be under the QR code so people know what they're getting themselves into without bothering with their phones.
+* On the front silkscreen, "2026-09-15   rev A" runs into the big "X". There is so much room on the left side to decongest the business end on the right.
+* When you update the lamp resistors and configuration, be sure to update the comments around it.
+* On the bottom right silkscreen, it says "SCOPE GND" 3 times in a row.
+* Just like you moved the multipliers to the left to make more room to spread things out on the right side, you should move the switch up to make more room to spread out the components and labels near the bottom.
+* The text "PCB by Jason Gallicchio and Claude Opus 5 Max" and "GND TIE" should be in the opposite order, vertically.
+* Shouldn't "x and z on a scope in X-Y draw this" be "x and z on a scope in X-Y draws this" with an s?
+
+
+## Response 4
+
+### What your nine favourites have in common
+
+I put all 100 back through the model and measured four things about each:
+
+* **hue coverage** — how much of a 24-segment hue wheel the lamp visits while
+  it is lit at all;
+* **brightness balance** — the dimmest die's peak divided by the brightest
+  die's peak;
+* **mean saturation** — how far from white the colour sits, averaged over
+  time;
+* **lit fraction** — how much of the time the lamp is showing anything.
+
+Medians, your nine against the other ninety-one:
+
+| | your nine | the other 91 |
+|---|---|---|
+| hue coverage | **0.71** | 0.42 |
+| brightness balance | **0.375** | 0.056 |
+| mean saturation | **0.269** | 0.347 |
+| lit fraction | **1.00** | 0.91 |
+| dimmest die's lit fraction | **0.19** | 0.00 |
+
+The last row is the one that explains the rest. In **47 of the hundred** —
+nearly half — one of the three dies never comes on at all: the reference is on
+the wrong side of that signal's swing, or its resistor is ten times too big, so
+the lamp is a two-colour lamp with a third die soldered on for decoration.
+**None of your nine is one of those.** Every one of them lights all three. That is why you kept describing them
+by hue range ("not enough green", "doesn't get blue enough", "a fuller
+range"): you were picking, every time, the ones where all three dies actually
+contribute, and rejecting the ones where one had quietly dropped out.
+
+Balance is what makes that possible. `bal` and `i05` — the two resistor rules
+that aim for equal *perceived* brightness or a small equal peak current — are
+26 of the 100 options but **7 of your 9**. The other three rules size the
+resistors for equal current or one value throughout, and green then runs five
+times brighter per milliamp than red and swamps it.
+
+Lower saturation follows: three dies that are all on all the time mix, and a
+mix sits nearer white than any one primary. So "less saturated" here does not
+mean "washed out", it means "actually mixing".
+
+Ranking all hundred by `hue × √balance × lit` puts your nine at **1, 4, 5, 7,
+11, 16, 22, 25 and 42** out of 100 — median rank 11 where chance would give
+50 — and **038 comes first**. So the whim was not much of a whim.
+
+038 is now what the board does: MHPA3528CRGBCT (common anode) held at
+**+3.20 V** by U2B from a 12k/33k divider off +12 V, with **z → red through
+470 Ω, x → green through 3.9 k, −y → blue through 1.5 k**. (1.6 k is an
+Extended part at JLCPCB and 1.5 k is Basic; the difference is 1.4 % of the
+blue peak.) Peak brightnesses come out 38.1, 36.3 and 38.9 mcd — within 8 %
+of each other — and U2B sources 3.7 mA at the peak, 1.2 mA on average.
+
+### 2. The freeze switch — yes, exactly that
+
+> *wouldn't disconnecting the place where one circuit nudges the second
+> circuit accomplish this?*
+
+Yes, and better than a freeze switch would have. A freeze switch holds one
+board's capacitors and then releases them, which starts board 2 from a state
+that is *equal* to board 1's but at a *different time*, so half of what you
+watch afterwards is that time offset. Pulling the sync wire leaves the two
+boards at the same point in state space at the same instant, agreeing to a few
+millivolts of op-amp offset noise — which is the textbook initial condition
+for the demonstration, and it needs one wire and no extra parts. The idea is
+dropped; the sync input does the job.
+
+### 3. The r knob — it is in, and it is not too sensitive
+
+**R3 is now 27 k fixed plus RV1, a Bourns 3386P 20 k single-turn cermet
+trimmer**, so `r = 1M / (27k + RV1)` sweeps **21.3 to 37.0**.
+
+*Is it too sensitive?* The 3386's mechanical angle is 310°, and the sweep is
+15.8 in r across it. The slope is steepest at the clockwise end, and even
+there one degree of screw moves r by **0.088**; at r = 28 it is **0.05 per
+degree**. Put another way, to move r by 1 you turn the screw about 17°. That
+is a comfortable screwdriver movement, and `check_circuit.py` asserts the
+steepest slope stays under 0.15 per degree so the claim cannot rot.
+
+*Is there anything to find?* Here is what the knob actually does to the lamp,
+computed by integrating at each r and running the result through the LED
+model:
+
+| r | % of rotation | red lit | green lit | blue lit | what you see |
+|---|---|---|---|---|---|
+| 21.3 | 0 (ccw stop) | 0 % | 100 % | 100 % | **steady** deep blue: the chaos has stopped |
+| 24.06 | 27 % | 43 % | 89 % | 85 % | the wings become an attractor again |
+| 24.74 | 33 % | 40 % | 89 % | 84 % | the fixed points let go; sustained chaos |
+| 28 | 56 % | 28 % | 88 % | 82 % | Lorenz's own value |
+| 32 | 78 % | 14 % | 86 % | 81 % | tighter, faster orbit; red thinning out |
+| 37.0 | 100 % (cw) | 6 % | 83 % | 78 % | blue-green with rare red flashes |
+
+So the knob is not a fine trim on one behaviour. At the counter-clockwise stop
+the lamp **stops changing colour altogether** and sits on a steady blue,
+because the trajectory has spiralled into a fixed point; a third of the way
+round it starts wandering; and from there to the clockwise stop the red
+flashes thin out from two in five to one in seventeen. Between 27 % and 33 %
+— eighteen degrees of screw — the chaotic attractor and the two fixed points
+are *both* stable and which one you land in depends on where you started,
+which is worth knowing about and worth hunting for.
+
+And you can get back: r = 28 sits at 56 % of rotation, and ±3 % of knob is
+±0.5 in r, which the table above says is a barely visible change.
+
+**The grit protection is wired as you asked.** RV1 is a rheostat on terminal 3
+and the wiper, with **terminal 1 tied to the wiper**. That shorts out the
+unused section of track, and if the wiper ever lifts, the full 20 k track is
+still bridging terminal 1 to terminal 3, so the branch goes to its *maximum*
+resistance — r falls to 21.3 and the attractor collapses to a fixed point —
+instead of going open and deleting the `r x` term. `check_circuit.py` checks
+that tie explicitly, so it cannot be lost in a later edit.
+
+Paul may still object. The honest defence is that the wiper carries no current
+that matters here — it is in series with 27 k feeding a virtual earth, so a
+wiper that goes from 0.1 Ω to 1 kΩ with age changes r by 0.05 % — and that the
+one failure mode he is right about is the one this wiring turns into a visible,
+recoverable symptom rather than a dead term.
+
+### 4. Synchronisation — and no, it is not the same on −y and z
+
+**Yes, every test point is meant to be poked or soldered to.** Each one is a
+1.5 mm annular ring on a **0.7 mm plated hole** — a probe tip sits in it, and
+a 0.6 mm resistor lead drops straight through and can be soldered on either
+side. The three "SCOPE GND" ones are different: two 1.1 mm holes on a 5.08 mm
+pitch, meant to have a wire loop soldered through them for a ground clip to
+bite on.
+
+**There is now a dedicated one.** `SYNC IN` is a new pad with **R19 = 100 k**
+in series into the dy/dt summing junction and **R20 = 1 M** holding the pad at
+ground when nothing is plugged in (100 k of open wire on a virtual earth is an
+aerial otherwise). Splitter from board 1's x BNC, one side to the scope, the
+other side to board 2's SYNC IN: that is the demonstration.
+
+**Why that junction, and not the others.** The summing junction inverts, so
+whatever you inject arrives with a *minus* sign. Diffusive coupling
+`g(u₁ − u₂)` is therefore only available where the local term already carries a
+**plus** — and in these three equations there are exactly two such terms:
+`+r·x` in dy/dt, and `+s·y` in dx/dt. Simulating the two boards at
+b = 1M/374k and 28 (RK4, 60 time units, 20 mV of initial mismatch):
+
+| channel | injected into | locks? | threshold | what else must change |
+|---|---|---|---|---|
+| **x** | `+r·x`, via SJ_Y | **yes** | g ≈ 7 | nothing — turn the receiver's knob down by g |
+| **−y** | `+s·y`, via SJ_X | yes | g ≈ 4 | R1 must become 1M/(10−g), and g < 10 always |
+| **z** | dz/dt | **no** | — | it cannot be done at all |
+
+*x* is the one that gets a pad because it is the only one that needs nothing
+else. The coupling adds g to the receiver's own r, and the receiver has a knob
+for r: drive at **r = 32**, receive at **r = 22**, and both boards are solving
+the same equations. `g = 1M/100k = 10` is comfortably over the threshold, and
+at g = 10 the error falls below a millivolt in **5 time units — 2.4 s at
+slow!, half a second at nice!**. That offset of 10 is why the knob was sized to
+sweep more than 10.
+
+*−y* would work, but it is not a drop-in. Injecting `−y₁` adds `+g·y₂`'s
+partner to dx/dt, and to turn that into `g(y₁ − y₂)` the receiver's own
+y-weight has to drop from s to s − g. There is no knob for s, so the receiving
+board would need R1 changed from 100 k to 1M/(10 − g) — 167 k for g = 4 — and
+g can never reach 10. Not worth a second pad.
+
+*z* cannot be done on this board, and the reason is the sign, not stability.
+The junction inverts, so injecting z₁ gives `−g·z₁`, which is *anti*-diffusive:
+simulated, the error does not shrink, it grows with g (at g = 2 it ends at 37,
+at g = 40 at 180). The sign-correct version — `+g(z₁ − z₂)` — does lock in
+simulation at quite modest g, so this is not a Pecora–Carroll obstruction; it
+is simply that getting the plus sign needs a **−z** output and this circuit
+does not produce one. z's integrator hands you +z.
+
+So: try z. It will fail, it will fail visibly and reproducibly, and the reason
+it fails is one sign in one equation, which is a better thing to learn from a
+board than another success.
+
+### 6. The fourth speed is called **glacial!**
+
+Both banks ON is 572 nF, τ = 572 ms. It is printed as a fourth row of the
+silkscreen table, in the schematic's speed table, and in the bring-up steps.
+"Glacial" because it is not just slower — at 572 ms per time unit you can
+follow the dot around one wing with your eye and see it decide, which is a
+different experience from "slow", not just a longer one.
+
+### Pin 1, marked on every part that can go in turned
+
+Every part that can be fitted the wrong way round — **U1–U7, D1, SW1 and
+RV1** — now has a **filled triangle on the front silkscreen, printed just
+outside its outline and pointing at pin 1**. The marks are generated from the
+real pad and the real courtyard at build time, not from a table, so they
+cannot drift away from the footprint; `gen_pcb.py` reports it as a build
+failure if any of them has nowhere to go.
+
+`docs/MANUFACTURING.md` now leads its "check these before you pay" table with
+the triangles, so the JLCPCB preview can be compared against them part by
+part. The custom trimmer footprint also gives pad 1 a **square** pad and a
+chamfered silkscreen corner, both of which KiCad's own copy lacks.
+
+### The minor list
+
+**USB-C setback.** It was wrong, and thank you for asking. The receptacle's
+mating face sits 3.65 mm in front of its footprint origin, and the origin was
+6 mm from the board edge — so the connector opening was **2.35 mm inside the
+laminate**, which is exactly the setback that stops a cable with a fat moulded
+body from seating. J1 has moved to y = 95.85: the connector body is now half a
+millimetre inside the edge, with its printed outline landing exactly on the
+0.15 mm silk-to-edge rule. That half millimetre is the most the silkscreen
+rule allows without clipping.
+
+**Resistor rotations.** You were right and I had the convention backwards: for
+a KiCad chip footprint **rot = 0 is horizontal** (pads at ±x) and rot = 90 is
+vertical, and I had written 90 for everything I described as horizontal. Fixed
+throughout: R1–R7 (the summing resistors), **R8/R9/R10 (the 100 Ω to the
+BNCs)**, R13–R15 (the lamp) and F1 are now rot = 0, lying along the signal
+flow, and the shunts R16 and C24 are rot = 90, standing across it. Series
+horizontal, shunt vertical, matching the schematic in every case.
+
+**The "z → blue" labels running into the notes box.** The box's left border
+moved from x = 283 to x = 292 and its contents with it; the labels were also
+dropped from 1.6 to 1.5 mm. `check_schematic.py` measures every text extent on
+the sheet and now reports no overlaps at all.
+
+**x/y/z → R/G/B on the front silk.** Printed directly above the lamp:
+
+```
+      CHAOS LAMP
+       z = red
+      x = green
+      -y = blue
+```
+
+and each lamp resistor also carries its colour word, so a substitution lands
+on the right one.
+
+**The back paragraph.** Split into whole sentences, one fact per line, and
+moved to the foot of the board where there is room for full-width lines:
+
+```
+Every term weighs 1 MEG / R.
+s is R1 = R2 = 100k, and b is R7 = 374k.
+r is R3 = 27k plus the knob RV1, which sweeps r from 21 to 37.
+The MPY634s form A*B/10, and both minus signs come from swapped inputs.
+Signals are 0.1 V per unit, and the time scale is tau = 1 MEG x C.
+```
+
+**URLs under the QR codes.** Both codes now print their address underneath.
+The circuit code needed two lines to fit inside the board, and the codes moved
+to clear the trimmer's drilled holes — a QR code is the one thing on this
+board that cannot be nudged or shrunk to fit, so everything else moved around
+them.
+
+**"2026-09-15 rev A" running into the big X.** Moved to the empty top-left
+corner of the board, where there was a whole quadrant of white space and
+nothing to collide with.
+
+**Comments around the lamp.** Rewritten: the schematic's CHAOS LAMP block, the
+`gen_sch.py` comment above it, `DESIGN_NOTES.md` §5, and the bring-up steps in
+`MANUFACTURING.md` all now describe a common *anode* at +3.2 V with the dies
+lighting on the way *down*, and quote the real numbers from the model.
+
+**"SCOPE GND" three times.** The three ground loops each printed their name
+twice: once as the footprint's Value field and once from a hand-written label
+list, and the placer pushed the duplicates apart into a stack. The hand-written
+entries are gone; each loop says it once.
+
+**The switch moved up.** SW1 went from y = 52 to y = 46, the middle capacitor
+bank from 32 to 26, and the speed table with them. That freed a 14 mm band
+across the middle of the board, which is where the lamp's reference chain (R16,
+R17, C24) now lives — clearing the bottom third for the credit line, the ground
+tie and the power strip's legends. The two multipliers also moved 5 mm further
+apart, which is the only place on the board with room for a 9.5 mm trimmer and
+the two lines of legend that explain it.
+
+**Credit line and "GND TIE".** Swapped: the credit now sits above, the jumper's
+legend below, pinned there by an explicit field anchor so the placer cannot
+reorder them again.
+
+**"draw" or "draws".** "x and z" is a compound subject, so **"draw"** was
+correct — but it reads like an error, which is nearly as bad as being one. The
+caption is now an imperative and sidesteps the question entirely: *"put x and z
+on X-Y to see this"*.
+
+### What else changed
+
+* `check_circuit.py` now solves the whole circuit **twice**, once at each end
+  of the knob, and requires every coefficient except r to come out identical.
+  r is checked as a *range*: it must contain 28, must contain both r = 24.06
+  and the Hopf bifurcation at r = 24.78 computed from the board's own s and b,
+  must span more than the 10 the sync input adds, and must not move faster
+  than 0.15 per degree of screw. 135 checks, all passing.
+* The summing-junction walk follows *chains* of resistors now rather than
+  assuming one, which is what lets it see 27 k + the trimmer as one branch.
+* `check_pinout.py` gained the common-anode lamp (verified against
+  `MHPA3528CRGBCT` rev 1 page 2: anode on 1, cathodes 2 blue, 3 green, 4 red)
+  and the trimmer's three terminals (Bourns 3386: 1 ccw, 2 wiper, 3 cw).
+* The 3386P footprint and its 3D model are **drawn by this project** rather
+  than borrowed: the KiCad AppImage ships a reduced 3D set with no model for
+  it, and a footprint edited on the board to add one stops matching its
+  library and fails DRC. `gen_footprints.py` and `gen_models.py` build it from
+  the Bourns drawing.
+* `./make.py` is green end to end: 15 pinout checks, 13 colour-model checks,
+  135 circuit checks, no schematic text overlaps, 0 ERC, 0 DRC, both QR codes
+  decoding, 64 3D models resolving.

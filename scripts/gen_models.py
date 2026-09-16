@@ -129,9 +129,21 @@ def fuse1812():
     return "Fuse_1812.wrl", s
 
 
+def trimpot():
+    """Bourns 3386P: a 9.53 mm square, 4.83 mm tall body with a screw on top.
+
+    The body sits 2.54 mm off terminal 1 in board -Y, which is +Y here.
+    """
+    s = HEAD
+    s += box(0, 2.54, 2.415, 9.53, 9.53, 4.83, (0.10, 0.18, 0.55))
+    s += box(0, 2.54, 4.90, 5.60, 5.60, 0.30, (0.85, 0.85, 0.88))
+    s += box(0, 2.54, 5.05, 3.15, 0.76, 0.30, (0.25, 0.25, 0.28))
+    return "Potentiometer_3386P.wrl", s
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
-    for maker in (bnc, dcdc, usbc, fuse1812, dipswitch, led_rgb):
+    for maker in (bnc, dcdc, usbc, fuse1812, dipswitch, led_rgb, trimpot):
         name, body = maker()
         with open(os.path.join(OUT, name), "w") as fh:
             fh.write(body)

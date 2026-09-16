@@ -118,21 +118,49 @@ def build():
             opa=("U1", 1), out="x", y=ROW_Y[0],
             res=[("R1", "100k", -6.35, "-y"), ("R2", "100k", +6.35, "x")],
             caps=("C1", "C2", "C3"), poles=(1, 4), outres="R8", bnc="J2",
-            label="x", sj="SJ_X", colour="red", note="dx/dt = 10 (y - x)"),
+            label="x", sj="SJ_X", colour="green", die="3", note="dx/dt = 10 (y - x)"),
         dict(  # dy/dt = 28x - y - xz
             opa=("U1", 2), out="-y", y=ROW_Y[1],
-            res=[("R4", "10k", -12.7, "xz"), ("R3", "35.7k", 0.0, "x"),
+            res=[("R4", "10k", -12.7, "xz"), ("R3", "27k", 0.0, "x"),
                  ("R5", "1M", +12.7, "-y")],
             caps=("C4", "C5", "C6"), poles=(2, 5), outres="R9", bnc="J3",
-            label="-y", sj="SJ_Y", colour="green", note="dy/dt = 28 x - y - x z"),
+            label="-y", sj="SJ_Y", colour="blue", die="2", note="dy/dt = r x - y - x z"),
         dict(  # dz/dt = xy - (8/3) z
             opa=("U2", 1), out="z", y=ROW_Y[2],
             res=[("R6", "10k", -6.35, "xy"), ("R7", "374k", +6.35, "z")],
             caps=("C7", "C8", "C9"), poles=(3, 6), outres="R10", bnc="J4",
-            label="z", sj="SJ_Z", colour="blue", note="dz/dt = x y - 2.674 z"),
+            label="z", sj="SJ_Z", colour="red", die="4", note="dz/dt = x y - 2.674 z"),
     ]
 
     feeds = {"x": [], "-y": [], "z": []}      # (x_start, y) horizontal bus taps
+
+    def knob(ry):
+        """RV1, the r trimmer, in series with R3 ahead of the summing node.
+
+        r = 1 MEG / (R3 + RV1), so 27k + 0..20k sweeps r from 37.0 down to
+        21.3 -- through the pitchfork at r = 1 and the Hopf bifurcation at
+        r = 24.74, which is what makes the knob worth turning.
+
+        RV1 is a rheostat: terminal 3 and the wiper.  Terminal 1, the far end
+        of the track, is tied to the wiper, which shorts out the unused
+        section and, more to the point, means a speck of grit under the wiper
+        leaves the whole 20k track bridging 1 to 3.  The branch then goes to
+        its *maximum* resistance -- r falls to its lowest value and the
+        attractor collapses to a fixed point -- instead of going open and
+        deleting the r x term altogether.  Paul's objection to potentiometers
+        is the wiper, so the wiper is the one thing this wiring does not trust.
+        """
+        cx = 130.81                    # pins: 1 at 127.0, 3 at 134.62
+        s.place("Device:R_Potentiometer_Trim_US", "RV1", "20k", cx, ry, rot=90,
+                footprint=fp("POT"), fields=part_fields("POT"),
+                ref_off=(0, -9.0), val_off=(0, 9.0))
+        wiper = s.pin("RV1", 1, "2")
+        s.wire(wiper, (wiper[0], ry - 6.35), (cx - 3.81, ry - 6.35),
+               (cx - 3.81, ry))
+        s.junction(cx - 3.81, ry)
+        s.wire((cx + 3.81, ry), (142.24, ry))
+        s.text("r knob", cx, ry - 13.0, size=2.0, justify=None)
+        return cx - 3.81
 
     for row in rows:
         y = row["y"]
@@ -152,8 +180,9 @@ def build():
                     footprint=rfp(), fields=passive_fields(val),
                     ref_off=(0, -7.0), val_off=(0, -3.7))
             s.wire((149.86, ry), (SJ_X, ry))
+            tap = knob(ry) if ref == "R3" else 142.24
             if src in feeds:
-                feeds[src].append((142.24, ry))
+                feeds[src].append((tap, ry))
         s.wire((SJ_X, min(ys)), (SJ_X, max(ys)))
         for ry in ys:
             s.junction(SJ_X, ry)
@@ -233,6 +262,42 @@ def build():
         s.text(row["label"], 232.41, y_out - 3.81, size=3.2)
         s.text(row["note"], SJ_X - 1.27, y + 16.51, size=1.8, justify="right")
 
+    # ======================================== the synchronisation input =====
+    # One extra summing resistor into SJ_Y, brought out to a pad.  Drive it
+    # from another board's x output and the two boards lock together; pull the
+    # wire off and they drift apart again from almost identical states, which
+    # is the demonstration a freeze switch was going to be for.
+    #
+    # It has to be SJ_Y.  The junction is inverting, so anything injected
+    # arrives with a minus sign, and diffusive coupling k(x1 - x2) is only
+    # available where the local term already enters with a *plus*: that is the
+    # + r x term of dy/dt, and (through R1) the + s y term of dx/dt.  z has no
+    # such term, and driving z does not lock -- see the notes on the right.
+    #
+    # 100k gives a coupling strength of 1M/100k = 10, which also adds 10 to
+    # the receiver's own r, so the receiving board is turned down by 10 on its
+    # knob.  That is exactly the span the knob was sized for.
+    SYNC_Y = ROW_Y[1] + 25.4
+    s.wire((SJ_X, ROW_Y[1] + 12.7), (SJ_X, SYNC_Y))
+    s.place("Device:R_US", "R19", "100k", RES_CX, SYNC_Y, rot=90,
+            footprint=rfp(), fields=passive_fields("100k"),
+            ref_off=(0, -7.0), val_off=(0, -3.7))
+    s.wire((149.86, SYNC_Y), (SJ_X, SYNC_Y))
+    s.wire((127.0, SYNC_Y), (142.24, SYNC_Y))
+    s.junction(127.0, SYNC_Y)
+    testpoint(127.0, SYNC_Y - 6.35, "SYNC IN", rot=180, dx=-2.2,
+              dy=-1.0, justify="right")
+    s.wire((127.0, SYNC_Y), (127.0, SYNC_Y - 6.35))
+    s.place("Device:R_US", "R20", "1M", 127.0, SYNC_Y + 6.35, footprint=rfp(),
+            fields=passive_fields("1M"),
+            ref_off=(2.54, -2.2), val_off=(2.54, 1.1),
+            ref_justify="left", val_justify="left")
+    s.wire((127.0, SYNC_Y), (127.0, SYNC_Y + 2.54))
+    s.wire((127.0, SYNC_Y + 10.16), (127.0, SYNC_Y + 13.97))
+    gnd(127.0, SYNC_Y + 13.97, key="sync")
+    s.text("1M holds the pad at 0 V", 133.35, SYNC_Y + 6.35, size=1.4)
+    s.text("when nothing is plugged in", 133.35, SYNC_Y + 9.05, size=1.4)
+
     # ==================================================== multipliers ======
     # U3 forms -xz/100 and U4 forms -xy/100.  The sign inversions come free
     # by swapping the differential inputs -- no extra op-amps, as Paul notes.
@@ -303,18 +368,26 @@ def build():
         s.text(m["legend"], JOG_X + 1.9, pw[1] - 2.2, size=1.9)
 
     # ============================== the chaos lamp, driven by x, -y and z ===
-    # Each colour is fed from its own integrator's *output* node, tapped on the
-    # short column between the op-amp and the 100 ohm series resistor, and
+    # Each colour is fed from its own integrator's *output* node, tapped on
+    # the short column between the op-amp and the 100 ohm series resistor and
     # brought down the right-hand margin.  Drawn this way there is no way to
     # mistake it for current taken from an op-amp input: the branch leaves the
     # output on the same side as the BNC, below the jack, and never touches
     # the return lanes that feed the summing resistors.
+    #
+    # The lamp is common *anode*, held at +3.2 V by U2B, so each die lights
+    # when its own signal goes LOW -- red when z is near the bottom of its
+    # range, green on the -x wing, blue on the +x wing.  Reference and
+    # resistors are option 038 of docs/lamp: all three dies stay above their
+    # turn-on voltage nearly all the time and reach within 5 % of the same
+    # peak brightness, so the colour wanders through mixed hues instead of
+    # blinking between saturated primaries.
     LAMP_Y = (269.24, 274.32, 279.4)
     LED_CX, BUF_CX, RES_CX_L = 168.91, 148.59, 190.5
     # topmost row gets the outermost lane, so no two feeds ever cross
     for (row, lane, ly, ref, val) in zip(rows, (273.05, 269.24, 265.43),
                                          LAMP_Y[::-1], ("R13", "R14", "R15"),
-                                         ("1.5k", "6.8k", "4.7k")):
+                                         ("3.9k", "1.5k", "470R")):
         y_out = row["y"]
         s.wire((OUT_X, y_out + 16.51), (lane, y_out + 16.51))
         s.junction(OUT_X, y_out + 16.51)
@@ -324,37 +397,37 @@ def build():
                 ref_off=(0, -4.4), val_off=(0, -1.9))
         s.wire((186.69, ly), (LED_CX + 5.08, ly))
         s.text(f"{row['label']} -> {row['colour']}", lane + 2.2, ly - 1.4,
-               size=1.6)
+               size=1.5)
 
-    s.place("lorenz:LED_RGB_CC", "D1", "RGB", LED_CX, LAMP_Y[1], mirror="y",
+    s.place("lorenz:LED_RGB_CA", "D1", "RGB", LED_CX, LAMP_Y[1], mirror="y",
             footprint=fp("LED_RGB"), fields=part_fields("LED_RGB"),
-            ref_off=(0, -10.0), val_off=(0, -7.0))
+            ref_off=(0, -11.4), val_off=(0, -8.4))
     s.place("lorenz:LF412", "U2", "LF412", BUF_CX, LAMP_Y[1], unit=2,
             footprint=fp("LF412"), fields=part_fields("LF412"),
             ref_off=(0, 9.4), val_off=(0, 12.6), hide_value=True)
     s.text("1/2 LF412", BUF_CX, LAMP_Y[1] + 12.6, size=1.7, justify=None)
-    k_pin = s.pin("D1", 1, "4")
+    a_pin = s.pin("D1", 1, "1")
     b_out, b_neg, b_pos = (s.pin("U2", 2, "7"), s.pin("U2", 2, "6"),
                            s.pin("U2", 2, "5"))
-    s.wire(b_out, k_pin)
-    s.wire(b_out, (b_out[0], LAMP_Y[0] - 2.54), (b_neg[0], LAMP_Y[0] - 2.54),
+    s.wire(b_out, a_pin)
+    s.wire(b_out, (b_out[0], LAMP_Y[0] - 3.81), (b_neg[0], LAMP_Y[0] - 3.81),
            b_neg)
     s.junction(*b_out)
-    testpoint(160.02, LAMP_Y[1] + 6.35, "-1.5V", rot=180, dx=2.2, dy=1.0)
+    testpoint(160.02, LAMP_Y[1] + 6.35, "+3.2V", rot=180, dx=2.2, dy=1.0)
     s.wire((160.02, LAMP_Y[1]), (160.02, LAMP_Y[1] + 6.35))
     s.junction(160.02, LAMP_Y[1])
 
-    # --- the reference the buffer holds the cathode at --------------------
+    # --- the reference the buffer holds the anode at ----------------------
     NODE_X = 124.46
     s.wire(b_pos, (NODE_X, b_pos[1]))
     s.place("Device:R_US", "R17", "33k", NODE_X - 3.81, b_pos[1], rot=90,
             footprint=rfp(), fields=passive_fields("33k"),
             ref_off=(0, -4.4), val_off=(0, -1.9))
     s.wire((NODE_X - 7.62, b_pos[1]), (NODE_X - 12.7, b_pos[1]))
-    rail("-12V", NODE_X - 12.7, b_pos[1] + 3.81, rot=180, to=b_pos[1])
+    rail("+12V", NODE_X - 12.7, b_pos[1] - 3.81, to=b_pos[1])
     for (ref, val, cx, lib, key) in (
             ("C24", "100nF", 129.54, "Device:C", "100nF"),
-            ("R16", "4.7k", 137.16, "Device:R_US", "4.7k")):
+            ("R16", "12k", 137.16, "Device:R_US", "12k")):
         s.place(lib, ref, val, cx, b_pos[1] + 6.35,
                 footprint=(parts.PARTS["C_0805"]["footprint"] if ref[0] == "C"
                            else rfp()),
@@ -369,13 +442,14 @@ def build():
     for i, line in enumerate((
             "One lamp, three colours, driven from the three outputs.",
             "",
-            "-12 V x 4.7k / (4.7k + 33k) = -1.5 V, buffered by U2B -- the half",
+            "+12 V x 12k / (12k + 33k) = +3.2 V, buffered by U2B -- the half",
             "of the LF412 Paul never needed -- and held on the lamp's common",
-            "cathode.  Putting the cathode below ground is what lets a signal",
-            "that swings either side of zero switch a colour on and off: each",
-            "one lights only above its own turn-on voltage.  The taps are on",
-            "the output side of each integrator, ahead of the 100 ohm series",
-            "resistor, so no lamp current flows in the BNC output impedance.")):
+            "anode.  Each die then lights when its own signal goes low, and",
+            "the three come within 5 % of the same peak brightness, so the",
+            "colour wanders through mixed hues rather than blinking between",
+            "saturated primaries.  The taps are on the output side of each",
+            "integrator, ahead of the 100 ohm series resistor, so no lamp",
+            "current flows in the BNC output impedance.")):
         if line:
             s.text(line, 19.05, 273.0 + i * 2.7, size=1.4)
 
@@ -673,7 +747,7 @@ def build():
     s.text("equations, integrated at s = 10, r = 28, b = 8/3.", 425.45, 30.6, size=1.9)
 
     # ---------------------------------------------------- the notes box ---
-    BX0, BY0, BX1, BY1 = 283.0, 186.0, 578.0, 356.0
+    BX0, BY0, BX1, BY1 = 292.0, 186.0, 578.0, 356.0
     s.polyline([(BX0, BY0), (BX1, BY0), (BX1, BY1), (BX0, BY1), (BX0, BY0)],
                width=0.3, style="dash", key="notesbox")
     L = BX0 + 6.0
@@ -695,7 +769,7 @@ def build():
     y += 1.5
     for line in (
         "R2 = R1 = 100k    ->  1M/100k  = 10.00   = s          (and the -x damping)",
-        "R3 = 35.7k        ->  1M/35.7k = 28.01   = r",
+        "R3 + RV1 = 27k + (20k..0)  ->  1M/47k .. 1M/27k = 21.3 .. 37.0  = r",
         "R5 = 1M           ->  1M/1M    =  1.00   = the -y term",
         "R7 = 374k         ->  1M/374k  =  2.674  = b   (8/3 = 2.667, 0.3 % high)",
         "R4 = R6 = 10k     ->  1M/10k   = 100     cancels the multipliers' /100",
@@ -734,13 +808,14 @@ def build():
     s.polyline([(C0 - 1.0, y + 1.6), (C4 + 26.0, y + 1.6)], width=0.25,
                key="swtab/head")
     for i, rx in enumerate((RULE_A, RULE_B)):
-        s.polyline([(rx, y - 1.4), (rx, y + 16.5)], width=0.25,
+        s.polyline([(rx, y - 1.4), (rx, y + 21.5)], width=0.25,
                    key=f"swtab/rule{i}")
     y += 5.0
     for (speed, a, b, cval, tau) in (
             ("fast!", "off", "off", "2.2 nF", "2.2 ms"),
             ("nice!", "ON", "off", "102 nF", "102 ms"),
-            ("slow!", "off", "ON", "472 nF", "472 ms")):
+            ("slow!", "off", "ON", "472 nF", "472 ms"),
+            ("glacial!", "ON", "ON", "572 nF", "572 ms")):
         s.text(speed, C0, y, size=1.9)
         for i, px in enumerate(POLE):
             s.text(a if i < 3 else b, px, y, size=1.9, justify=None)
@@ -748,10 +823,8 @@ def build():
         s.text(tau, C4, y, size=1.9)
         y += 5.0
     y += 1.0
-    s.text("Never both banks ON: that is 572 nF, which works but is not one of",
+    s.text("All four are printed on the back of the board, next to the switch.",
            L, y, size=1.9)
-    y += 4.2
-    s.text("the three settings the board is labelled for.", L, y, size=1.9)
     y += 6.0
     s.text("Paul's original ran on a bench +/-15 V supply and used 2000 pF, 0.1 uF and",
            L, y, size=1.9)
@@ -759,8 +832,68 @@ def build():
     s.text("0.47 uF.  Here the three values are built up in parallel because no supplier",
            L, y, size=1.9)
     y += 4.2
-    s.text("stocks a 3-pole 3-position switch; 2.2 nF is always fitted.",
+    s.text("stocks a 3-pole 3-position switch; 2.2 nF is always fitted.  Both banks",
            L, y, size=1.9)
+    y += 4.2
+    s.text("ON adds a fourth speed Paul never had, slow enough to watch by eye.",
+           L, y, size=1.9)
+
+    # --- second column: the two things you can actually do to the board ---
+    # The switch table is the widest thing on the left, so the column starts
+    # clear of its last rule and runs to the box edge.
+    L2 = 458.0
+    y = BY0 + 10.0
+    s.text("THE r KNOB", L2, y, size=2.6)
+    y += 6.0
+    for line in (
+        "RV1 is the only control that changes the shape of the attractor.",
+        "Clockwise raises r, and 310 degrees of screw covers 21.3 to 37.0:",
+        "",
+        "    27 %  r = 24.06   below this, the trace spirals into one wing",
+        "    33 %  r = 24.74   above this, both fixed points are unstable",
+        "    56 %  r = 28      Lorenz's own value -- the owl's face",
+        "   100 %  r = 37      wings still there, orbit tighter and faster",
+        "",
+        "Between 27 % and 33 % -- eighteen degrees of screw -- chaos and",
+        "the two fixed points are both stable, and which one you land in",
+        "depends on where you started.  Elsewhere r moves about 0.05 per",
+        "degree, so a few percent of knob is a visible change and you can",
+        "still find your way back to a setting you liked.",
+        "",
+        "The knob is wired as a rheostat, terminal 3 and the wiper, with",
+        "terminal 1 tied to the wiper.  That short is the point: if grit ever",
+        "lifts the wiper, the whole 20k track still bridges the branch, so r",
+        "goes to its minimum instead of the r x term disappearing.  Wipers",
+        "fail open, and this one is not trusted not to.",
+    ):
+        if line:
+            s.text(line, L2, y, size=1.7)
+        y += 3.9
+    y += 4.0
+    s.text("SYNCHRONISING TWO BOARDS", L2, y, size=2.6)
+    y += 6.0
+    for line in (
+        "Run a wire from one board's x output to a second board's SYNC IN pad.",
+        "Within a few seconds the second board is drawing the first board's",
+        "trajectory, whatever state it was in when you connected it.  Pull the",
+        "wire off and the two drift apart again: the same equations, states",
+        "that agree to a few millivolts, and completely different futures",
+        "within a minute.  That is the demonstration, and it needs no switch.",
+        "",
+        "R19 = 100k sets the coupling to 1M/100k = 10.  It lands on the r x",
+        "term, so it also adds 10 to the receiving board's r: set the driver",
+        "to r = 32 and the receiver to r = 22 and both are solving the same",
+        "equations.  That offset is why the knob spans more than 10.",
+        "",
+        "x is the channel that gets a pad because the knob can absorb the",
+        "offset.  -y would lock too, into the top of R1, but there is no knob",
+        "for s to absorb it with.  z never locks at any strength -- the x, y",
+        "pair driven by z keeps a positive conditional Lyapunov exponent, the",
+        "one case Pecora and Carroll's 1990 paper says must fail.  Try it.",
+    ):
+        if line:
+            s.text(line, L2, y, size=1.7)
+        y += 3.9
 
     # -------------------------------------------- mechanical --------------
     # Four M3 holes.  Three BNCs on one edge means cables lever on the board;

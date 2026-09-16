@@ -40,9 +40,11 @@ DATASHEET = {
     # ("双路" = dual output column); pin 3 is absent from the package.
     "DCDC_A0515S": ({1: "+Vin", 2: "-Vin", 4: "-Vout", 5: "COM", 6: "+Vout"},
                     None, None),
-    # MEIHUA MHPC3528CRGBCT (LPDS-0001482 Rev.1 p.2): common cathode on 4,
-    # anodes 1 red, 2 blue, 3 green.
-    "LED_RGB_CC": ({1: "R", 2: "B", 3: "G", 4: "K"}, None, None),
+    # MEIHUA MHPA3528CRGBCT (LPDS-0001481 Rev.1 p.2, "Polarity"): common
+    # anode on 1, cathodes 2 blue, 3 green, 4 red.  The common-cathode
+    # MHPC3528CRGBCT in the same package is 1 red, 2 blue, 3 green, 4 cathode
+    # -- the same dies, but 1 and 4 change places, so the boards differ.
+    "LED_RGB_CA": ({1: "A", 2: "B", 3: "G", 4: "R"}, None, None),
 }
 
 # Parts used straight from KiCad's library: the datasheet is checked against
@@ -63,6 +65,8 @@ FOOTPRINT_PINS = {
         {str(i) for i in range(1, 13)},
     "lorenz:TestPoint_ScopeGnd_Loop_2x1.1mm": {"1"},
     "lorenz:PTC_1812_4532Metric": {"1", "2"},
+    # Bourns 3386 datasheet, "3386P" outline: 1 CCW, 2 wiper, 3 CW.
+    "lorenz:Potentiometer_Bourns_3386P_Vertical": {"1", "2", "3"},
     "lorenz:BNC_KYWE_RightAngle": {"1", "2"},
 }
 

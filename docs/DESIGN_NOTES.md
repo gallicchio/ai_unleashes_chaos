@@ -5,7 +5,7 @@ Reference: Paul Horowitz, <https://seti.harvard.edu/unusual_stuff/misc/lorenz.ht
 ## The equations and how the circuit implements them
 
     dx/dt = s(y - x)          s = 10
-    dy/dt = r*x - y - x*z     r = 28
+    dy/dt = r*x - y - x*z     r = 21.3 .. 37.0, set by the knob (28 at 56 %)
     dz/dt = x*y - b*z         b = 8/3
 
 Every coefficient is `1 MEG / R`.  Time is scaled by `tau0 = 1M * C`.
@@ -15,10 +15,10 @@ Circuit voltages represent the dimensionless variables at **0.1 V per unit**
 | Integrator | Op-amp | Feedback | Summing inputs | Yields |
 |---|---|---|---|---|
 | x  | U1A | C_x | R1 100k from `-y`, R2 100k from `x` | dx/dt = 10(y - x) |
-| -y | U1B | C_y | R3 35.7k from `x`, R4 10k from `-xz/100`, R5 1M from `-y` | dy/dt = 28x - y - xz |
+| -y | U1B | C_y | R3 27k + RV1 0..20k from `x`, R4 10k from `-xz/100`, R5 1M from `-y` | dy/dt = r x - y - xz |
 | z  | U2A | C_z | R6 10k from `-xy/100`, R7 374k from `z` | dz/dt = xy - 2.674 z |
 
-Coefficient check: 1M/100k = **10** = s; 1M/35.7k = **28.01** = r;
+Coefficient check: 1M/100k = **10** = s; 1M/(27k..47k) = **37.0..21.3** = r;
 1M/374k = **2.674** = b (8/3 = 2.6667, 0.3 % high); 1M/1M = 1; 1M/10k = 100
 cancels the multipliers' /100.
 
@@ -63,8 +63,11 @@ Comfortable inside +/-12 V rails.
    | fast!   | off       | off       | 2.2 nF | 2000 pF      |
    | nice!   | **on**    | off       | 102 nF | 0.1 uF       |
    | slow!   | off       | **on**    | 472 nF | 0.47 uF      |
+   | glacial!| **on**    | **on**    | 572 nF | —            |
 
-   (Both banks on gives 572 nF — a bonus "very slow".)  Contact resistance is
+   `glacial!` is the fourth speed both banks on give you for nothing: tau =
+   572 ms, slow enough to follow the trajectory around a wing by eye.  It is
+   printed on the silkscreen table with the other three.  Contact resistance is
    ~100 mohm in series with C; against a 100 kohm..1 Mohm integrating resistor
    that is a 1-ppm effect.
 
@@ -72,7 +75,7 @@ Comfortable inside +/-12 V rails.
    the USB ground.  The board has two grounds: `GND` downstream of the
    converter (op-amps, multipliers, BNC shells, everything a scope touches) and
    `GNDU` upstream of it (the USB connector and its shell, the CC pull-downs,
-   the input bulk, the +5 V lamp).  They are separate copper pours with a 1 mm
+   the input bulk).  They are separate copper pours with a 1 mm
    gap, and the converter straddles it.
 
    The reason is specific to this board: its whole purpose is to be watched on
@@ -86,40 +89,74 @@ Comfortable inside +/-12 V rails.
 
    | part | value | what it does |
    |---|---|---|
-   | R21 | 1 M | drains static, so the analog side cannot float up on charge |
+   | R18 | 1 M | drains static, so the analog side cannot float up on charge |
    | C25 | 2.2 nF | 720 ohm at the converter's 100 kHz, 1.2 Gohm at 60 Hz |
    | JP1 | solder jumper, open | bridge it to give the isolation up |
 
 5. **U2B drives the chaos lamp's reference.**  Paul also used only 1.5 of his
-   two LF412s; this board spends the spare half on something useful.  A 4.7k /
-   33k divider from -12 V makes -1.50 V, U2B buffers it, and that becomes the
-   common cathode of one RGB LED whose anodes come from x, -y and z through
-   1.5k, 6.8k and 4.7k.
+   two LF412s; this board spends the spare half on something useful.  A 12k /
+   33k divider from +12 V makes **+3.20 V**, U2B buffers it, and that becomes
+   the common *anode* of one RGB lamp whose three cathodes are driven from z,
+   x and -y through 470 ohm, 3.9k and 1.5k.
 
-   Holding the cathode *below* ground is what makes signals that swing either
-   side of zero drive an LED at all.  Each colour then lights above its own
-   threshold:
+   Holding the anode above every signal's maximum is what makes signals that
+   swing either side of zero drive an LED at all: each die conducts when its
+   own signal falls a forward drop *below* +3.2 V, so the lamp is brightest
+   where the signal is most negative.
 
-   | colour | from | lights when | peak |
-   |---|---|---|---|
-   | red | x | x > +0.25 V, i.e. the +x wing | 1.16 mA |
-   | green | -y | y < -1.10 V, i.e. the -x wing | 0.23 mA |
-   | blue | z | z > +1.10 V, brightness tracking z | 0.79 mA |
+   | die | from | lights when | peak | lit |
+   |---|---|---|---|---|
+   | red | z | z < +1.4 V, the bottom of each excursion | 2.5 mA, 38 mcd | 28 % of the time |
+   | green | x | x < +0.6 V, most of the -x wing | 0.7 mA, 36 mcd | 87 % |
+   | blue | -y | -y < +0.6 V, most of the +x wing | 2.2 mA, 39 mcd | 84 % |
 
-   So red and green alternate as the trajectory changes wings -- which is the
-   chaos itself -- and blue brightens with z and drops out at the bottom of
-   each excursion.  In `slow!` that happens at a few hertz, which is watchable;
-   in `fast!` it averages into a colour.  The resistors are sized for roughly
-   equal *perceived* brightness from the datasheet's luminous intensities, not
-   equal current: green is about five times brighter per milliamp than red and
-   sits where the eye is most sensitive.
+   The three peak brightnesses are within 8 % of each other, so no single
+   colour dominates: blue and green mix through the wings and red flashes in
+   at the bottom of each excursion.  That is option 038 of the hundred wirings
+   rendered in `docs/lamp/` -- mostly deep blue, with a fast swirl through the
+   colour wheel whenever the trajectory changes wings.  U2B sources 3.7 mA at
+   the peak and 1.2 mA on average.
+
+   The part is **MHPA3528CRGBCT** (LCSC C2962095), common anode: pin 1 is the
+   anode, pin 2 blue, pin 3 green, pin 4 red.  Its common-*cathode* twin
+   MHPC3528CRGBCT is the same dies in the same package with pins 1 and 4
+   swapped, so the two are not interchangeable on this board.
 
    The lamp taps the op-amp outputs *before* the 100 ohm series resistors, so
    none of its current flows in the BNC output impedance.
 
-6. **Three rail lamps, one per rail.**  Yellow on +5 V (on the USB side of the
-   barrier), green on +12 V, white on -12 V, each named on the silkscreen
-   beside it.  A single lamp on one rail cannot tell you the other two are up.
+6. **An r knob.**  R3 is split into a fixed 27k and RV1, a Bourns 3386P 20k
+   single-turn cermet trimmer, which sweeps `r = 1M / (27k + RV1)` from 21.3
+   to 37.0.  That covers the whole interesting range: r = 24.06 where the
+   wings stop being an attractor, r = 24.74 where the two fixed points let go,
+   Lorenz's 28 at 56 % of rotation, and up to 37 where the orbit tightens and
+   speeds up.  About 0.05 in r per degree of screw at r = 28, so a setting can
+   be found again by hand.
+
+   RV1 is wired as a rheostat -- terminal 3 and the wiper -- with **terminal 1
+   tied to the wiper**.  That short is deliberate: it takes the unused section
+   of track out of circuit, and if grit ever lifts the wiper the full 20k
+   track still bridges the branch, so r falls to its minimum instead of the
+   `r x` term vanishing altogether.  A worn wiper fails open; this wiring does
+   not let it.
+
+7. **A synchronisation input.**  R19, 100k from a pad marked SYNC IN into the
+   dy/dt summing junction, with R20 = 1M holding the pad at ground when
+   nothing is plugged in.  Drive it from another board's x output and the two
+   boards lock together within a few seconds; pull the wire off and they drift
+   apart again from states that agreed to a few millivolts.
+
+   It has to be that junction.  The junction inverts, so an injected voltage
+   always arrives with a minus sign, and diffusive coupling `g(x1 - x2)` is
+   only available where the local term already carries a plus -- which is the
+   `+ r x` term of dy/dt and, through R1, the `+ s y` term of dx/dt.  z has no
+   such term, and driving z does not lock at any strength.
+
+   1M/100k = 10 is the coupling strength, and because it lands on the `r x`
+   term it also adds 10 to the receiving board's own r.  Turn the receiver's
+   knob down by 10 -- drive at r = 32, receive at r = 22 -- and both boards
+   are solving the same equations.  That offset is why the knob was sized to
+   sweep more than 10.
 
 ## Part selection (JLCPCB stock checked 2026-09-15)
 
@@ -133,8 +170,8 @@ Comfortable inside +/-12 V rails.
 | J1 | TYPE-C-31-M-12 | C165948 | SMD | 230097 | $0.19 |
 | J2-J4 | BNC-KYWE-295-W4-N | C41416668 | THT right-angle | 410 | $1.55 |
 | SW1 | DSIC06LSGET | C54952 | SMD DIP-6 | 2140 | $0.57 |
-| D1-D3 | KT-0805Y / G / W | C2296 / C2297 / C34499 | 0805 | >500k each | $0.02 |
-| D4 | MHPC3528CRGBCT | C2962096 | PLCC-4 3.5x2.8 | 3789 | $0.05 |
+| D1 | MHPA3528CRGBCT | C2962095 | PLCC-4 3.5x2.8 | 9796 | $0.07 |
+| RV1 | 3386P-1-203LF | C116287 | 9.5 mm square THT | 767 | $0.45 |
 
 LF412 and MPY634 are Paul's exact parts — both still stocked, both in
 hand-solderable wide-body packages, so the circuit stays literally his.

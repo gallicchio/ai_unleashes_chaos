@@ -305,9 +305,50 @@ def ptc():
     return name, f
 
 
+# ------------------------------------------------------------- trimmer -----
+def trimpot():
+    """Bourns 3386P, 3/8 inch square single-turn cermet trimmer, top adjust.
+
+    Bourns 3386 data sheet: a 9.53 mm square body 4.83 mm tall, screw on top,
+    and the P pin pattern -- terminal 1 and terminal 3 on a 5.08 mm pitch with
+    the wiper 2.54 mm to the side of the midpoint.  Pins are 0.51 mm diameter,
+    so 0.8 mm holes.
+
+    KiCad ships this footprint, but the AppImage's reduced 3D set has no model
+    for it, and a footprint edited on the board to add one stops matching its
+    library.  Drawing it here keeps the board, the library and the render in
+    agreement.  Pad 1 is square, which is the other thing KiCad's copy does
+    not do and the one that tells an assembler which way round it goes.
+    """
+    name = "Potentiometer_Bourns_3386P_Vertical"
+    f = fp_header(name,
+                  "Bourns 3386P, 9.53 mm square single-turn cermet trimmer, "
+                  "top adjust (LCSC C116287)",
+                  "potentiometer trimmer trimpot Bourns 3386P vertical",
+                  "through_hole", 3.6)
+    cy = -2.54                       # body centre, relative to terminal 1
+    for (num, x, y, shape) in (("1", 0.0, 0.0, "rect"),
+                               ("2", 2.54, -2.54, "circle"),
+                               ("3", 0.0, -5.08, "circle")):
+        f.add(tht_pad(num, x, y, 0.8, 1.6, f"{name}/p{num}", shape=shape))
+    rect_lines(f, -4.765, cy - 4.765, 4.765, cy + 4.765, "F.Fab", FAB_W,
+               f"{name}/fab")
+    f.add(circle(0, cy, 1.6, "F.Fab", FAB_W, f"{name}/screw"))
+    rect_lines(f, -4.87, cy - 4.87, 4.87, cy + 4.87, "F.SilkS", SILK_W,
+               f"{name}/silk")
+    # the corner that says which end terminal 1 is
+    f.add(line(-4.87, 1.4, -3.5, 2.33, "F.SilkS", SILK_W, f"{name}/silk/p1"))
+    rect_lines(f, -5.12, cy - 5.12, 5.12, cy + 5.12, "F.CrtYd", CRT_W,
+               f"{name}/crt")
+    text_fab(f, "1", -2.2, 0.0, f"{name}/fab/p1", size=0.9)
+    model(f, "${KIPRJMOD}/lib/lorenz.3dshapes/Potentiometer_3386P.wrl",
+          scale=MM_SCALE)
+    return name, f
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
-    for maker in (bnc, dcdc, dipsw, led_rgb, scope_gnd, ptc):
+    for maker in (bnc, dcdc, dipsw, led_rgb, scope_gnd, ptc, trimpot):
         name, node = maker()
         path = os.path.join(OUT, name + ".kicad_mod")
         with open(path, "w") as fh:

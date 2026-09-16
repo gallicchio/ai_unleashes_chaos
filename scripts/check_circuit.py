@@ -17,6 +17,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sexp_parse import parse_file
 
 S_TARGET, R_TARGET, B_TARGET = 10.0, 28.0, 8.0 / 3.0
+R_BISTABLE = 24.06       # below this the trace falls into a wing and stays
+POT = "RV1"              # the one adjustable element: the r knob
+POT_TRAVEL = 310.0       # degrees, Bourns 3386 "Mechanical Angle"
 SCALE = 1.0e6            # every coefficient is 1 MEG / R
 TOL = 0.01               # 1 % on the resistor ratios
 
@@ -119,6 +122,35 @@ class Net:
         return self.net(ref, other)
 
 
+def upstream(nl, ref, pin, knob, meaning):
+    """Follow a summing resistor outward until it reaches a named signal.
+
+    Returns (total ohms, net).  Almost every branch is one resistor, but the
+    r branch is R3 in series with the trimmer, so this walks a chain rather
+    than assuming a single part.  `knob` is the trimmer setting: 0.0 at the
+    clockwise stop, where the wiper is on terminal 3 and nothing of the track
+    is in circuit, and 1.0 at the counter-clockwise stop, where all of it is.
+    If the walk ends somewhere that is not a signal it returns (None, net),
+    and the caller decides whether that net is a mistake or the sync input.
+    """
+    total = 0.0
+    for _ in range(4):
+        total += (ohms(nl.value[ref]) * knob if ref == POT
+                  else ohms(nl.value[ref]))
+        pins = sorted(p for (r, p) in nl.of if r == ref)
+        far = {nl.net(ref, p) for p in pins if p != pin}
+        if len(far) != 1:
+            return None, f"{ref} bridges {sorted(far)}"
+        net = far.pop()
+        if net in meaning:
+            return total, net
+        onward = sorted(nl.others(net, exclude_ref=ref))
+        if len(onward) != 1 or not onward[0][0].startswith("R"):
+            return None, net
+        ref, pin = onward[0]
+    return None, "chain too long"
+
+
 def main():
     path = sys.argv[1] if len(sys.argv) > 1 else "out/lorenz.net"
     nl = Net(path)
@@ -150,76 +182,141 @@ def main():
         notes.append(f"      {ref}: W = ({pstr(a)}) x ({pstr(b)}) / 100 "
                      f"= {pstr(meaning[w])}")
 
-    # --- the three integrators -------------------------------------------
+    # --- the three integrators, solved at both ends of the r knob ---------
+    # RV1 makes one coefficient adjustable, so the netlist is walked twice:
+    # once with the trimmer at its clockwise stop, where none of the track is
+    # in circuit, and once at the counter-clockwise stop, where all of it is.
+    # Every other coefficient has to come out identical both times.
     integrators = [("U1", "2", "1"), ("U1", "6", "7"), ("U2", "2", "1")]
     caps_seen = {}
-    results = {}
-    for (ref, inv, out) in integrators:
-        sj, outnet = nl.net(ref, inv), nl.net(ref, out)
-        plus = "3" if inv == "2" else "5"
-        need(nl.net(ref, plus) == "GND",
-             f"{ref} pin {plus} (+ input) at ground -- a true virtual earth")
+    injected = []
 
-        expr, terms = {}, []
-        cap_total = 0.0
-        for (r, p) in sorted(nl.others(sj, exclude_ref=ref)):
-            kind = r[0]
-            if kind == "R":
-                src = nl.other_pin(r, p)
-                if src not in meaning:
-                    problems.append(f"FAIL  {r} feeds {sj} from unknown net '{src}'")
-                    continue
-                weight = SCALE / ohms(nl.value[r])
-                expr = padd(expr, meaning[src], -weight)
-                terms.append(f"{r}={nl.value[r]} (1M/R={weight:.4g}) from {src}")
-            elif kind == "C":
-                far = nl.other_pin(r, p)
-                cap_total += farads(nl.value[r])
-                if far != outnet:
-                    # the switched branches reach the output through one pole;
-                    # on a DIP switch pole k pairs with pin 13-k
-                    hop = [(rr, pp) for (rr, pp) in nl.others(far, exclude_ref=r)
-                           if rr.startswith("SW")]
-                    if not hop:
-                        problems.append(f"FAIL  {r} hangs off {far} with no switch")
+    def solve(knob, record):
+        results = {}
+        for (ref, inv, out) in integrators:
+            sj, outnet = nl.net(ref, inv), nl.net(ref, out)
+            plus = "3" if inv == "2" else "5"
+            if record:
+                need(nl.net(ref, plus) == "GND",
+                     f"{ref} pin {plus} (+ input) at ground -- a true virtual earth")
+
+            expr, terms = {}, []
+            cap_total = 0.0
+            for (r, p) in sorted(nl.others(sj, exclude_ref=ref)):
+                kind = r[0]
+                if kind == "R":
+                    rtot, src = upstream(nl, r, p, knob, meaning)
+                    if rtot is None:
+                        # not a signal: the one branch allowed to end
+                        # somewhere else is the sync input, which ends on a pad
+                        pads = sorted(rr for (rr, _) in nl.nets.get(src, ())
+                                      if rr.startswith("TP"))
+                        if not pads:
+                            problems.append(
+                                f"FAIL  {r} feeds {sj} from unknown net '{src}'")
+                        elif record:
+                            injected.append((r, sj, ohms(nl.value[r]), pads[0]))
                         continue
-                    sw, swpin = hop[0]
-                    mate = str(13 - int(swpin))
-                    need(nl.net(sw, mate) == outnet,
-                         f"{r} reaches {ref}'s output through {sw} pole "
-                         f"{swpin}-{mate}")
-            else:
-                problems.append(f"FAIL  unexpected {r} on summing node {sj}")
-        results[outnet] = expr
-        caps_seen[outnet] = cap_total
-        notes.append(f"      {ref} ({outnet}): d/dt = {pstr(expr)}")
-        for t in terms:
-            notes.append(f"         <- {t}")
+                    weight = SCALE / rtot
+                    expr = padd(expr, meaning[src], -weight)
+                    terms.append(f"{r} -> {src}: {rtot / 1e3:g}k, "
+                                 f"1M/R = {weight:.4g}")
+                elif kind == "C":
+                    far = nl.other_pin(r, p)
+                    cap_total += farads(nl.value[r])
+                    if far != outnet:
+                        # the switched branches reach the output through one
+                        # pole; on a DIP switch pole k pairs with pin 13-k
+                        hop = [(rr, pp) for (rr, pp)
+                               in nl.others(far, exclude_ref=r)
+                               if rr.startswith("SW")]
+                        if not hop:
+                            if record:
+                                problems.append(
+                                    f"FAIL  {r} hangs off {far} with no switch")
+                            continue
+                        sw, swpin = hop[0]
+                        mate = str(13 - int(swpin))
+                        if record:
+                            need(nl.net(sw, mate) == outnet,
+                                 f"{r} reaches {ref}'s output through {sw} pole "
+                                 f"{swpin}-{mate}")
+                else:
+                    problems.append(f"FAIL  unexpected {r} on summing node {sj}")
+            results[outnet] = expr
+            if record:
+                caps_seen[outnet] = cap_total
+                notes.append(f"      {ref} ({outnet}): d/dt = {pstr(expr)}")
+                for t in terms:
+                    notes.append(f"         <- {t}")
+        return results
+
+    cw = solve(0.0, True)      # trimmer shorted out: the least R, the most r
+    ccw = solve(1.0, False)    # the whole track in circuit: the least r
 
     # --- compare with Lorenz ---------------------------------------------
+    # r is the knob's, so it is left out of the fixed comparison and checked
+    # by the span it covers.
     want = {
         "x":  poly(x=-S_TARGET, y=S_TARGET),                       # 10(y-x)
-        "-y": poly(x=-R_TARGET, y=1.0, xz=1.0),                    # -(28x - y - xz)
+        "-y": poly(y=1.0, xz=1.0),                                 # -(-y - xz)
         "z":  poly(xy=1.0, z=-B_TARGET),                           # xy - (8/3)z
     }
     labels = {"x": "dx/dt = s(y - x)",
-              "-y": "d(-y)/dt = -(r x - y - x z)",
+              "-y": "d(-y)/dt = -(r x - y - x z), r term excluded",
               "z": "dz/dt = x y - b z"}
     for net, target in want.items():
-        got = results.get(net)
-        if got is None:
-            problems.append(f"FAIL  no integrator produces '{net}'")
-            continue
-        need(pclose(got, target), f"{labels[net]}   ->   {pstr(got)}")
+        for (tag, res) in (("clockwise", cw), ("counter-clockwise", ccw)):
+            got = res.get(net)
+            if got is None:
+                problems.append(f"FAIL  no integrator produces '{net}'")
+                continue
+            fixed = {k: v for k, v in got.items()
+                     if not (net == "-y" and k == "x")}
+            need(pclose(fixed, target),
+                 f"knob {tag:17s}  {labels[net]}   ->   {pstr(got)}")
 
     # extract the realised constants for the report
-    s_got = results.get("x", {}).get("y", 0.0)
-    r_got = -results.get("-y", {}).get("x", 0.0)
-    b_got = -results.get("z", {}).get("z", 0.0)
-    notes.append(f"      realised constants: s = {s_got:.4g}, r = {r_got:.4g}, "
-                 f"b = {b_got:.5g}  (8/3 = {B_TARGET:.5g})")
+    s_got = cw.get("x", {}).get("y", 0.0)
+    b_got = -cw.get("z", {}).get("z", 0.0)
+    r_hi = -cw.get("-y", {}).get("x", 0.0)
+    r_lo = -ccw.get("-y", {}).get("x", 0.0)
+    notes.append(f"      realised constants: s = {s_got:.4g}, "
+                 f"b = {b_got:.5g}  (8/3 = {B_TARGET:.5g}), "
+                 f"r = {r_lo:.4g} .. {r_hi:.4g}")
     need(abs(b_got - B_TARGET) / B_TARGET < 0.005,
          f"b within 0.5 % of 8/3 ({100*abs(b_got-B_TARGET)/B_TARGET:.2f} % high)")
+
+    # --- the r knob -------------------------------------------------------
+    # Clockwise has to be the end that raises r: terminal 1 is tied to the
+    # wiper, so the section in circuit is wiper-to-3 and shrinks as the screw
+    # turns clockwise.  Everything else here is about whether the knob is
+    # worth fitting: does it reach the interesting values, and can a person
+    # hold a setting?
+    pot_pins = sorted(p for (r, p) in nl.of if r == POT)
+    need(pot_pins == ["1", "2", "3"], f"{POT} has three terminals")
+    need(nl.net(POT, "1") == nl.net(POT, "2"),
+         f"{POT} terminal 1 is tied to the wiper, so grit under the wiper "
+         f"means maximum resistance -- the lowest r -- and never an open")
+    need(nl.net(POT, "3") == nl.net("R3", 1) or nl.net(POT, "3") == nl.net("R3", 2),
+         f"{POT} terminal 3 goes to R3, and R3 to the summing junction")
+    need(r_lo < R_TARGET < r_hi,
+         f"the knob sweeps r = {r_lo:.2f} to {r_hi:.2f}, across Lorenz's 28")
+    r_hopf = s_got * (s_got + b_got + 3.0) / (s_got - b_got - 1.0)
+    for (rc, what) in ((R_BISTABLE, "where the wings stop being an attractor"),
+                       (r_hopf, "the Hopf bifurcation, where the fixed "
+                                "points let go")):
+        need(r_lo < rc < r_hi, f"...and across r = {rc:.2f}, {what}")
+    # dr/dtheta is steepest at the clockwise stop, where R is smallest
+    span = r_hi - r_lo
+    steepest = (SCALE * ohms(nl.value[POT]) / ohms(nl.value["R3"]) ** 2
+                / POT_TRAVEL)
+    need(steepest < 0.15,
+         f"one degree of screw never moves r by more than {steepest:.3f}, so "
+         f"a setting can be found again by hand")
+    need(span > 10.0,
+         f"the sweep is {span:.1f} wide -- more than the 10 that the sync "
+         f"input adds, so a receiving board can be turned down to match")
 
     # --- the three time constants must match ------------------------------
     vals = sorted(caps_seen.values())
@@ -283,53 +380,59 @@ def main():
     need(nl.net("J1", "SH") == "GNDU",
          "the USB shell stays on the USB side, where the cable screen belongs")
 
-    # --- the chaos lamp: three signals, one common cathode ---------------
-    # There is no separate power lamp.  The lamp needs +12 V (the op-amps),
-    # -12 V (the reference), and therefore the converter and the USB input, so
-    # it lights only when the whole chain is up -- which three discrete LEDs
-    # on three rails told you less well and in three more places.
-    vled = nl.net("D1", 4)
+    # --- the chaos lamp: three signals, one common anode -----------------
+    # There is no separate power lamp.  The lamp needs +12 V (the op-amps and
+    # the reference), and therefore the converter and the USB input, so it
+    # lights only when the whole chain is up -- which three discrete LEDs on
+    # three rails told you less well and in three more places.
+    vled = nl.net("D1", 1)
     need(vled == nl.net("U2", 7) and vled == nl.net("U2", 6),
-         "D1's common cathode is driven by U2B wired as a unity follower")
+         "D1's common anode is driven by U2B wired as a unity follower")
     ref_node = nl.net("U2", 5)
     top = sorted(r for (r, p) in nl.nets[ref_node] if r.startswith("R"))
     need(top == ["R16", "R17"],
          f"the reference is a two-resistor divider (found {top})")
-    r_gnd = ohms(nl.value["R16"]) if "GND" in (nl.other_pin("R16", "1"),
-                                               nl.other_pin("R16", "2")) \
-        else ohms(nl.value["R17"])
-    r_neg = ohms(nl.value["R17"]) if r_gnd == ohms(nl.value["R16"]) \
-        else ohms(nl.value["R16"])
-    vk = -12.0 * r_gnd / (r_gnd + r_neg)
-    need(-2.0 < vk < -1.0,
-         f"the cathode sits at {vk:.2f} V -- below ground, so a signal that "
-         "goes negative can still switch its colour off")
+    legs = {}
+    for r in top:
+        ends = [nl.net(r, "1"), nl.net(r, "2")]
+        legs[ends[1] if ends[0] == ref_node else ends[0]] = ohms(nl.value[r])
+    need(set(legs) == {"GND", "+12V"},
+         f"the divider hangs between +12 V and ground (found {sorted(legs)})")
+    va = 12.0 * legs.get("GND", 0.0) / sum(legs.values())
+    need(2.9 < va < 3.5,
+         f"the anode sits at {va:.2f} V: above the red die's forward drop at "
+         "every z, and below the peak of every signal, so each colour has a "
+         "threshold inside its own swing")
     caps = {r for (r, p) in nl.nets[ref_node] if r.startswith("C")}
     need(caps == {"C24"}, "C24 filters the reference before the buffer")
 
-    # each colour, its drive resistor, its source and what it means
-    colours = [("1", "R13", "x", 1.75, -2.0, 2.0, "red"),
-               ("3", "R14", "-y", 2.60, -2.7, 2.7, "green"),
-               ("2", "R15", "z", 2.60, 0.0, 4.8, "blue")]
+    # Each colour, its drive resistor, its source, and the range that source
+    # covers over the whole sweep of the r knob (r = 21.3 measured at the
+    # bottom, r = 37.0 at the top).  A die conducts when its cathode -- the
+    # signal -- falls a forward drop below the anode, so the peak current is
+    # set by the signal's *minimum*, and the reverse voltage by its maximum.
+    colours = [("4", "R15", "z", 1.75, 0.28, 6.00, "red"),
+               ("3", "R13", "x", 2.60, -2.10, 2.20, "green"),
+               ("2", "R14", "-y", 2.60, -2.95, 3.15, "blue")]
     i_total = 0.0
     for (pin, res, src, vf, vmin, vmax, name) in colours:
-        anode = nl.net("D1", pin)
+        cath = nl.net("D1", pin)
         need(nl.net(res, 1) == src or nl.net(res, 2) == src,
-             f"{res} feeds D1's {name} from {src}")
-        need(anode in (nl.net(res, 1), nl.net(res, 2)),
+             f"{res} feeds D1's {name} die from {src}")
+        need(cath in (nl.net(res, 1), nl.net(res, 2)),
              f"{res} lands on D1 pin {pin} ({name})")
-        thresh = vk + vf
-        i_pk = (vmax - vk - vf) / ohms(nl.value[res]) * 1e3
+        thresh = va - vf
+        i_pk = (va - vmin - vf) / ohms(nl.value[res]) * 1e3
         i_total += i_pk
-        need(-1.0 < thresh < 1.5 and 0.15 < i_pk < 3.0,
-             f"{name}: {res} = {nl.value[res]}, lights above {src} = "
+        need(vmin < thresh < vmax and 0.15 < i_pk < 3.0,
+             f"{name}: {res} = {nl.value[res]}, lights below {src} = "
              f"{thresh:+.2f} V, {i_pk:.2f} mA at the extreme")
-        v_rev = max(0.0, vk - vmin)
+        v_rev = max(0.0, vmax - va)
         need(v_rev < 5.0,
              f"{name} never sees more than {v_rev:.1f} V in reverse when "
-             f"{src} bottoms out at {vmin:+.1f} V (the part is rated 5 V)")
+             f"{src} tops out at {vmax:+.1f} V (the part is rated 5 V)")
     need(i_total < 8.0,
-         f"the lamp draws at most {i_total:.1f} mA, which U2B can sink and "
+         f"the lamp draws at most {i_total:.1f} mA, which U2B can source and "
          "the 2 W converter will not notice")
     # the lamp must tap the output node, not the summing junction and not the
     # far side of the series resistor
@@ -339,6 +442,38 @@ def main():
              f"{res} and {series} share the op-amp output node, so no lamp "
              f"current flows in the 100 ohm going to the BNC")
 
+    # --- the synchronisation input ---------------------------------------
+    # One resistor from a pad into a summing junction.  It has to land on the
+    # r x term: the junction inverts, so an injected voltage always arrives
+    # with a minus sign, and diffusive coupling k(x1 - x2) is only available
+    # where the local term already carries a plus.  The pad also has to be
+    # held at ground when nothing is plugged into it, or 100k of open wire
+    # sits on a virtual earth picking up the mains.
+    need(len(injected) == 1, f"exactly one branch comes in from a pad "
+                             f"(found {[i[0] for i in injected]})")
+    for (res, sj, rval, pad) in injected:
+        need(sj == nl.net("U1", "6"),
+             f"{res} injects into the dy/dt summing junction, the one node "
+             f"where an inverted input still adds to a + r x term")
+        gain = SCALE / rval
+        need(5.0 < gain < 15.0,
+             f"{res} = {nl.value[res]} gives a coupling strength of "
+             f"{gain:.1f}, which also adds {gain:.1f} to the receiving "
+             f"board's r -- inside the {span:.1f} the knob can take back")
+        sync = nl.net(res, 1) if nl.net(res, 2) == sj else nl.net(res, 2)
+        holds = [r for (r, _) in nl.nets[sync]
+                 if r.startswith("R") and r != res]
+        need(len(holds) == 1 and "GND" in (nl.other_pin(holds[0], "1"),
+                                           nl.other_pin(holds[0], "2")),
+             f"the {pad} pad is held at ground by {holds} when nothing is "
+             f"plugged in")
+        if holds:
+            leak = ohms(nl.value[holds[0]])
+            need(leak >= 10.0 * rval,
+                 f"{holds[0]} = {nl.value[holds[0]]} is {leak / rval:.0f}x "
+                 f"{res}, so it costs under {100 * rval / leak:.0f} % of the "
+                 f"injected signal")
+
     # --- probe points -----------------------------------------------------
     # Every rail and every interesting node gets a pad, and nothing gets two.
     # The designators are assigned in drawing order, so check the set of nets
@@ -346,6 +481,7 @@ def main():
     got_tp = {r: nl.net(r, "1") for r in nl.value if r.startswith("TP")}
     want = {"x", "-y", "z", "xz", "xy", vled,
             "+5V", "+15V", "-15V", "+12V", "-12V", "GNDU"}
+    want |= {nl.net(pad, "1") for (_, _, _, pad) in injected}
     probed = sorted(got_tp.values())
     for netname in sorted(want):
         need(probed.count(netname) == 1,

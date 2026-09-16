@@ -72,32 +72,25 @@ PARTS = {
     # cost nothing extra to place.  Not red/green: red reads as "fault" when
     # here it means the rail is up, and the RGB output lamp has already spoken
     # for red, green and blue.
-    "LED_G": dict(
-        value="green", mpn="KT-0805G", lcsc="C2297", jlc_type="basic",
-        process="SMT", stock=1542073, price=0.016,
-        footprint="LED_SMD:LED_0805_2012Metric",
-        desc="+12 V rail lamp"),
-    "LED_Y": dict(
-        value="yellow", mpn="KT-0805Y", lcsc="C2296", jlc_type="basic",
-        process="SMT", stock=526613, price=0.0152,
-        footprint="LED_SMD:LED_0805_2012Metric",
-        desc="+5 V (USB) rail lamp"),
-    "LED_W": dict(
-        value="white", mpn="KT-0805W", lcsc="C34499", jlc_type="basic",
-        process="SMT", stock=570707, price=0.0198,
-        footprint="LED_SMD:LED_0805_2012Metric",
-        desc="-12 V rail lamp"),
     "LED_RGB": dict(
-        value="RGB", mpn="MHPC3528CRGBCT", lcsc="C2962096", jlc_type="extended",
-        process="SMT", stock=3789, price=0.0547,
+        value="RGB", mpn="MHPA3528CRGBCT", lcsc="C2962095", jlc_type="extended",
+        process="SMT", stock=9796, price=0.065,
         footprint="lorenz:LED_RGB_PLCC4_3.5x2.8mm",
-        desc="Common-cathode RGB lamp, PLCC-4: red = x, green = -y, blue = z",
-        alt=["XL-A3528RGBC-BM / C3647023 (6451 in stock) and "
-             "TJ-S3528UG2W9TLCCSRGB-A5 / C20613304 are the same 3528 PLCC-4 "
-             "outline; check the pin order before substituting",
-             "MHSC110RGBCT / C482558 (10921 in stock) is the same idea in a "
-             "3.0 x 1.5 mm package -- smaller than this project wants to "
-             "hand-solder"]),
+        desc="Common-anode RGB lamp, PLCC-4: red = z, green = x, blue = -y",
+        alt=["MHPC3528CRGBCT / C2962096 is the same part with a common "
+             "*cathode*: same footprint, same dies, but pins 1 and 4 swap "
+             "roles, so the board would have to change with it"]),
+    "POT": dict(
+        value="20k", mpn="3386P-1-203LF", lcsc="C116287", jlc_type="extended",
+        process="THT", stock=767, price=0.4458,
+        footprint="lorenz:Potentiometer_Bourns_3386P_Vertical",
+        desc="20k single-turn cermet trimmer, 9.5 mm square, top adjust: "
+             "sets r.  Terminal 1 (CCW end) is tied to the wiper, so a speck "
+             "of grit under the wiper means maximum resistance, not an open "
+             "circuit",
+        alt=["3386P-1-103LF / C116281 (10k, 1700 in stock) with R3 raised to "
+             "33k gives r = 23 to 30 -- a narrower sweep that never leaves "
+             "the chaotic region"]),
     "TESTPOINT": dict(
         value="", process="THT", in_bom=False,
         footprint="TestPoint:TestPoint_THTPad_D1.5mm_Drill0.7mm",
@@ -123,8 +116,8 @@ PARTS = {
 PASSIVES = {
     "100k":  dict(lcsc="C149504", mpn="0805W8F1003T5E", jlc_type="basic",
                   price=0.006, stock=4893299),
-    "35.7k": dict(lcsc="C843989", mpn="CRCW080535K7FKEA", jlc_type="extended",
-                  price=0.015, stock=2783),
+    "27k":   dict(lcsc="C17593", mpn="0805W8F2702T5E", jlc_type="basic",
+                  price=0.0013, stock=238446),
     "10k":   dict(lcsc="C17414", mpn="0805W8F1002T5E", jlc_type="basic",
                   price=0.004, stock=53835303),
     "1M":    dict(lcsc="C17514", mpn="0805W8F1004T5E", jlc_type="basic",
@@ -135,16 +128,16 @@ PASSIVES = {
                   price=0.004, stock=10085527),
     "5.1k":  dict(lcsc="C27834", mpn="0805W8F5101T5E", jlc_type="basic",
                   price=0.006, stock=3917491),
-    "4.7k":  dict(lcsc="C17673", mpn="0805W8F4701T5E", jlc_type="basic",
-                  price=0.005, stock=5973538),
-    "2.2k":  dict(lcsc="C17520", mpn="0805W8F2201T5E", jlc_type="basic",
-                  price=0.0027, stock=3751757),
     "1.5k":  dict(lcsc="C4310", mpn="0805W8F1501T5E", jlc_type="basic",
                   price=0.0015, stock=585325),
+    "3.9k":  dict(lcsc="C17614", mpn="0805W8F3901T5E", jlc_type="basic",
+                  price=0.0015, stock=296958),
+    "470R":  dict(lcsc="C17710", mpn="0805W8F4700T5E", jlc_type="basic",
+                  price=0.0025, stock=3140647),
+    "12k":   dict(lcsc="C17444", mpn="0805W8F1202T5E", jlc_type="basic",
+                  price=0.0021, stock=456483),
     "33k":   dict(lcsc="C17633", mpn="0805W8F3302T5E", jlc_type="basic",
                   price=0.0028, stock=570100),
-    "6.8k":  dict(lcsc="C17772", mpn="0805W8F6801T5E", jlc_type="basic",
-                  price=0.0042, stock=382071),
     "2.2nF": dict(lcsc="C28260", mpn="CL21C222JBFNNNE", jlc_type="basic",
                   price=0.028, stock=179637, note="C0G/NP0 50V"),
     "100nF_C0G": dict(lcsc="C170182", mpn="1206N104J500CT", jlc_type="extended",

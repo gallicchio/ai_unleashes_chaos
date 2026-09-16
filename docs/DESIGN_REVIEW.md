@@ -180,7 +180,10 @@ is a section nobody has defined the potential of, and if you touch it while it
 is charged you get a small spark.  At +/-12 V into a 1 M bleeder there is
 nothing to discharge.
 
-**The chaos lamp, and how the negative-going problem is solved.**  One
+**The chaos lamp, and how the negative-going problem is solved.**
+*(Superseded at prompt 4, which flipped the lamp to a common anode at +3.2 V
+and rewired the colours; see the prompt 4 section at the foot of this file.
+The argument below is unchanged -- only the sign of it is.)*  One
 common-cathode RGB LED, red from x, green from -y, blue from z, with the
 *cathode* held at -1.5 V by the half of U2 that Paul never needed.  That single
 trick is what makes the negative excursions usable: each colour now lights only
@@ -484,3 +487,117 @@ In order:
    second source, and an "equivalent" would not be.
 4. Everything else -- values, nets, equations, ranges, decoupling -- is either
    proved from the netlist on every build or checked against a datasheet here.
+
+
+# Prompt 4: a knob, a second board, and the lamp as it is actually built
+
+## The lamp, settled
+
+Option 038 of the hundred renderings, chosen by the person the board is for.
+**MHPA3528CRGBCT**, common *anode*, held at **+3.20 V** by U2B from a 12k/33k
+divider off +12 V; **z -> red through 470 ohm, x -> green through 3.9 k, -y ->
+blue through 1.5 k**.  Every die now lights on the way *down*: it conducts when
+its own signal falls a forward drop below +3.2 V.
+
+| die | from | conducts below | peak | lit |
+|---|---|---|---|---|
+| red | z | +1.45 V | 2.5 mA, 38.1 mcd | 28 % of the time |
+| green | x | +0.60 V | 0.7 mA, 36.3 mcd | 87 % |
+| blue | -y | +0.60 V | 2.2 mA, 38.9 mcd | 84 % |
+
+Three peaks within 8 % of one another, so the colour is a mix rather than one
+die with hints of the others; the lamp is never fully dark; and U2B sources
+3.7 mA at the peak.  Worst-case reverse on any junction is 2.8 V of the 5 V
+rating, at the top of z with the knob fully clockwise.
+
+The part matters: MHPC3528CRGBCT is the same dies in the same package with
+pins 1 and 4 swapped, and fitting it here would put the red die's cathode on
+the anode rail.  `check_pinout.py` transcribes the polarity drawing from the
+data sheet (LPDS-0001481 rev 1 p.2) and compares it against the drawn symbol.
+
+## The knob
+
+R3 splits into 27 k fixed plus **RV1**, a Bourns 3386P 20 k single-turn cermet
+trimmer, giving `r = 1M/(27k + RV1)` from **21.3 to 37.0**.
+
+The two questions worth answering before fitting a potentiometer to a circuit
+whose author dislikes them:
+
+*Is it controllable?*  310 degrees of mechanical travel for 15.8 in r.  The
+slope is steepest at the clockwise stop and even there it is 0.088 in r per
+degree; at r = 28 it is 0.05.  Seventeen degrees of screw moves r by one.
+
+*Is there anything at the end of it?*  At the counter-clockwise stop the
+attractor is gone -- the trace spirals into a fixed point and the lamp stops
+changing colour, which is the most visible thing on this board.  27 % of the
+way round the wings become an attractor again; 33 % the fixed points lose
+stability; 56 % is Lorenz's 28; and from there to the stop the red flashes
+thin from two in five to one in seventeen as the orbit tightens.
+
+*What happens when the wiper wears?*  Terminal 1 is tied to the wiper, so the
+section in circuit is wiper-to-3 and the unused section is shorted out.  A
+speck of grit that lifts the wiper leaves the whole 20 k track bridging
+terminal 1 to terminal 3: r goes to its minimum and the attractor collapses,
+which is a symptom you can see and recover from, rather than an open circuit
+that deletes the `r x` term.  `check_circuit.py` asserts the tie.
+
+The wiper carries no current that matters: it is in series with 27 k into a
+virtual earth, so a wiper resistance that ages from 0.1 ohm to 1 kohm changes
+r by 0.05 %.
+
+## The synchronisation input
+
+R19, 100 k from a pad marked SYNC IN into the dy/dt summing junction, with
+R20 = 1 M holding the pad at ground when nothing is connected.
+
+The junction inverts, so an injected voltage always arrives negative, and
+diffusive coupling `g(u1 - u2)` is only available where the local term already
+carries a plus.  In these three equations that is `+r x` in dy/dt and `+s y`
+in dx/dt -- and no term at all in dz/dt.
+
+Simulated, two boards at b = 1M/374k with 20 mV of initial mismatch, RK4 over
+60 time units:
+
+| channel | locks | threshold | what else must change |
+|---|---|---|---|
+| x into `+r x` | yes | g ~ 7 | nothing: turn the receiver's knob down by g |
+| -y into `+s y` | yes | g ~ 4 | R1 -> 1M/(10-g), and g < 10 always |
+| z | no | -- | impossible: the sign is wrong and there is no -z |
+
+x gets the pad because the knob absorbs the offset the coupling adds to r.
+At g = 1M/100k = 10 the error falls below a millivolt in 5 time units: 2.4 s
+at `slow!`.  Drive at r = 32, receive at r = 22.
+
+z is worth stating carefully.  It is *not* a conditional-Lyapunov obstruction:
+sign-correct diffusive coupling `+g(z1 - z2)` synchronises in simulation at
+quite modest g.  What blocks it here is that the inverting junction turns an
+injected z1 into `-g z1`, which is anti-diffusive -- the error grows with g --
+and producing `+g z1` would need a -z output this circuit does not have.
+
+## Pin 1, and the rotation problem
+
+Every part that can be fitted turned -- U1 through U7, D1, SW1, RV1 -- carries
+a filled triangle on the front silkscreen, outside its outline, pointing at
+pin 1.  `add_pin1_marks()` reads the real pad position and the real courtyard
+from the placed footprint and picks the edge pad 1 is nearest, so the mark
+cannot disagree with the footprint; a mark with nowhere to go is a build
+failure, not a silent omission.
+
+## The USB-C setback, which was wrong
+
+The HRO receptacle's mating face is 3.65 mm in front of its footprint origin.
+The origin was 6 mm from the board edge, so the opening sat 2.35 mm inside the
+laminate -- far enough that a cable with a large moulded body would foul the
+edge before the plug seated.  J1 moved to y = 95.85: the body is half a
+millimetre inside the edge, and its printed outline lands exactly on the
+0.15 mm silk-to-edge rule, which is as far out as the silkscreen allows
+without being clipped.
+
+## Rotations, corrected
+
+For a KiCad chip footprint **rot = 0 is horizontal** and rot = 90 is vertical;
+this project had it backwards, and had described vertical parts as horizontal.
+Series resistors are now rot = 0 and lie along the signal flow -- R1-R7 into
+the summing junctions, R8/R9/R10 into the BNCs, R13-R15 into the lamp, F1 in
+the +5 V line -- and shunts are rot = 90 and stand across it.  Every one now
+matches the way it is drawn on the schematic.

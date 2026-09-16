@@ -196,12 +196,12 @@ def dipsw():
 
 # --------------------------------------------------------- RGB lamp -------
 def led_rgb():
-    """Common-cathode RGB lamp, drawn as three diodes on one cathode bar.
+    """Common-anode RGB lamp: one anode bar, three cathodes out to the signals.
 
-    Pin order follows the MHPC3528CRGBCT drawing: 1 = red anode, 2 = blue
-    anode, 3 = green anode, 4 = the common cathode.
+    Pin order follows the MHPA3528CRGBCT drawing: 1 = the common anode,
+    2 = blue cathode, 3 = green cathode, 4 = red cathode.
 
-    They are *drawn* blue, green, red down the page, which is not the pin
+    They are *drawn* red, blue, green down the page, which is not the pin
     order.  That is deliberate: on the sheet the three feeds come down the
     right margin from the three integrators, and the only way for none of
     them to cross is for the topmost integrator to take the outermost lane
@@ -209,29 +209,30 @@ def led_rgb():
     and this order changes with it.
     """
     body = []
-    # the shared cathode bar, on the right
+    # the shared anode bar, on the right, and its pin
     body.append(poly([(2.54, 6.35), (2.54, -6.35)], width=0.4))
     body.append(poly([(2.54, 0), (5.08, 0)]))
-    for (num, name, y) in (("2", "B", 5.08), ("3", "G", 0.0), ("1", "R", -5.08)):
-        body.append(poly([(0.0, y + 1.27), (0.0, y - 1.27), (2.54, y),
-                          (0.0, y + 1.27)], fill="background"))
-        body.append(poly([(-2.54, y), (0.0, y)]))
-        # the two light arrows, as every LED symbol has
+    for (num, name, y) in (("4", "R", 5.08), ("2", "B", 0.0), ("3", "G", -5.08)):
+        # current runs right to left: anode bar -> triangle -> cathode bar
+        body.append(poly([(2.54, y + 1.27), (2.54, y - 1.27), (0.0, y),
+                          (2.54, y + 1.27)], fill="background"))
+        body.append(poly([(0.0, y + 1.27), (0.0, y - 1.27)], width=0.3))
+        body.append(poly([(0.0, y), (-2.54, y)]))
         for k in (0, 1):
-            bx = 0.6 + 0.9 * k
+            bx = 0.4 + 0.9 * k
             body.append(poly([(bx, y + 1.9), (bx + 1.0, y + 3.0)], width=0.15))
             body.append(poly([(bx + 1.0, y + 3.0), (bx + 0.35, y + 2.9)],
                              width=0.15))
             body.append(poly([(bx + 1.0, y + 3.0), (bx + 0.9, y + 2.35)],
                              width=0.15))
         body.append(pin("passive", "line", -5.08, y, 0, 2.54, name, num))
-    body.append(pin("passive", "line", 7.62, 0, 180, 2.54, "K", "4"))
-    return symbol("LED_RGB_CC", "D", "RGB",
-                  "https://www.lcsc.com/product-detail/C2962096.html",
-                  "RGB LED, common cathode, PLCC-4",
-                  "LED RGB common cathode",
+    body.append(pin("passive", "line", 7.62, 0, 180, 2.54, "A", "1"))
+    return symbol("LED_RGB_CA", "D", "RGB",
+                  "https://www.lcsc.com/product-detail/C2962095.html",
+                  "RGB LED, common anode, PLCC-4",
+                  "LED RGB common anode",
                   "LED*RGB*PLCC4*",
-                  [(1, body)], ref_at=(-5.08, 8.89), val_at=(-5.08, -8.89))
+                  [(1, body)], ref_at=(-5.08, 9.9), val_at=(-5.08, -9.9))
 
 
 # ------------------------------------------------- the second ground ------
