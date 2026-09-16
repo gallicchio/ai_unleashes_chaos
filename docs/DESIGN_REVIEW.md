@@ -294,3 +294,193 @@ exactly the noise that hides a real change.
   need a bigger board.
 * `ON` on a DIP switch is marked on the package, and I have not held one.  The
   silkscreen says so rather than guessing a direction.
+
+
+# Prompt 3: the full review
+
+Worked through item by item.  Where a check could be made to run every build
+rather than once, it was; those are named.
+
+## Four bugs, in order of how badly they would have hurt
+
+**1. DRC was not reading this project's design rules at all.**  `pcbnew` writes
+a `.kicad_pro` next to any board it saves, with a default set of rules, and
+`make.py` only regenerated the real one at the very end -- after DRC.  So every
+"DRC: 0 violations" this project has ever printed was measured against KiCad's
+defaults, not against the rules in `gen_project.py`.  Regenerating the project
+file immediately before DRC turned up **203 violations** that had been there
+all along.  The zone filler had the same problem from the other side: it works
+from the *board's* settings, and a board made by `CreateEmptyBoard()` carries
+defaults, so the pour was backing off 0.25 mm from holes while the rule asked
+for 0.3.  Both are fixed; `apply_rules()` now sets them on the board before
+anything is filled.
+
+This is the worst kind of bug: a check that reports success while checking
+nothing.  Everything below was found only because it started working.
+
+**2. Every via violated the annular-ring rule.**  0.6 mm outside diameter on a
+0.3 mm drill is 0.15 mm of annulus, against a rule asking for 0.25.  Vias are
+now 0.8/0.3 -- 0.25 mm -- and the rule sits at 0.20, because the binding item
+turned out to be the four shell tabs of KiCad's own USB-C footprint, which are
+0.20.  0.20 is still well above the 0.13-0.15 mm the three fabs quote; the
+board's own vias and pads are all 0.25 or better.
+
+**3. Stitching vias were necking the pour beside through-hole pads.**  A via
+placed 1.5 mm from a 2.2 mm ground pad leaves a 0.08 mm isthmus of copper
+between them -- legal for clearance, since they are the same net, and caught
+only by the minimum-connection-width check.  It is also pointless: a
+through-hole pad already connects every layer, so it *is* a stitching via.
+The router now refuses to place one within 0.35 mm of a drilled pad and skips
+the per-pad via for through-hole pads entirely.
+
+**4. Both multipliers had no designator on the silkscreen.**  The legend
+placer avoided pads and other legends but not the package body, so `U3` and
+`U4` were printed neatly underneath the chips.  It now treats every
+footprint's courtyard as occupied, which is the rule that should always have
+applied: silk under a part is silk nobody reads.
+
+## Packages, rotations and pin assignments
+
+Checked mechanically: 82 footprints, none flipped, all on `F.Cu`, every
+rotation 0 or 90 degrees, no mirrored text on the front.  (Two *symbols* are
+mirrored on the sheet -- U2B and the lamp, because the lamp is fed from the
+right -- which has no effect on the board.)
+
+`scripts/check_pinout.py` now runs in every build.  It writes out each IC's pin
+table from the datasheet named in the code, compares it with the symbol this
+project actually uses, and -- where KiCad ships the same part -- compares it
+again with KiCad's library, drawn by other people from the same document:
+
+| part | datasheet | second source |
+|---|---|---|
+| MPY634 SOIC-16 | TI SBFS017A, "PIN CONFIGURATIONS", 'KU' column | `Analog:MPY634KU` |
+| LF412 SOIC-8 | TI SLOS091 | `Amplifier_Operational:LM2904` |
+| CJ78L12 SOT-89 | Changjiang outline: 1 OUT, 2 GND, 3 IN | `Regulator_Linear:MC78L05_SOT89` |
+| CJ79L12 SOT-89 | Changjiang outline: 1 GND, 2 IN, 3 OUT | `Regulator_Linear:L79L05_SOT89` |
+| A0515S-2WR2 | YLPTEC pin table, dual-output column | -- |
+| MHPC3528CRGBCT | MEIHUA LPDS-0001482 Rev.1 p.2 | -- |
+
+Two of these are worth calling out.  The SOT-89 tab is pin 2, which is *ground*
+on the 78L12 and the **input** on the 79L12 -- so U7's tab sits at -15 V, not
+at ground, and a footprint drawn for the positive part would have shorted it.
+And the A0515S's pins are 1, 2, 4, 5, 6 with no pin 3; the gap is the module's
+own isolation barrier, and this board puts the plane split through it.
+
+## Power, traced from the connector
+
+    J1 VBUS x4 -> F1 500 mA PTC -> +5V -> C10 10uF + C11 100nF -> U5 pin 1
+    J1 GND x4 + shell ------------------------------------------> U5 pin 2
+    U5 pin 6 +15V -> C12 + C26 -> U6 pin 3 -> U6 pin 1 +12V -> C27 + C14
+    U5 pin 4 -15V -> C13 + C28 -> U7 pin 2 -> U7 pin 3 -12V -> C29 + C15
+    U5 pin 5 COM  -> GND
+    +12V -> U1.8  U2.8  U3.16  U4.16     each with its own 100 nF
+    -12V -> U1.4  U2.4  U3.10  U4.10     each with its own 100 nF
+
+| rail | load | headroom |
+|---|---|---|
+| +12 V | 20.0 mA | 78L12 rated 100 mA |
+| -12 V | 19.5 mA | 79L12 rated 100 mA |
+| +15 V | 25.0 mA | module rated 67 mA; minimum load 7 mA, so 3.5x over it |
+| -15 V | 24.5 mA | as above |
+| USB 5 V | 186 mA at 80 % efficiency | 500 mA PTC |
+
+Regulator dissipation is (15 - 12) x 25 mA = 75 mW each in a SOT-89, which is
+a seventh of what the package will take.  The converter delivers 743 mW of its
+2 W.  Nothing here is close to a limit, and the one number that could have
+been -- the module's **minimum** load of 7 mA per rail, below which its output
+climbs -- is met 3.5 times over, which is why the rails sit near 15 V and the
+regulators keep their dropout margin.
+
+**Decoupling** was the one place the review actually changed the circuit.  The
+78L12 and 79L12 datasheets are characterised with 0.33 uF in and 0.1 uF out,
+"located as close as possible", and the 10 uF bulk capacitors were 15 mm away.
+Four 100 nF parts, C26 to C29, now sit at the regulators' own pins.
+
+## Impedances, and what drives what
+
+| source | impedance | load | error |
+|---|---|---|---|
+| LF412 output | ~0.01 ohm closed loop | 100 ohm to a 1 Mohm scope | 0.01 % |
+| LF412 output | " | summing resistors 10k..1M into a virtual earth | none |
+| LF412 output | " | MPY634 X/Y input, 10 Mohm | none |
+| MPY634 output | 1 ohm, +/-10 mA | 10k summing resistor | none |
+| U2B output | ~0.01 ohm | three LEDs, 2.2 mA peak | none |
+| 4.7k/33k divider | 4.1k Thevenin | LF412 JFET input, 50 pA | 0.2 uV |
+
+The one thing to say out loud: the BNC outputs are meant for a **1 Mohm**
+scope input.  Into a 50 ohm termination the 100 ohm series resistor divides the
+signal by three.  That is the right trade for a circuit whose output is a slow
+voltage and whose op-amp does not want a metre of coax hanging directly off it.
+
+## Input ranges against the datasheets
+
+| part | limit | worst case here |
+|---|---|---|
+| MPY634 X, Y, Z inputs | +/-10 V linear, +/-Vs absolute | 2.6 V |
+| MPY634 output | about +/-9 V at +/-12 V rails | 1.2 V |
+| LF412 common mode | about +/-8 V at +/-12 V rails | 0 V, and -1.5 V at U2B |
+| LED reverse | 5 V | 1.2 V, computed per colour from the netlist |
+| converter input | 4.5 - 5.5 V | 5 V USB |
+| 78L12 / 79L12 input | 35 V max, ~14.2 V min for 12 V out | 15 - 15.5 V |
+| C0G 2.2 nF, 50 V | 50 V | 5 V |
+
+JFET-input op-amps invert their output if the common mode goes below the
+negative limit; both inverting inputs are virtual earths at 0 V and U2B's
+non-inverting input is at -1.5 V, so nothing goes near it.
+
+## Configuration pins
+
+`SF` on both multipliers is left open, which selects the 10 V scale factor --
+the one the whole resistor network is sized for; a resistor to -Vs there would
+change it to 3 V and multiply every product by 3.3.  Both multipliers' six NC
+pins are unconnected.  On the USB-C receptacle, CC1 and CC2 get **one 5.1k
+each, not a shared one**, which is what tells a source to turn 5 V on; D+, D-,
+SBU1 and SBU2 are unconnected; all four VBUS and all four GND pins are tied.
+The DIP switch has no configuration pins.  `check_circuit.py` asserts all of
+this from the netlist.
+
+## The split ground, re-examined
+
+Still the right call, and now checked rather than asserted.  `gen_pcb.py`
+refuses to build if any net has pads on both sides of the gap, apart from the
+converter and the three bridge parts, and refuses if any track or via strays
+across.  The consequences that matter:
+
+* The only analog-side connection to anything mains-referenced is the scope's
+  own ground clip, which is the point.
+* No return current crosses the split, because no net does.
+* The converter's common-mode current has a 2.2 nF path home (720 ohm at
+  100 kHz) that does not run through the analog ground plane.
+* With nothing plugged in, the analog side sits within a millivolt of USB
+  ground through R18 = 1 M rather than floating on accumulated charge.
+
+**Converter noise, with numbers.**  The module's output ripple is of order
+100 mVpp at about 100 kHz.  The linear regulators give perhaps 25 dB there and
+the op-amps' own supply rejection another 30 dB, which puts roughly 200 uV of
+switching residue at an output whose full scale is 2 V.  That is -80 dB, and
+it is a hundred times *below* the MPY634's own output feedthrough of around
+30 mV.  An RC between the converter and the regulators would buy another 36 dB
+for two resistors; it is not worth the dropout margin it costs, because the
+multiplier would still be the limit.  Physically the switcher, its input
+capacitors and its 6 mm switching loop are all inside the island in the
+bottom-left corner, behind a 1 mm gap, as far from the multipliers as the board
+allows.
+
+## What I would bet on if these came back not working
+
+In order:
+
+1. **Part rotation in assembly.**  The CPL says which way each part is turned,
+   but the fab's library has its own idea of zero degrees, and for polarised
+   parts -- D1, the two regulators, the USB-C receptacle, the DIP switch --
+   a disagreement fits the part backwards.  This is the one failure I cannot
+   check from here, and it is the most common first-article failure there is.
+   `docs/MANUFACTURING.md` now carries a table of every polarised part and
+   which way it faces, to check against the fab's own rendering before paying.
+2. **The BNC footprint**, still drawn from SAMZO's drawing rather than from a
+   connector in my hand.  It is through-hole: if it is wrong it will not fit,
+   which is at least loud.  `lorenz-assembly-top.pdf` prints 1:1.
+3. **A substituted MPY634.**  It is the one part on the board with no real
+   second source, and an "equivalent" would not be.
+4. Everything else -- values, nets, equations, ranges, decoupling -- is either
+   proved from the netlist on every build or checked against a datasheet here.

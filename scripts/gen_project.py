@@ -24,7 +24,7 @@ HW = os.path.join(HERE, "..", "hardware")
 
 TRACK_MIN = 0.2
 CLEARANCE = 0.2
-VIA_DIA, VIA_DRILL = 0.6, 0.3
+VIA_DIA, VIA_DRILL = 0.8, 0.3
 
 NET_CLASSES = [
     {"name": "Default", "clearance": CLEARANCE, "track_width": 0.25,
@@ -63,7 +63,11 @@ def design_rules():
         "min_text_thickness": 0.15,
         "min_through_hole_diameter": 0.3,
         "min_track_width": TRACK_MIN,
-        "min_via_annular_width": 0.25,
+        # 0.20, not 0.25: the binding item is the USB-C receptacle's four
+        # shell tabs in KiCad's own footprint, which are 0.20.  Every via and
+        # pad this design draws itself is 0.25 or better, and 0.20 is still
+        # well above the 0.13-0.15 the three fabs quote.
+        "min_via_annular_width": 0.20,
         "min_via_diameter": VIA_DIA,
         "solder_mask_clearance": 0.0,
         "solder_mask_min_width": 0.0,
@@ -119,7 +123,7 @@ def project(board_stem):
                     "silk_line_width": 0.15,
                     "silk_text_size_h": 1.0, "silk_text_size_v": 1.0,
                     "silk_text_thickness": 0.15,
-                    "zones": {"min_clearance": 0.25},
+                    "zones": {"min_clearance": 0.3},
                 },
                 "diff_pair_dimensions": [],
                 "drc_exclusions": [],

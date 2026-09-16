@@ -81,7 +81,7 @@ def build():
 
         Two grounds exist on this board.  GND is everything downstream of the
         isolated converter -- the analog circuit, the BNC shells, the scope's
-        ground.  GNDU is the USB side.  They meet only at R21/C25/JP1.
+        ground.  GNDU is the USB side.  They meet only at R18/C25/JP1.
         """
         lib = "power:GND" if net == "GND" else "lorenz:GNDU"
         s.place(lib, pwr_ref(), net, x, y, rot=180 if up else 0,
@@ -118,18 +118,18 @@ def build():
             opa=("U1", 1), out="x", y=ROW_Y[0],
             res=[("R1", "100k", -6.35, "-y"), ("R2", "100k", +6.35, "x")],
             caps=("C1", "C2", "C3"), poles=(1, 4), outres="R8", bnc="J2",
-            label="x", sj="SJ_X", note="dx/dt = 10 (y - x)"),
+            label="x", sj="SJ_X", colour="red", note="dx/dt = 10 (y - x)"),
         dict(  # dy/dt = 28x - y - xz
             opa=("U1", 2), out="-y", y=ROW_Y[1],
             res=[("R4", "10k", -12.7, "xz"), ("R3", "35.7k", 0.0, "x"),
                  ("R5", "1M", +12.7, "-y")],
             caps=("C4", "C5", "C6"), poles=(2, 5), outres="R9", bnc="J3",
-            label="-y", sj="SJ_Y", note="dy/dt = 28 x - y - x z"),
+            label="-y", sj="SJ_Y", colour="green", note="dy/dt = 28 x - y - x z"),
         dict(  # dz/dt = xy - (8/3) z
             opa=("U2", 1), out="z", y=ROW_Y[2],
             res=[("R6", "10k", -6.35, "xy"), ("R7", "374k", +6.35, "z")],
             caps=("C7", "C8", "C9"), poles=(3, 6), outres="R10", bnc="J4",
-            label="z", sj="SJ_Z", note="dz/dt = x y - 2.674 z"),
+            label="z", sj="SJ_Z", colour="blue", note="dz/dt = x y - 2.674 z"),
     ]
 
     feeds = {"x": [], "-y": [], "z": []}      # (x_start, y) horizontal bus taps
@@ -303,55 +303,58 @@ def build():
         s.text(m["legend"], JOG_X + 1.9, pw[1] - 2.2, size=1.9)
 
     # ============================== the chaos lamp, driven by x, -y and z ===
-    # Three signals, three colours, one lamp.  The signals swing either side of
-    # ground, so the lamp's common cathode is held at -1.5 V by U2B -- the half
-    # of U2 Paul never needed -- and each colour then lights only while its own
-    # signal is above its own turn-on voltage.  Red marks the +x wing, green
-    # the -x wing, and blue brightens with z, so in "slow!" the colour walks
-    # around the attractor with the trajectory.
-    for (lane, ly, ref, val, rx, note) in (
-            (BUS_X, RGB_R, "R16", "1.5k", 83.82, "x  -> red"),
-            (BUS_NY, RGB_G, "R17", "6.8k", 95.25, "-y -> green"),
-            (BUS_Z, RGB_B, "R18", "4.7k", 104.14, "z  -> blue")):
-        # The three rows are close together, so the resistors step to the
-        # right as they go down and each one's labels sit over its own body.
-        s.place("Device:R_US", ref, val, rx, ly, rot=90, footprint=rfp(),
+    # Each colour is fed from its own integrator's *output* node, tapped on the
+    # short column between the op-amp and the 100 ohm series resistor, and
+    # brought down the right-hand margin.  Drawn this way there is no way to
+    # mistake it for current taken from an op-amp input: the branch leaves the
+    # output on the same side as the BNC, below the jack, and never touches
+    # the return lanes that feed the summing resistors.
+    LAMP_Y = (269.24, 274.32, 279.4)
+    LED_CX, BUF_CX, RES_CX_L = 168.91, 148.59, 190.5
+    # topmost row gets the outermost lane, so no two feeds ever cross
+    for (row, lane, ly, ref, val) in zip(rows, (273.05, 269.24, 265.43),
+                                         LAMP_Y[::-1], ("R13", "R14", "R15"),
+                                         ("1.5k", "6.8k", "4.7k")):
+        y_out = row["y"]
+        s.wire((OUT_X, y_out + 16.51), (lane, y_out + 16.51))
+        s.junction(OUT_X, y_out + 16.51)
+        s.wire((lane, y_out + 16.51), (lane, ly), (194.31, ly))
+        s.place("Device:R_US", ref, val, RES_CX_L, ly, rot=90, footprint=rfp(),
                 fields=passive_fields(val),
                 ref_off=(0, -4.4), val_off=(0, -1.9))
-        feeds[{BUS_X: "x", BUS_NY: "-y", BUS_Z: "z"}[lane]].append((rx - 3.81, ly))
-        s.wire((rx + 3.81, ly), (LED_CX - 5.08, ly))
-        s.text(note, 62.23, ly - 1.4, size=1.6)
-    s.place("lorenz:LED_RGB_CC", "D4", "RGB", LED_CX, RGB_G,
+        s.wire((186.69, ly), (LED_CX + 5.08, ly))
+        s.text(f"{row['label']} -> {row['colour']}", lane + 2.2, ly - 1.4,
+               size=1.6)
+
+    s.place("lorenz:LED_RGB_CC", "D1", "RGB", LED_CX, LAMP_Y[1], mirror="y",
             footprint=fp("LED_RGB"), fields=part_fields("LED_RGB"),
-            ref_off=(-7.62, -9.8), val_off=(-7.62, -6.8),
-            ref_justify="right", val_justify="right")
-    s.place("lorenz:LF412", "U2", "LF412", BUF_CX, RGB_G, unit=2, mirror="y",
+            ref_off=(0, -10.0), val_off=(0, -7.0))
+    s.place("lorenz:LF412", "U2", "LF412", BUF_CX, LAMP_Y[1], unit=2,
             footprint=fp("LF412"), fields=part_fields("LF412"),
             ref_off=(0, 9.4), val_off=(0, 12.6), hide_value=True)
-    s.text("1/2 LF412", BUF_CX, RGB_G + 12.6, size=1.7)
-    k_pin = s.pin("D4", 1, "4")
+    s.text("1/2 LF412", BUF_CX, LAMP_Y[1] + 12.6, size=1.7, justify=None)
+    k_pin = s.pin("D1", 1, "4")
     b_out, b_neg, b_pos = (s.pin("U2", 2, "7"), s.pin("U2", 2, "6"),
                            s.pin("U2", 2, "5"))
-    s.wire(k_pin, b_out)
-    # the follower's feedback, taken above the body
-    s.wire(b_out, (b_out[0], RGB_R - 2.54), (b_neg[0], RGB_R - 2.54), b_neg)
+    s.wire(b_out, k_pin)
+    s.wire(b_out, (b_out[0], LAMP_Y[0] - 2.54), (b_neg[0], LAMP_Y[0] - 2.54),
+           b_neg)
     s.junction(*b_out)
-    tp_vled = testpoint(134.62, RGB_G - 2.54, "-1.5V", rot=0, dx=-2.2, dy=-1.0,
-                        justify="right")
-    s.wire((134.62, RGB_G), (134.62, RGB_G - 2.54))
-    s.junction(134.62, RGB_G)
+    testpoint(160.02, LAMP_Y[1] + 6.35, "-1.5V", rot=180, dx=2.2, dy=1.0)
+    s.wire((160.02, LAMP_Y[1]), (160.02, LAMP_Y[1] + 6.35))
+    s.junction(160.02, LAMP_Y[1])
 
     # --- the reference the buffer holds the cathode at --------------------
-    NODE_X = 186.69
+    NODE_X = 124.46
     s.wire(b_pos, (NODE_X, b_pos[1]))
-    s.place("Device:R_US", "R20", "33k", NODE_X + 3.81, b_pos[1], rot=90,
+    s.place("Device:R_US", "R17", "33k", NODE_X - 3.81, b_pos[1], rot=90,
             footprint=rfp(), fields=passive_fields("33k"),
-            ref_off=(0, -4.4), val_off=(0, 3.4))
-    s.wire((NODE_X + 7.62, b_pos[1]), (NODE_X + 12.7, b_pos[1]))
-    rail("-12V", NODE_X + 12.7, b_pos[1] + 3.81, rot=180, to=b_pos[1])
+            ref_off=(0, -4.4), val_off=(0, -1.9))
+    s.wire((NODE_X - 7.62, b_pos[1]), (NODE_X - 12.7, b_pos[1]))
+    rail("-12V", NODE_X - 12.7, b_pos[1] + 3.81, rot=180, to=b_pos[1])
     for (ref, val, cx, lib, key) in (
-            ("C24", "100nF", 172.72, "Device:C", "100nF"),
-            ("R19", "4.7k", 181.61, "Device:R_US", "4.7k")):
+            ("C24", "100nF", 129.54, "Device:C", "100nF"),
+            ("R16", "4.7k", 137.16, "Device:R_US", "4.7k")):
         s.place(lib, ref, val, cx, b_pos[1] + 6.35,
                 footprint=(parts.PARTS["C_0805"]["footprint"] if ref[0] == "C"
                            else rfp()),
@@ -362,11 +365,19 @@ def build():
         s.wire((cx, b_pos[1] + 10.16), (cx, b_pos[1] + 12.7))
         gnd(cx, b_pos[1] + 12.7, key=f"ref{ref}")
         s.junction(cx, b_pos[1])
-    s.text("-12 V x 4.7k / (4.7k + 33k) = -1.5 V, buffered so",
-           190.5, 288.0, size=1.4)
-    s.text("the lamp current cannot drag the reference about.",
-           190.5, 290.7, size=1.4)
-    s.text("CHAOS LAMP", 62.23, 262.0, size=2.4)
+    s.text("CHAOS LAMP", 19.05, 268.0, size=2.4)
+    for i, line in enumerate((
+            "One lamp, three colours, driven from the three outputs.",
+            "",
+            "-12 V x 4.7k / (4.7k + 33k) = -1.5 V, buffered by U2B -- the half",
+            "of the LF412 Paul never needed -- and held on the lamp's common",
+            "cathode.  Putting the cathode below ground is what lets a signal",
+            "that swings either side of zero switch a colour on and off: each",
+            "one lights only above its own turn-on voltage.  The taps are on",
+            "the output side of each integrator, ahead of the 100 ohm series",
+            "resistor, so no lamp current flows in the BNC output impedance.")):
+        if line:
+            s.text(line, 19.05, 273.0 + i * 2.7, size=1.4)
 
     # ======================================= bus lanes and return lanes =====
     lanes = {"x": BUS_X, "-y": BUS_NY, "z": BUS_Z}
@@ -490,11 +501,11 @@ def build():
     for (ref, val, yb, lib, fld, half) in (
             ("JP1", "GND TIE", BY + 2.54, "Jumper:SolderJumper_2_Open",
              None, 5.08),
-            ("R21", "1M", BY + 7.62, "Device:R_US", "1M", 3.81),
+            ("R18", "1M", BY + 7.62, "Device:R_US", "1M", 3.81),
             ("C25", "2.2nF", BY + 12.7, "Device:C", "2.2nF", 3.81)):
         s.place(lib, ref, val, 139.7, yb, rot=0 if ref == "JP1" else 90,
                 footprint=(fp("JUMPER") if ref == "JP1" else
-                           rfp() if ref == "R21" else
+                           rfp() if ref == "R18" else
                            parts.PARTS["C_0805"]["footprint"]),
                 fields=passive_fields(fld) if fld else {},
                 in_bom=(ref != "JP1"),
@@ -503,12 +514,13 @@ def build():
         s.wire((139.7 + half, yb), (BX_R, yb))
     s.text("ISOLATION BARRIER", BX_L, BY - 4.0, size=2.0)
     for i, line in enumerate((
-            "JP1 open: the analog ground floats, and a scope's",
-            "ground clip is what sets it -- so no mains-referenced",
-            "loop runs through the signal ground.  1 M drains",
-            "static and 2.2 nF takes the converter's 100 kHz",
-            "common-mode current home.  Bridge JP1 to give the",
-            "isolation up and tie the two grounds together.")):
+            "JP1 open: the analog ground floats,",
+            "and a scope's ground clip is what sets",
+            "it, so no mains-referenced loop runs",
+            "through the signal ground.  1 M drains",
+            "static; 2.2 nF takes the converter's",
+            "100 kHz common-mode current home.",
+            "Bridge JP1 to give the isolation up.")):
         s.text(line, 165.1, BY + 1.8 + i * 2.7, size=1.4)
 
     # +/-15 V bulk, then the two regulators.  Both bulk capacitors hang on
@@ -545,6 +557,17 @@ def build():
         s.wire((228.6, ylev), ip)
         s.wire(gp, (gp[0], gp[1] + 5.08 * sign))
         gnd(gp[0], gp[1] + 5.08 * sign, key=f"reg{ureg}", up=(sign < 0))
+        for (cref, cx, pinpt) in ((f"C{26 if sign > 0 else 28}", ip[0] - 7.62, ip),
+                                  (f"C{27 if sign > 0 else 29}", op[0] + 7.62, op)):
+            s.place("Device:C", cref, "100nF", cx, ylev - 11.43 * sign,
+                    footprint=parts.PARTS["C_0805"]["footprint"],
+                    fields=passive_fields("100nF"),
+                    ref_off=(2.4, -1.0), val_off=(2.4, 2.2),
+                    ref_justify="left", val_justify="left")
+            s.wire((cx, ylev), (cx, ylev - 7.62 * sign))
+            s.wire((cx, ylev - 15.24 * sign), (cx, ylev - 20.32 * sign))
+            gnd(cx, ylev - 20.32 * sign, key=f"reg{cref}", up=(sign > 0))
+            s.junction(cx, ylev)
         s.wire(op, (262.89, ylev))
         rail("+12V" if sign > 0 else "-12V", 262.89,
              ylev - 3.81 * sign, rot=0 if sign > 0 else 180, to=ylev)
@@ -561,66 +584,29 @@ def build():
         gnd(cx, ylev + 20.32 * sign, key=f"out{cref}", up=(sign < 0))
         s.junction(cx, ylev)
 
-    # ================================ rail lamps and probe points =========
-    # One lamp per rail, not one lamp for all of them: the old single green
-    # LED across +12 V said nothing about -12 V or about the USB input, so it
-    # could sit there looking healthy with half the board dead.
-    s.text("RAIL LAMPS", 20.32, 381.0, size=2.4)
-    s.text("one per rail, three colours,", 20.32, 385.0, size=1.5)
-    s.text("so a dark one names itself", 20.32, 388.0, size=1.5)
-    for (ref_r, ref_d, rail_name, rval, colour, key, lx) in (
-            ("R13", "D1", "+5V", "2.2k", "yellow", "LED_Y", 78.74),
-            ("R14", "D2", "+12V", "4.7k", "green", "LED_G", 96.52),
-            ("R15", "D3", "-12V", "10k", "white", "LED_W", 114.3)):
-        led_fields = part_fields(key)
-        neg = rail_name.startswith("-")
-        # positive rails: rail -> R -> lamp -> ground.  The negative one runs
-        # the other way, ground -> lamp -> R -> rail, so the lamp still points
-        # the way the current flows.
-        if neg:
-            gnd(lx, 386.08, key=f"lamp{ref_d}", up=True)
-            s.place("Device:LED", ref_d, colour, lx, 391.16, rot=90,
-                    footprint=parts.PARTS[key]["footprint"], fields=led_fields,
-                    ref_off=(5.6, -1.9), val_off=(5.6, 1.9))
-            s.place("Device:R_US", ref_r, rval, lx, 401.32, footprint=rfp(),
-                    fields=passive_fields(rval),
-                    ref_off=(-5.6, -1.9), val_off=(-5.6, 1.9))
-            rail(rail_name, lx, 405.13, rot=180)
-        else:
-            rail(rail_name, lx, 386.08)
-            s.place("Device:R_US", ref_r, rval, lx, 391.16, footprint=rfp(),
-                    fields=passive_fields(rval),
-                    ref_off=(-5.6, -1.9), val_off=(-5.6, 1.9))
-            s.place("Device:LED", ref_d, colour, lx, 401.32, rot=90,
-                    footprint=parts.PARTS[key]["footprint"], fields=led_fields,
-                    ref_off=(5.6, -1.9), val_off=(5.6, 1.9))
-            gnd(lx, 405.13, key=f"lamp{ref_d}",
-                net="GNDU" if rail_name == "+5V" else "GND")
-        s.wire((lx, 386.08), (lx, 387.35))
-        s.wire((lx, 394.97), (lx, 397.51))
-
+    # =========================================== probe points ============
     # --- probe points for every DC rail ----------------------------------
-    s.text("PROBE POINTS", 135.89, 381.0, size=2.4)
+    s.text("PROBE POINTS", 20.32, 381.0, size=2.4)
     s.text("a plated hole for a probe tip, one per rail, plus three wire",
-           135.89, 385.0, size=1.5)
-    s.text("loops a scope's ground clip can bite on", 135.89, 388.0, size=1.5)
+           20.32, 385.0, size=1.5)
+    s.text("loops a scope's ground clip can bite on", 20.32, 388.0, size=1.5)
     TPY, TPTOP = 400.05, 393.7
     for i, name in enumerate(("+5V", "+15V", "-15V", "+12V", "-12V")):
-        tx = 138.43 + i * 15.24
+        tx = 24.13 + i * 20.32
         rail(name, tx, TPTOP, to=TPY)
         testpoint(tx, TPY, name, dx=1.9, dy=4.0)
     for i, (name, net) in enumerate((("GND", "GND"), ("GNDU", "GNDU"))):
-        tx = 138.43 + (5 + i) * 15.24
+        tx = 24.13 + (5 + i) * 20.32
         gnd(tx, TPTOP, up=True, net=net)
         s.text(name, tx + 1.9, TPTOP - 1.6, size=1.27)
         s.wire((tx, TPTOP), (tx, TPY))
         testpoint(tx, TPY, name, dx=1.9, dy=4.0)
     for i in range(3):
-        tx = 259.08 + i * 15.24
+        tx = 191.77 + i * 20.32
         gnd(tx, TPTOP, up=True)
         s.wire((tx, TPTOP), (tx, TPY))
         testpoint(tx, TPY, "SCOPE GND", dx=1.9, dy=4.0, loop=True)
-    s.text("scope ground clips", 259.08, 388.0, size=1.5)
+    s.text("scope ground clips", 191.77, 388.0, size=1.5)
 
     s.text("POWER:  USB-C 5 V in, +/-12 V out", 20.32, 303.0, size=2.6)
     s.text("about 25 mA per rail; the 2 W module is rated +/-66 mA",

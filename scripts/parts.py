@@ -104,7 +104,7 @@ PARTS = {
         desc="Probe pad: a 0.7 mm plated hole, nothing to buy or place"),
     "SCOPE_GND": dict(
         value="", process="THT", in_bom=False,
-        footprint="lorenz:ScopeGround_Loop",
+        footprint="lorenz:TestPoint_ScopeGnd_Loop_2x1.1mm",
         desc="Two 1.1 mm holes 5.08 mm apart: solder a wire loop through "
              "them and a scope ground clip has something to grab"),
     "JUMPER": dict(
@@ -115,7 +115,7 @@ PARTS = {
     "FUSE": dict(
         value="500mA", mpn="MF-MSMF050-2", lcsc="C17313", jlc_type="extended",
         process="SMT", stock=142624, price=0.068,
-        footprint="Fuse:Fuse_1812_4532Metric",
+        footprint="lorenz:PTC_1812_4532Metric",
         desc="Resettable PTC on the USB input"),
 }
 

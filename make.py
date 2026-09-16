@@ -128,6 +128,11 @@ def stage_pcb(stem, layers):
                    env={"LORENZ_STAGE": "route"})
     if "had nowhere to go" in out:
         raise Fail("some silkscreen could not be placed")
+    # Saving a board through pcbnew rewrites the project file next to it with
+    # a default set of design rules, so DRC has to be handed the real ones
+    # back before it runs.  Without this the whole "stricter than every fab"
+    # claim is checked against KiCad's defaults instead.
+    sys_py("gen_project.py")
     rpt = os.path.join(OUT, f"drc-{stem}.rpt")
     kienv.cli("pcb", "drc", "--format", "report", "--severity-all",
               "--schematic-parity", "-o", rpt, pcb, check=False)
@@ -167,6 +172,7 @@ def stage_selftest():
     sys_py("selftest_rotation.py")
     sys_py("qrcode_gen.py")
     sys_py("lamp_model.py")
+    sys_py("check_pinout.py")
 
 
 def clean():

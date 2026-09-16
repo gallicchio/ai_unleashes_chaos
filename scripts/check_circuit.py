@@ -240,6 +240,17 @@ def main():
          and nl.net("U6", 2) == "GND", "U6 78L12: +15 V in, +12 V out, tab to ground")
     need(nl.net("U7", 2) == "-15V" and nl.net("U7", 3) == "-12V"
          and nl.net("U7", 1) == "GND", "U7 79L12: -15 V in, -12 V out")
+    # the datasheets are characterised with 0.33 uF in and 0.1 uF out, "located
+    # as close as possible": the 10 uF bulk is not close, so each pin gets its
+    # own 100 nF as well
+    for (ureg, ipin, opin, cin, cout) in (("U6", 3, 1, "C26", "C27"),
+                                          ("U7", 2, 3, "C28", "C29")):
+        for (cref, pin) in ((cin, ipin), (cout, opin)):
+            net = nl.net(ureg, pin)
+            need(net in (nl.net(cref, 1), nl.net(cref, 2))
+                 and "GND" in (nl.other_pin(cref, "1"), nl.other_pin(cref, "2"))
+                 and nl.value[cref] == "100nF",
+                 f"{cref} is 100 nF from {ureg} pin {pin} ({net}) to ground")
     need(nl.net("U5", 1) == "+5V" and nl.net("U5", 2) == "GNDU"
          and nl.net("U5", 6) == "+15V" and nl.net("U5", 5) == "GND"
          and nl.net("U5", 4) == "-15V",
@@ -258,73 +269,55 @@ def main():
         pins = sorted(p for (r, p) in nl.of if r == ref)
         if any(nl.net(ref, p) == "GND" for p in pins):
             bridges.add(ref)
-    need(bridges == {"R21", "C25", "JP1"},
+    need(bridges == {"R18", "C25", "JP1"},
          f"apart from the converter itself, GND and GNDU meet only at "
-         f"R21, C25 and JP1 (found {sorted(bridges)})")
-    need(nl.value.get("R21") == "1M" and nl.value.get("C25") == "2.2nF",
+         f"R18, C25 and JP1 (found {sorted(bridges)})")
+    need(nl.value.get("R18") == "1M" and nl.value.get("C25") == "2.2nF",
          "the barrier is 1 M in parallel with 2.2 nF: static drains, "
          "100 kHz common-mode current gets home, 60 Hz does not")
     usb_side = {r for (r, _) in nl.nets.get("GNDU", ())
                 if not r.startswith("#") and not r.startswith("TP")}
-    need(usb_side == {"J1", "R11", "R12", "C10", "C11", "U5", "D1", "R21",
+    need(usb_side == {"J1", "R11", "R12", "C10", "C11", "U5", "R18",
                       "C25", "JP1"},
          f"only the USB input sits on GNDU (found {sorted(usb_side)})")
     need(nl.net("J1", "SH") == "GNDU",
          "the USB shell stays on the USB side, where the cable screen belongs")
 
-    # --- one rail lamp per rail, each the right way round ----------------
-    # A lamp soldered backwards lights nothing, and a lamp on the wrong rail
-    # is worse than none: it says a rail is up when it is not.
-    for (led, res, rail, ret, colour) in (("D1", "R13", "+5V", "GNDU", "yellow"),
-                                          ("D2", "R14", "+12V", "GND", "green")):
-        anode = nl.net(led, 2)
-        need(nl.net(led, 1) == ret and nl.net(res, 2) == anode
-             and nl.net(res, 1) == rail and nl.value[led] == colour,
-             f"{led} ({colour}) anode fed from {rail} through {res}, "
-             f"cathode to {ret}")
-    need(nl.net("D3", 2) == "GND" and nl.net("D3", 1) == nl.net("R15", 1)
-         and nl.net("R15", 2) == "-12V" and nl.value["D3"] == "white",
-         "D3 (white) runs ground -> lamp -> R15 -> -12 V, so it lights only "
-         "when the negative rail is really there")
-    for (res, rail, want) in (("R13", "+5V", 5.0), ("R14", "+12V", 12.0),
-                              ("R15", "-12V", 12.0)):
-        i_ma = (want - 2.2) / ohms(nl.value[res]) * 1e3
-        need(0.3 < i_ma < 5.0,
-             f"{res} = {nl.value[res]} runs the {rail} lamp at {i_ma:.2f} mA")
-
     # --- the chaos lamp: three signals, one common cathode ---------------
-    # The signals swing either side of ground, so the cathode is held below
-    # ground and each colour lights only above its own threshold.  Work the
-    # reference and the thresholds out from the resistors that are fitted.
-    vled = nl.net("D4", 4)
+    # There is no separate power lamp.  The lamp needs +12 V (the op-amps),
+    # -12 V (the reference), and therefore the converter and the USB input, so
+    # it lights only when the whole chain is up -- which three discrete LEDs
+    # on three rails told you less well and in three more places.
+    vled = nl.net("D1", 4)
     need(vled == nl.net("U2", 7) and vled == nl.net("U2", 6),
-         "D4's common cathode is driven by U2B wired as a unity follower")
+         "D1's common cathode is driven by U2B wired as a unity follower")
     ref_node = nl.net("U2", 5)
-    top = [r for (r, p) in nl.nets[ref_node] if r.startswith("R")]
-    need(sorted(top) == ["R19", "R20"],
-         "the reference is a two-resistor divider (R19, R20)")
-    r_gnd = ohms(nl.value["R19"]) if nl.other_pin("R19", "1") == "GND" \
-        or nl.other_pin("R19", "2") == "GND" else ohms(nl.value["R20"])
-    r_neg = ohms(nl.value["R20"]) if r_gnd == ohms(nl.value["R19"]) \
-        else ohms(nl.value["R19"])
+    top = sorted(r for (r, p) in nl.nets[ref_node] if r.startswith("R"))
+    need(top == ["R16", "R17"],
+         f"the reference is a two-resistor divider (found {top})")
+    r_gnd = ohms(nl.value["R16"]) if "GND" in (nl.other_pin("R16", "1"),
+                                               nl.other_pin("R16", "2")) \
+        else ohms(nl.value["R17"])
+    r_neg = ohms(nl.value["R17"]) if r_gnd == ohms(nl.value["R16"]) \
+        else ohms(nl.value["R16"])
     vk = -12.0 * r_gnd / (r_gnd + r_neg)
     need(-2.0 < vk < -1.0,
          f"the cathode sits at {vk:.2f} V -- below ground, so a signal that "
          "goes negative can still switch its colour off")
-    caps = {c for (r, p) in nl.nets[ref_node] for c in [r] if r.startswith("C")}
+    caps = {r for (r, p) in nl.nets[ref_node] if r.startswith("C")}
     need(caps == {"C24"}, "C24 filters the reference before the buffer")
 
     # each colour, its drive resistor, its source and what it means
-    colours = [("1", "R16", "x", 1.75, -2.0, 2.0, "red"),
-               ("3", "R17", "-y", 2.60, -2.7, 2.7, "green"),
-               ("2", "R18", "z", 2.60, 0.0, 4.8, "blue")]
+    colours = [("1", "R13", "x", 1.75, -2.0, 2.0, "red"),
+               ("3", "R14", "-y", 2.60, -2.7, 2.7, "green"),
+               ("2", "R15", "z", 2.60, 0.0, 4.8, "blue")]
     i_total = 0.0
     for (pin, res, src, vf, vmin, vmax, name) in colours:
-        anode = nl.net("D4", pin)
+        anode = nl.net("D1", pin)
         need(nl.net(res, 1) == src or nl.net(res, 2) == src,
-             f"{res} feeds D4's {name} from {src}")
+             f"{res} feeds D1's {name} from {src}")
         need(anode in (nl.net(res, 1), nl.net(res, 2)),
-             f"{res} lands on D4 pin {pin} ({name})")
+             f"{res} lands on D1 pin {pin} ({name})")
         thresh = vk + vf
         i_pk = (vmax - vk - vf) / ohms(nl.value[res]) * 1e3
         i_total += i_pk
@@ -338,6 +331,13 @@ def main():
     need(i_total < 8.0,
          f"the lamp draws at most {i_total:.1f} mA, which U2B can sink and "
          "the 2 W converter will not notice")
+    # the lamp must tap the output node, not the summing junction and not the
+    # far side of the series resistor
+    for (res, src, series) in (("R13", "x", "R8"), ("R14", "-y", "R9"),
+                               ("R15", "z", "R10")):
+        need(nl.net(series, 1) == src,
+             f"{res} and {series} share the op-amp output node, so no lamp "
+             f"current flows in the 100 ohm going to the BNC")
 
     # --- probe points -----------------------------------------------------
     # Every rail and every interesting node gets a pad, and nothing gets two.

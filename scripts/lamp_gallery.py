@@ -225,126 +225,276 @@ def label(cfg):
 
 
 GALLERY_CSS = """
-:root { color-scheme: dark; }
-* { box-sizing: border-box; }
-body { margin:0; background:#0b0c0e; color:#e6e6e6;
-       font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
-header { padding:14px 18px 10px; border-bottom:1px solid #23262b; }
-h1 { margin:0 0 4px; font-size:17px; letter-spacing:.06em; }
-.sub { color:#8b929c; font-size:12px; }
-main { display:flex; gap:18px; padding:16px 18px 40px; flex-wrap:wrap; }
-.stage { flex:1 1 640px; min-width:320px; }
-figure { margin:0; }
-img.big { width:100%; height:auto; image-rendering:pixelated;
-          border:1px solid #23262b; background:#000; }
-.caption { margin-top:10px; font-size:13px; }
-.caption b { color:#fff; }
-table.spec { border-collapse:collapse; margin-top:10px; font-size:12px; }
-table.spec td { padding:2px 12px 2px 0; vertical-align:top; color:#b9c0ca; }
-table.spec td:first-child { color:#7d858f; white-space:nowrap; }
-.side { flex:0 0 220px; max-height:78vh; overflow:auto; }
-.side button { display:block; width:100%; text-align:left; margin:0 0 4px;
-  padding:5px 7px; font:inherit; font-size:11px; background:#14161a;
-  color:#c9d1d9; border:1px solid #23262b; border-radius:4px; cursor:pointer; }
-.side button.on { background:#1f6feb33; border-color:#1f6feb; color:#fff; }
-.nav { margin:10px 0 0; display:flex; gap:8px; align-items:center; }
-.nav button { font:inherit; padding:5px 12px; background:#14161a; color:#c9d1d9;
-  border:1px solid #23262b; border-radius:4px; cursor:pointer; }
-.hint { color:#7d858f; font-size:12px; }
-@media (max-width:760px){ .side{flex:1 1 100%; max-height:none;} }
+:root{
+  --ground:#E4E7E5; --panel:#F7F8F7; --well:#0B0D0C; --ink:#11150F;
+  --muted:#5D655E; --line:#C6CDC6; --line-soft:#D9DED9; --brass:#9A7A18;
+  --brass-soft:#E9DFBE; --die-r:#FF2D16; --die-g:#12E04A; --die-b:#2B4BFF;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0C0F0D; --panel:#141815; --well:#000000; --ink:#DDE3DD;
+    --muted:#8B958C; --line:#252B26; --line-soft:#1C211D; --brass:#D9B23F;
+    --brass-soft:#3A3013;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0C0F0D; --panel:#141815; --well:#000000; --ink:#DDE3DD;
+  --muted:#8B958C; --line:#252B26; --line-soft:#1C211D; --brass:#D9B23F;
+  --brass-soft:#3A3013;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font:400 15px/1.55 "IBM Plex Sans Condensed","Helvetica Neue",Arial,sans-serif;
+  padding:0 20px 56px;
+}
+.mono,code{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-variant-numeric:tabular-nums}
+header{max-width:1320px; margin:0 auto; padding:26px 0 18px;
+  border-bottom:1px solid var(--line)}
+h1{margin:0; font-weight:600; font-size:clamp(24px,3.4vw,34px);
+  letter-spacing:.015em; text-wrap:balance}
+h1 span{color:var(--muted); font-weight:400}
+.lede{margin:9px 0 0; max-width:66ch; color:var(--muted); font-size:14px}
+.dies{display:flex; gap:14px; margin:14px 0 0; flex-wrap:wrap;
+  font-size:12px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--muted)}
+.die{display:flex; align-items:center; gap:6px}
+.chip{width:11px; height:11px; border-radius:2px; box-shadow:0 0 7px currentColor}
+.chip.r{background:var(--die-r); color:var(--die-r)}
+.chip.g{background:var(--die-g); color:var(--die-g)}
+.chip.b{background:var(--die-b); color:var(--die-b)}
+
+main{max-width:1320px; margin:0 auto; display:grid; gap:26px;
+  grid-template-columns:minmax(0,1fr) 290px; padding-top:22px}
+@media (max-width:900px){ main{grid-template-columns:minmax(0,1fr)} }
+
+.stage{min-width:0}
+.well{background:var(--well); border:1px solid var(--line);
+  padding:14px; display:block}
+.well img{display:block; width:100%; height:auto; image-rendering:pixelated}
+.ruler{display:flex; justify-content:space-between; align-items:baseline;
+  margin-top:7px; font-size:11px; letter-spacing:.07em; color:var(--muted)}
+.ruler b{font-weight:400; color:var(--ink)}
+
+.headline{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+  margin:20px 0 2px}
+.idx{font-size:30px; font-weight:500; color:var(--brass)}
+.wiring{display:flex; gap:12px; flex-wrap:wrap; font-size:15px}
+.w{display:flex; align-items:center; gap:6px}
+.kind{font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--muted); border:1px solid var(--line); border-radius:2px;
+  padding:2px 7px}
+
+dl.spec{display:grid; grid-template-columns:auto 1fr; gap:3px 20px;
+  margin:16px 0 0; font-size:13.5px; align-items:baseline}
+dl.spec dt{color:var(--muted); font-size:11.5px; letter-spacing:.09em;
+  text-transform:uppercase; white-space:nowrap}
+dl.spec dd{margin:0}
+dl.spec dd .u{color:var(--muted)}
+
+.controls{display:flex; gap:9px; align-items:center; margin:20px 0 0;
+  flex-wrap:wrap}
+button{font:inherit; font-size:13px; color:var(--ink); background:var(--panel);
+  border:1px solid var(--line); border-radius:2px; padding:6px 13px;
+  cursor:pointer}
+button:hover{border-color:var(--brass)}
+button:focus-visible{outline:2px solid var(--brass); outline-offset:2px}
+.hint{color:var(--muted); font-size:12.5px}
+
+.rail{min-width:0}
+.filters{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px}
+.filters button{padding:4px 9px; font-size:12px; letter-spacing:.04em}
+.filters button[aria-pressed="true"]{background:var(--brass-soft);
+  border-color:var(--brass); color:var(--ink)}
+.list{max-height:74vh; overflow:auto; border-top:1px solid var(--line-soft);
+  scrollbar-width:thin}
+.row{display:grid; grid-template-columns:34px 30px 1fr auto; gap:9px;
+  align-items:center; width:100%; text-align:left; padding:7px 8px;
+  border:0; border-bottom:1px solid var(--line-soft); border-radius:0;
+  background:none; font-size:12.5px}
+.row:hover{background:var(--panel); border-color:var(--line-soft)}
+.row[aria-current="true"]{background:var(--brass-soft);
+  box-shadow:inset 3px 0 0 var(--brass)}
+.row .n{color:var(--muted)}
+.row .bar{display:flex; gap:2px}
+.row .bar i{width:8px; height:8px; border-radius:1px; display:block}
+.row .v{color:var(--muted)}
+@media (max-width:900px){ .list{max-height:46vh} }
+@media (prefers-reduced-motion:no-preference){
+  .well img{transition:opacity .12s ease}
+}
+footer{max-width:1320px; margin:34px auto 0; padding-top:16px;
+  border-top:1px solid var(--line); color:var(--muted); font-size:12.5px;
+  max-width:1320px}
+footer p{margin:0 0 6px; max-width:74ch}
 """
 
-GALLERY_JS = """
-const S = window.LAMP;
-let i = 0;
-const img = document.getElementById('big');
-const cap = document.getElementById('cap');
+GALLERY_JS = r"""
+const S = window.LAMP, OPTS = S.options;
+const DIE = ['--die-r','--die-g','--die-b'];
+const img = document.getElementById('shot');
 const list = document.getElementById('list');
-S.options.forEach((o, k) => {
-  const b = document.createElement('button');
-  b.textContent = String(k + 1).padStart(3, '0') + '  ' + o.label.replace(/\s+/g, ' ');
-  b.onclick = () => show(k);
-  list.appendChild(b);
-});
-function mA(v){ return v.map(x => x.toFixed(2)).join(' / '); }
-function show(k) {
-  i = (k + S.options.length) % S.options.length;
-  const o = S.options[i];
-  img.src = o.file;
-  img.alt = o.label;
-  const d = o.div.r_gnd
-      ? o.div.r_gnd/1000 + 'k to GND, ' + o.div.r_rail/1000 + 'k to ' + o.div.rail
-      : 'none -- tie the common pin straight to ground';
-  cap.innerHTML =
-    '<div class="caption"><b>' + String(i + 1).padStart(3, '0') + '</b> &nbsp; ' +
-    o.label + '</div>' +
-    '<table class="spec">' +
-    '<tr><td>lamp</td><td>' + o.mpn + ' (' + o.lcsc + '), ' +
-      (o.part === 'CC' ? 'common cathode' : 'common anode') + '</td></tr>' +
-    '<tr><td>reference</td><td>' + o.vref.toFixed(1) + ' V &nbsp; divider: ' + d +
-      ' &nbsp; (U2B buffers it)</td></tr>' +
-    '<tr><td>series R</td><td>R ' + o.r[0] + ' &nbsp; G ' + o.r[1] +
-      ' &nbsp; B ' + o.r[2] + ' ohm</td></tr>' +
-    '<tr><td>peak mA</td><td>' + mA(o.i_peak) + ' &nbsp; (mean ' + mA(o.i_mean) +
-      ')</td></tr>' +
-    '<tr><td>peak mcd</td><td>' + o.mcd_peak.join(' / ') + '</td></tr>' +
-    '<tr><td>lit</td><td>' + (100 * o.lit).toFixed(0) + '% of the time &nbsp; ' +
-      'worst reverse ' + o.v_rev.toFixed(1) + ' V of 5 V allowed</td></tr>' +
-    '</table>';
-  [...list.children].forEach((b, k2) => b.classList.toggle('on', k2 === i));
-  list.children[i].scrollIntoView({ block: 'nearest' });
-  history.replaceState(null, '', '#' + (i + 1));
+let i = 0, filter = 'all';
+
+function wiringHTML(o){
+  return o.perm.map((sig,k) =>
+    `<span class="w"><i class="chip ${'rgb'[k]}"></i>${S.signals[sig]}</span>`
+  ).join('');
 }
-document.getElementById('prev').onclick = () => show(i - 1);
-document.getElementById('next').onclick = () => show(i + 1);
-addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight' || e.key === ' ') { show(i + 1); e.preventDefault(); }
-  if (e.key === 'ArrowLeft') { show(i - 1); e.preventDefault(); }
-  if (e.key === 'Home') show(0);
-  if (e.key === 'End') show(S.options.length - 1);
+function rows(){
+  list.textContent = '';
+  OPTS.forEach((o,k) => {
+    if (filter === 'cc' && o.part !== 'CC') return;
+    if (filter === 'ca' && o.part !== 'CA') return;
+    if (filter === 'switchy' && o.lit > 0.75) return;
+    if (filter === 'steady' && o.lit <= 0.75) return;
+    const b = document.createElement('button');
+    b.className = 'row'; b.dataset.k = k;
+    b.innerHTML =
+      `<span class="n mono">${String(k+1).padStart(3,'0')}</span>` +
+      `<span class="bar">` + o.perm.map((sig,j) =>
+        `<i style="background:var(${DIE[j]})"></i>`).join('') + `</span>` +
+      `<span class="mono">${o.perm.map(s => S.signals[s]).join(' ')}</span>` +
+      `<span class="v mono">${o.vref > 0 ? '+' : ''}${o.vref.toFixed(1)}V</span>`;
+    b.onclick = () => show(k);
+    list.appendChild(b);
+  });
+  mark();
+}
+function mark(){
+  [...list.children].forEach(b => {
+    const on = Number(b.dataset.k) === i;
+    b.setAttribute('aria-current', on ? 'true' : 'false');
+    if (on) b.scrollIntoView({block:'nearest'});
+  });
+}
+function ma(v){ return v.map(x => x.toFixed(2)).join(' · '); }
+function show(k){
+  i = (k + OPTS.length) % OPTS.length;
+  const o = OPTS[i];
+  img.src = o.file;
+  img.alt = 'colour of the lamp over ' + S.seconds + ' seconds, option ' + (i+1);
+  document.getElementById('idx').textContent = String(i+1).padStart(3,'0');
+  document.getElementById('wiring').innerHTML = wiringHTML(o);
+  document.getElementById('kind').textContent =
+    o.part === 'CC' ? 'common cathode' : 'common anode';
+  const d = o.div.r_gnd
+    ? `${o.div.r_gnd/1000}k to GND, ${o.div.r_rail/1000}k to ${o.div.rail}`
+    : 'none — tie the common pin straight to ground';
+  document.getElementById('spec').innerHTML =
+    `<dt>lamp</dt><dd class="mono">${o.mpn} <span class="u">(${o.lcsc})</span></dd>` +
+    `<dt>reference</dt><dd class="mono">${o.vref.toFixed(1)} V <span class="u">— ${d}, buffered by U2B</span></dd>` +
+    `<dt>series R</dt><dd class="mono">${o.r[0]} · ${o.r[1]} · ${o.r[2]} <span class="u">ohm (R13 R14 R15)</span></dd>` +
+    `<dt>peak</dt><dd class="mono">${ma(o.i_peak)} <span class="u">mA</span> &nbsp; ${o.mcd_peak.join(' · ')} <span class="u">mcd</span></dd>` +
+    `<dt>mean</dt><dd class="mono">${ma(o.i_mean)} <span class="u">mA — ${(100*o.lit).toFixed(0)}% of the time something is lit</span></dd>` +
+    `<dt>reverse</dt><dd class="mono">${o.v_rev.toFixed(1)} V <span class="u">of the 5 V the part allows</span></dd>`;
+  mark();
+  history.replaceState(null, '', '#' + (i+1));
+}
+document.getElementById('prev').onclick = () => show(i-1);
+document.getElementById('next').onclick = () => show(i+1);
+document.querySelectorAll('.filters button').forEach(b => {
+  b.onclick = () => {
+    filter = b.dataset.f;
+    document.querySelectorAll('.filters button').forEach(x =>
+      x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+    rows();
+  };
 });
-show(Math.max(0, (parseInt(location.hash.slice(1), 10) || 1) - 1));
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'BUTTON' && e.key === ' ') return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown'){ show(i+1); e.preventDefault(); }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp'){ show(i-1); e.preventDefault(); }
+  if (e.key === 'Home') show(0);
+  if (e.key === 'End') show(OPTS.length-1);
+});
+rows();
+show(Math.max(0, (parseInt(location.hash.slice(1),10) || 1) - 1));
 """
 
 
 def write_gallery(out, index):
-    """A page for flipping through the options with the arrow keys."""
-    meta = json.dumps(dict(width=W, rows=ROWS, dt=DT, tau_slow=TAU_SLOW,
-                           options=index), separators=(",", ":"))
+    """The page for flipping through the options."""
     ms = DT * TAU_SLOW * 1e3
     secs = W * ROWS * DT * TAU_SLOW
+    row_s = W * DT * TAU_SLOW
+    meta = json.dumps(dict(width=W, rows=ROWS, dt=DT, tau_slow=TAU_SLOW,
+                           seconds=round(secs), signals=list(SIGNALS),
+                           options=index), separators=(",", ":"))
     html = f"""<!doctype html>
+<html lang="en">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Chaos lamp options</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Chaos Lamp Wirings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;500;600&display=swap">
 <style>{GALLERY_CSS}</style>
+<body>
 <header>
-  <h1>CHAOS LAMP &mdash; {len(index)} wirings</h1>
-  <div class="sub">Each picture is {secs:.0f} seconds of the lamp at the
-  &ldquo;slow!&rdquo; setting, read left to right and wrapping at the end of
-  every row, {ms:.1f} ms per pixel, with a black row between passes.
-  Colour is computed from the datasheet's forward voltages and luminous
-  intensities through the CIE 1931 observer; brightness is compressed the way
-  a dark-adapted eye compresses it.  Arrow keys to flip.</div>
+  <h1>Chaos lamp <span>&mdash; {len(index)} ways to wire it</span></h1>
+  <p class="lede">One RGB lamp on the three outputs of a Lorenz attractor.
+  Each picture is {secs:.0f} seconds of it at the &ldquo;slow!&rdquo; setting,
+  read left to right and wrapping at the end of every row, {ms:.1f}&nbsp;ms per
+  pixel, with a black row between passes.  Colour comes from the datasheet's
+  forward voltages and luminous intensities through the CIE&nbsp;1931 observer;
+  brightness is compressed the way a dark-adapted eye compresses it.</p>
+  <div class="dies">
+    <span class="die"><i class="chip r"></i>red die, 621&nbsp;nm</span>
+    <span class="die"><i class="chip g"></i>green die, 520&nbsp;nm</span>
+    <span class="die"><i class="chip b"></i>blue die, 465&nbsp;nm</span>
+  </div>
 </header>
 <main>
-  <div class="stage">
-    <figure><img class="big" id="big" alt=""></figure>
-    <div id="cap"></div>
-    <div class="nav">
+  <section class="stage">
+    <figure class="well" style="margin:0"><img id="shot" alt=""></figure>
+    <div class="ruler">
+      <span>t = 0</span>
+      <span><b>{row_s:.1f} s</b> per row &middot; <b>{ms:.1f} ms</b> per pixel</span>
+      <span>t = {secs:.0f} s</span>
+    </div>
+    <div class="headline">
+      <span class="idx mono" id="idx">001</span>
+      <span class="wiring mono" id="wiring"></span>
+      <span class="kind" id="kind"></span>
+    </div>
+    <dl class="spec" id="spec"></dl>
+    <div class="controls">
       <button id="prev">&larr; previous</button>
       <button id="next">next &rarr;</button>
-      <span class="hint">or use the arrow keys</span>
+      <span class="hint">or the arrow keys</span>
     </div>
-  </div>
-  <div class="side" id="list"></div>
+  </section>
+  <aside class="rail">
+    <div class="filters">
+      <button data-f="all" aria-pressed="true">all</button>
+      <button data-f="cc" aria-pressed="false">common cathode</button>
+      <button data-f="ca" aria-pressed="false">common anode</button>
+      <button data-f="switchy" aria-pressed="false">switches</button>
+      <button data-f="steady" aria-pressed="false">always lit</button>
+    </div>
+    <div class="list" id="list"></div>
+  </aside>
 </main>
+<footer>
+  <p>&ldquo;Switches&rdquo; means something is dark more than a quarter of the
+  time &mdash; the trajectory turning a colour off as it changes wings.
+  &ldquo;Always lit&rdquo; means all three dies stay above their turn-on
+  voltage and the colour wanders instead of blinking.</p>
+  <p>Every option is buildable as drawn: the reference divider hangs off the
+  &plusmn;12&nbsp;V rails and is buffered by the half of U2 that Paul never
+  needed, and the common-anode ones are the same package with the pin&nbsp;1
+  and pin&nbsp;4 connections exchanged.  Generated by
+  <span class="mono">scripts/lamp_gallery.py</span> in
+  <span class="mono">gallicchio/ai_unleashes_chaos</span>.</p>
+</footer>
 <script>window.LAMP={meta};</script>
 <script>{GALLERY_JS}</script>
+</html>
 """
     with open(os.path.join(out, "index.html"), "w") as fh:
         fh.write(html)
-
 
 
 def main():

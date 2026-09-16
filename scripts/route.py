@@ -27,7 +27,7 @@ CLEARANCE = 0.20       # matches the project design rules
 # pad.
 TRACK = 0.30           # every track
 POWER_TRACK = 0.30
-VIA_DIA = 0.60
+VIA_DIA = 0.80
 VIA_DRILL = 0.30
 HOLE_TO_HOLE = 0.50
 EDGE_KEEPOUT = 0.45    # copper to board edge, with margin over the 0.3 rule
@@ -425,6 +425,16 @@ def stitch_vias(g, pads, net="GND", spacing=4.5, lattice=True):
     nid = g.nid(net)
     step = max(1, int(round(spacing / GRID)))
     r = int(math.ceil(VIA_HALO / GRID))
+    # A through-hole pad already ties every layer together, so it needs no
+    # stitching via beside it -- and a via *near* one leaves a neck of copper
+    # between the two, narrower than the minimum connection width, which is a
+    # real manufacturing defect rather than a rule-book one.
+    for p in pads:
+        if not p["through"]:
+            continue
+        k = VIA_DIA / 2.0 + 0.35
+        g.block_vias(p["cx"] - p["w"] / 2 - k, p["cy"] - p["h"] / 2 - k,
+                     p["cx"] + p["w"] / 2 + k, p["cy"] + p["h"] / 2 + k)
     _, room = g.masks(nid)
     room = room.reshape(g.ny, g.nx)
     out = []
@@ -439,10 +449,11 @@ def stitch_vias(g, pads, net="GND", spacing=4.5, lattice=True):
         g.block_vias(x - k, y - k, x + k, y + k)
         return g.masks(nid)[1].reshape(g.ny, g.nx)
 
-    # one beside each ground pad first, so no pour island is left floating
+    # one beside each surface ground pad first, so no pour island is left
+    # floating; the through-hole ones are their own vias
     reach = int(round(2.4 / GRID))
     for p in pads:
-        if p["net"] != net:
+        if p["net"] != net or p["through"]:
             continue
         px, py = g.cell(p["x"], p["y"])
         best = None

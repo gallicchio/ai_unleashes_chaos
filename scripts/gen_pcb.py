@@ -116,9 +116,25 @@ def layer_id(name):
     return LAYER_BY_NAME[name]
 
 
+# The zone filler works from the *board's* design settings, not from the
+# project file next to it, and a board made with CreateEmptyBoard carries
+# KiCad's defaults.  Set the few that decide how far a pour backs off, or the
+# fill quietly disagrees with the rules DRC is about to check it against.
+BOARD_RULES = dict(m_MinClearance=0.20, m_HoleClearance=0.30,
+                   m_HoleToHoleMin=0.50, m_CopperEdgeClearance=0.30,
+                   m_SilkClearance=0.15)
+
+
+def apply_rules(board):
+    ds = board.GetDesignSettings()
+    for name, value in BOARD_RULES.items():
+        setattr(ds, name, mm(value))
+
+
 def add_routes(board, routes_path, layers):
     """Lay down the tracks, vias and ground planes the router worked out."""
     import json
+    apply_rules(board)
     data = json.load(open(routes_path))
     nets = {board.GetNetInfo().GetNetItem(i).GetNetname():
             board.GetNetInfo().GetNetItem(i)
@@ -174,7 +190,7 @@ def add_routes(board, routes_path, layers):
         z.SetPadConnection(pcbnew.ZONE_CONNECTION_THT_THERMAL)
         z.SetThermalReliefGap(mm(0.3))
         z.SetThermalReliefSpokeWidth(mm(0.5))
-        z.SetLocalClearance(mm(0.25))
+        z.SetLocalClearance(mm(0.3))
         z.SetMinThickness(mm(0.2))
         z.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_ALWAYS)
         outline = z.Outline()
@@ -183,6 +199,43 @@ def add_routes(board, routes_path, layers):
             outline.Append(mm(x), mm(y))
         board.Add(z)
     pcbnew.ZONE_FILLER(board).Fill(board.Zones())
+
+    # Nothing but the barrier parts may cross the split.  A track wandering
+    # over the gap would not be a short, but it would put a signal's return
+    # current on the wrong plane, which is the whole thing the split exists to
+    # prevent -- and it is invisible in every other check.
+    # A net belongs to the island if any of its pads is in there; the three
+    # bridge parts and the converter are the only things allowed both sides.
+    bridge = {"JP1", "R18", "C25", "U5"}
+    usb_nets, gnd_nets = set(), set()
+    for fp in board.GetFootprints():
+        ref = fp.GetReference()
+        for pad in fp.Pads():
+            net = pad.GetNetname()
+            if not net or ref in bridge:
+                continue
+            x = pcbnew.ToMM(pad.GetPosition().x)
+            y = pcbnew.ToMM(pad.GetPosition().y)
+            (usb_nets if P.in_island(x, y) else gnd_nets).add(net)
+    both = usb_nets & gnd_nets
+    if both:
+        raise SystemExit("isolation split: net(s) with pads on both sides of "
+                         f"the gap: {sorted(both)}")
+    stray = []
+    for t in board.GetTracks():
+        net = t.GetNetname()
+        for pos in ((t.GetStart(), t.GetEnd()) if not isinstance(
+                t, pcbnew.PCB_VIA) else (t.GetPosition(),)):
+            x, y = pcbnew.ToMM(pos.x), pcbnew.ToMM(pos.y)
+            inside = P.in_island(x, y)
+            if net in usb_nets and not inside:
+                stray.append(f"{net} track at ({x:.1f}, {y:.1f}) leaves the "
+                             "USB island")
+            if net not in usb_nets and net and inside:
+                stray.append(f"{net} track at ({x:.1f}, {y:.1f}) is inside the "
+                             "USB island")
+    if stray:
+        raise SystemExit("isolation split: " + "; ".join(sorted(set(stray))[:6]))
     return ntrack, nvia
 
 
@@ -191,7 +244,7 @@ def add_via(board, x, y, net, layers):
     v.SetPosition(pt(x, y))
     v.SetViaType(pcbnew.VIATYPE_THROUGH)
     v.SetDrill(mm(0.3))
-    v.SetWidth(mm(0.6))
+    v.SetWidth(mm(0.8))
     cu = list(board.GetEnabledLayers().CuStack())
     v.SetLayerPair(cu[0], cu[-1])
     if net:
@@ -240,13 +293,23 @@ class SilkSpace:
 
     def __init__(self, board):
         self.pads = pad_boxes(board)
-        # a footprint's own outline is silkscreen too, so legends must dodge it
         for fp in board.GetFootprints():
+            # a footprint's own outline is silkscreen too, so legends dodge it
             for it in fp.GraphicalItems():
                 if it.GetLayer() == pcbnew.F_SilkS:
                     b = bbox_mm(it)
                     self.pads.append((b[0] - 0.15, b[1] - 0.15,
                                       b[2] + 0.15, b[3] + 0.15))
+            # ...and so does the package body.  Legend printed under a part is
+            # legend nobody will ever read, which is how both multipliers came
+            # to have no designator on them at all.
+            poly = fp.GetCourtyard(pcbnew.F_CrtYd)
+            if poly.OutlineCount():
+                bb = poly.BBox()
+                self.pads.append((pcbnew.ToMM(bb.GetLeft()),
+                                  pcbnew.ToMM(bb.GetTop()),
+                                  pcbnew.ToMM(bb.GetRight()),
+                                  pcbnew.ToMM(bb.GetBottom())))
         self.taken = []
 
     def free(self, box):
@@ -320,12 +383,16 @@ def add_text_near(board, space, x, y, txt, size, thickness=0.15, reach=9.0):
 
 
 def add_text(board, space, x, y, txt, size, layer=pcbnew.F_SilkS,
-             thickness=0.15, must_fit=True, angle=0):
+             thickness=0.15, must_fit=True, angle=0, justify="center"):
     t = pcbnew.PCB_TEXT(board)
     t.SetText(txt)
     style_text(t, size, thickness, layer)
     t.SetTextAngleDegrees(angle)
-    t.SetHorizJustify(pcbnew.GR_TEXT_H_ALIGN_CENTER)
+    # KiCad mirrors a back-layer item about its own anchor, so left-aligned
+    # still reads left-aligned once the board is turned over.
+    align = {"center": pcbnew.GR_TEXT_H_ALIGN_CENTER,
+             "left": pcbnew.GR_TEXT_H_ALIGN_LEFT}[justify]
+    t.SetHorizJustify(align)
     t.SetPosition(pt(x, y))
     box = bbox_mm(t)
     if must_fit and not space.free(box):
@@ -413,14 +480,14 @@ def add_speed_table(board, space, missing):
         if add_text(board, space, x, y, str(i + 1), 1.0, must_fit=False) is None:
             missing.append(f"speed table pole {i + 1}")
     add_text(board, space, left - 4.0, y, "SW1", 1.0, must_fit=False)
-    add_text(board, space, right + 7.0, y, "C", 1.0, must_fit=False)
+    add_text(board, space, right + 4.5, y, "C", 1.0, must_fit=False)
     for (i, (speed, a, b, cval, tau)) in enumerate(SILK.SPEED_ROWS):
         ry = y + 1.8 + i * 1.8
         add_text(board, space, left - 4.0, ry, speed, 1.0, must_fit=False)
         for k, x in enumerate(xs):
             add_text(board, space, x, ry, a if k < 3 else b, 0.9,
                      must_fit=False)
-        add_text(board, space, right + 7.0, ry, cval, 1.0, must_fit=False)
+        add_text(board, space, right + 4.5, ry, cval, 1.0, must_fit=False)
     bot = y + 1.8 + len(SILK.SPEED_ROWS) * 1.8 - 0.6
     add_text(board, space, mid, y - 2.4, "SPEED SELECT", 1.0, must_fit=False)
     below = pcbnew.ToMM(sw.GetBoundingBox().GetBottom()) + 1.7
@@ -428,7 +495,7 @@ def add_speed_table(board, space, missing):
                      "ON is marked on the switch", 0.9, reach=3.0) is None:
         missing.append("speed table footnote")
     for (x1, y1, x2, y2) in ((mid, y - 1.4, mid, bot),          # between banks
-                             (left - 8.0, y + 0.9, right + 11.0, y + 0.9)):
+                             (left - 8.0, y + 0.9, right + 8.5, y + 0.9)):
         seg = pcbnew.PCB_SHAPE(board)
         seg.SetShape(pcbnew.SHAPE_T_SEGMENT)
         seg.SetStart(pt(x1, y1))
@@ -520,7 +587,8 @@ def add_silk(board):
     for (size, line) in SILK.BACK_BLOCK:
         if line:
             if add_text(board, back, bx, y, line, size, layer=pcbnew.B_SilkS,
-                        thickness=0.25 if size > 2 else 0.15) is None:
+                        thickness=0.25 if size > 2 else 0.15,
+                        justify="left") is None:
                 missing.append(f"back line {line!r}")
         y += (size * 1.5 + 0.9) if line else 1.4
     ox, oy, ocap, osize = SILK.OWL_CAPTION[0], SILK.OWL_CAPTION[1], \
@@ -608,6 +676,7 @@ def build(layers, netlist_path, out_path):
     comps, nets = read_netlist(netlist_path)
     board = pcbnew.CreateEmptyBoard()
     board.SetCopperLayerCount(layers)
+    apply_rules(board)
 
     # --- nets -----------------------------------------------------------
     netmap = {}
@@ -658,7 +727,7 @@ def build(layers, netlist_path, out_path):
             if key in pad_net:
                 pad.SetNet(netmap[pad_net[key]])
         # the bundled 3D library is a reduced set and has no model for these
-        local = {"J1": "USB_C_HRO_TYPE-C-31-M-12.wrl", "F1": "Fuse_1812.wrl"}
+        local = {"J1": "USB_C_HRO_TYPE-C-31-M-12.wrl"}
         if ref in local:
             fp.Models().clear()
             m = pcbnew.FP_3DMODEL()

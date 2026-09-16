@@ -32,9 +32,9 @@ bridged only by R21, C25 and JP1.  Do not scratch across the 1 mm gap.
 
 ## Cost
 
-The board has **186 SMT joints** and **24 through-hole joints** on
-30 BOM lines (16 JLCPCB Basic, 14 Extended).
-Parts alone are **$71.86 per board**, of which
+The board has **182 SMT joints** and **24 through-hole joints** on
+26 BOM lines (12 JLCPCB Basic, 14 Extended).
+Parts alone are **$71.87 per board**, of which
 $61.17 is the pair of MPY634 multipliers.
 
 **2 boards, two layers, fully assembled including through-hole**
@@ -42,37 +42,62 @@ $61.17 is the pair of MPY634 multipliers.
 | line | cost |
 |---|---|
 | bare PCBs | $2.00 |
-| parts ($71.86 x 2) | $143.71 |
-| assembly: setup $8.00 + stencil $1.50 + 372 SMT joints + 14 extended parts + 48 THT joints | $66.53 |
+| parts ($71.87 x 2) | $143.74 |
+| assembly: setup $8.00 + stencil $1.50 + 364 SMT joints + 14 extended parts + 48 THT joints | $66.52 |
 | shipping (DHL, worldwide) | $22.00 |
-| **total** | **$234.25**  ($117.12 each) |
+| **total** | **$234.26**  ($117.13 each) |
 
 **5 boards, two layers, fully assembled including through-hole**
 
 | line | cost |
 |---|---|
 | bare PCBs | $2.00 |
-| parts ($71.86 x 5) | $359.28 |
-| assembly: setup $8.00 + stencil $1.50 + 930 SMT joints + 14 extended parts + 120 THT joints | $89.08 |
+| parts ($71.87 x 5) | $359.35 |
+| assembly: setup $8.00 + stencil $1.50 + 910 SMT joints + 14 extended parts + 120 THT joints | $89.05 |
 | shipping (DHL, worldwide) | $22.00 |
-| **total** | **$472.37**  ($94.47 each) |
+| **total** | **$472.40**  ($94.48 each) |
 
 **10 boards, two layers, fully assembled including through-hole**
 
 | line | cost |
 |---|---|
 | bare PCBs | $4.00 |
-| parts ($71.86 x 10) | $718.57 |
-| assembly: setup $8.00 + stencil $1.50 + 1860 SMT joints + 14 extended parts + 240 THT joints | $126.66 |
+| parts ($71.87 x 10) | $718.70 |
+| assembly: setup $8.00 + stencil $1.50 + 1820 SMT joints + 14 extended parts + 240 THT joints | $126.59 |
 | shipping (DHL, worldwide) | $22.00 |
-| **total** | **$871.23**  ($87.12 each) |
+| **total** | **$871.29**  ($87.13 each) |
 
-Four layers would cost about $495.37 for five ($99.07 each) -- the only change is the bare-board price --
+Four layers would cost about $495.40 for five ($99.08 each) -- the only change is the bare-board price --
 and buys almost nothing here: tracks cover 1.2 % of the back copper, so
 the pour on the two-layer board is already 98.8 % of an unbroken ground
 plane.  That is why this project ships one board.
 
 Two boards is the sensible order: one for Paul and one to keep.
+
+## Check these before you pay
+
+The one thing that cannot be checked from here is how the assembler
+turns each part.  Your CPL says which way; their library has its own
+idea of zero degrees, and where the two disagree a polarised part goes
+in backwards.  JLCPCB renders every part on the board before you
+confirm the order.  Compare that rendering with this table and with
+`lorenz-assembly-top.pdf`, which prints 1:1.
+
+| part | what to look for | should be |
+|---|---|---|
+| D1 | the RGB lamp's pin 1 corner | bottom left, toward the board's left edge |
+| U6 | 78L12, SOT-89 | pin 1 (OUT) on the left, tab to ground |
+| U7 | 79L12, SOT-89 | pin 1 (GND) on the left; its tab is at -15 V, not ground |
+| U1, U2 | LF412 SOIC-8 | pin 1 dot at the top left |
+| U3, U4 | MPY634 SOIC-16W | pin 1 dot at the top left |
+| J1 | USB-C receptacle | opening facing off the board edge |
+| SW1 | 6-way DIP switch | "ON" printing on the same side as the silkscreen table |
+| U5 | the converter, hand-fitted | pin 1 is the square pad, at the left, marked on the silkscreen |
+| F1 | PTC fuse | not polarised |
+
+The three BNCs and the converter are through-hole and can be checked
+by eye after assembly: the converter's own printed face carries its pin
+numbers.
 
 ## The through-hole parts
 
@@ -108,26 +133,22 @@ Stock was checked at JLCPCB on 2026-09-15, the date on the silkscreen.
 |---|---|---|---|---|---|---|
 | C1,C4,C7,C25 | 2.2nF | C28260 | basic | $0.0280 | 179,637 | C0G/NP0 50V |
 | C10,C12,C13,C14,C15 | 10uF | C15850 | basic | $0.0840 | 6,702,077 | X5R 25V, 0805 - bulk |
-| C11,C16,C17,C18,C19,C20,C21,C22,C23,C24 | 100nF | C49678 | basic | $0.0190 | 18,183,154 | X7R 50V, 0805 - bypass |
+| C11,C16,C17,C18,C19,C20,C21,C22,C23,C24,C26,C27,C28,C29 | 100nF | C49678 | basic | $0.0190 | 18,183,154 | X7R 50V, 0805 - bypass |
 | C2,C5,C8 | 100nF | C170182 | extended | $0.1870 | 193,311 | C0G/NP0 50V, 1206 |
 | C3,C6,C9 | 470nF | C277483 | extended | $0.0320 | 190,079 | X7R 50V, 1206 |
-| D1 | yellow | C2296 | basic | $0.0152 | 526,613 | +5 V (USB) rail lamp |
-| D2 | green | C2297 | basic | $0.0160 | 1,542,073 | +12 V rail lamp |
-| D3 | white | C34499 | basic | $0.0198 | 570,707 | -12 V rail lamp |
-| D4 | RGB | C2962096 | extended | $0.0547 | 3,789 | Common-cathode RGB lamp, PLCC-4: red = x, green = -y, blue = z |
+| D1 | RGB | C2962096 | extended | $0.0547 | 3,789 | Common-cathode RGB lamp, PLCC-4: red = x, green = -y, blue = z |
 | F1 | 500mA | C17313 | extended | $0.0680 | 142,624 | Resettable PTC on the USB input |
 | J1 | USB-C | C165948 | extended | $0.1860 | 230,097 | USB-C receptacle, power only (16 pin) |
 | J2,J3,J4 | BNC | C41416668 | extended | $1.5490 | 410 | 50 ohm BNC jack, right angle, 4 ground posts on 8x8 mm |
 | R1,R2 | 100k | C149504 | basic | $0.0060 | 4,893,299 |  |
 | R11,R12 | 5.1k | C27834 | basic | $0.0060 | 3,917,491 |  |
-| R13 | 2.2k | C17520 | basic | $0.0027 | 3,751,757 |  |
-| R14,R18,R19 | 4.7k | C17673 | basic | $0.0050 | 5,973,538 |  |
-| R16 | 1.5k | C4310 | basic | $0.0015 | 585,325 |  |
-| R17 | 6.8k | C17772 | basic | $0.0042 | 382,071 |  |
-| R20 | 33k | C17633 | basic | $0.0028 | 570,100 |  |
+| R13 | 1.5k | C4310 | basic | $0.0015 | 585,325 |  |
+| R14 | 6.8k | C17772 | basic | $0.0042 | 382,071 |  |
+| R15,R16 | 4.7k | C17673 | basic | $0.0050 | 5,973,538 |  |
+| R17 | 33k | C17633 | basic | $0.0028 | 570,100 |  |
 | R3 | 35.7k | C843989 | extended | $0.0150 | 2,783 |  |
-| R4,R6,R15 | 10k | C17414 | basic | $0.0040 | 53,835,303 |  |
-| R5,R21 | 1M | C17514 | basic | $0.0050 | 2,688,974 |  |
+| R4,R6 | 10k | C17414 | basic | $0.0040 | 53,835,303 |  |
+| R5,R18 | 1M | C17514 | basic | $0.0050 | 2,688,974 |  |
 | R7 | 374k | C2933427 | extended | $0.0040 | 18,582 |  |
 | R8,R9,R10 | 100R | C17408 | basic | $0.0040 | 10,085,527 |  |
 | SW1 | SW_DIP_x06 | C54952 | extended | $0.5710 | 2,140 | 6-way SMD DIP switch, 2.54 mm pitch - integrator speed select |

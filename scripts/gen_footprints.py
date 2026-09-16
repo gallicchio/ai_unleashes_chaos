@@ -264,7 +264,7 @@ def scope_gnd():
     clip has a post.  Nothing is fitted at the factory: this is two holes and
     a legend, so it costs two drill hits and nothing else.
     """
-    name = "ScopeGround_Loop"
+    name = "TestPoint_ScopeGnd_Loop_2x1.1mm"
     f = fp_header(name,
                   "Oscilloscope ground anchor: two 1.1mm plated holes on "
                   "5.08mm centres for a hand-fitted wire loop",
@@ -280,9 +280,34 @@ def scope_gnd():
     return name, f
 
 
+# ------------------------------------------------------------ PTC fuse -----
+def ptc():
+    """1812 land pattern for the resettable fuse, named so it is a PTC.
+
+    Geometrically the same as KiCad's Fuse_1812_4532Metric -- IPC density
+    level B, pads 1.125 x 3.4 mm on 4.275 mm centres -- but the symbol this
+    project uses is Device:Polyfuse, whose footprint filters ask for a name
+    containing "PTC".  A footprint whose name disagrees with the symbol is a
+    DRC warning and, more to the point, an invitation to fit the wrong part.
+    """
+    name = "PTC_1812_4532Metric"
+    f = fp_header(name,
+                  "Resettable PTC fuse, 1812 (4532 metric), IPC density B; "
+                  "Bourns MF-MSMF050-2 (LCSC C17313)", "PTC fuse resettable "
+                  "polyfuse 1812", "smd", 2.8)
+    for (num, x) in (("1", -2.1375), ("2", 2.1375)):
+        f.add(smd_pad(num, x, 0, 1.125, 3.4, f"{name}/p{num}"))
+    rect_lines(f, -2.25, -1.6, 2.25, 1.6, "F.Fab", FAB_W, f"{name}/fab")
+    f.add(line(-1.5, -1.85, 1.5, -1.85, "F.SilkS", SILK_W, f"{name}/silk/t"),
+          line(-1.5, 1.85, 1.5, 1.85, "F.SilkS", SILK_W, f"{name}/silk/b"))
+    rect_lines(f, -2.95, -2.1, 2.95, 2.1, "F.CrtYd", CRT_W, f"{name}/crt")
+    model(f, "${KIPRJMOD}/lib/lorenz.3dshapes/Fuse_1812.wrl", scale=MM_SCALE)
+    return name, f
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
-    for maker in (bnc, dcdc, dipsw, led_rgb, scope_gnd):
+    for maker in (bnc, dcdc, dipsw, led_rgb, scope_gnd, ptc):
         name, node = maker()
         path = os.path.join(OUT, name + ".kicad_mod")
         with open(path, "w") as fh:

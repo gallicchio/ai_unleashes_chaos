@@ -221,6 +221,11 @@ Misc:
 
 ## Response 2
 
+*(As written. Response 3 changed two things here: the three rail lamps are
+gone, because the chaos lamp cannot light unless every rail is up, and the
+lamp is now fed from each integrator's output node rather than from the return
+lanes.)*
+
 Everything below is built by `./make.py`, which now ends with **BUILD OK** only
 if ERC, DRC with schematic parity, 116 circuit checks, the schematic layout
 check, the fab-package checks and — new — a QR decoder all pass.
@@ -554,3 +559,268 @@ Other mostly aesthetic things, from most important to least:
 
 
 Since we have to do at least one more prompt, where I tell you which RGB LED configuration I liked best, please suggest some other simple things we could do or add to this circuit (like we added the RGB LED). If I think Paul would like one, you'll get to build it.
+
+
+## Response 3
+
+### The chaos lamp
+
+**"It looked like they were taking current from the *input* of an op-amp."**
+You were right to be worried, and the drawing was the problem, not the
+circuit. The resistors tapped the return lanes on the left of the sheet —
+electrically the op-amp output, but those same lanes feed the summing
+resistors, so tracing from one of them leads to an op-amp's inverting input.
+
+Redrawn as you describe. Each colour is now fed from **its own integrator's
+output node**, tapped on the short column between the op-amp and the 100 Ω
+series resistor, and brought down the right-hand margin to the lamp:
+
+```
+   U1A out ──┬── 100R ── J2  (x)
+             └──────────────────────────┐
+   U1B out ──┬── 100R ── J3  (-y)       │   three lanes down
+             └───────────────────────┐  │   the right margin
+   U2A out ──┬── 100R ── J4  (z)     │  │
+             └────────────────────┐  │  │
+                                  │  │  │
+        U2B ── D1 ──┬─ R15 ───────┘  │  │
+                    ├─ R14 ──────────┘  │
+                    └─ R13 ─────────────┘
+```
+
+The branch leaves on the same side as the BNC, below the jack, and never
+touches a return lane. `check_circuit.py` now also asserts that each lamp
+resistor and its 100 Ω series resistor share a node, so no lamp current can
+ever end up flowing in the BNC output impedance.
+
+**"You claim red and green are x and −y, but your text says red marks the +x
+wing and green the −x wing."** Both are true, and it is worth stating why. In
+the Lorenz solution **x and y have the same sign 87 % of the time**
+(correlation 0.88 — measured, in `lamp_gallery.py`'s own trajectory). So −y is
+large and positive exactly when y is large and negative, which is when x is
+negative, which is the −x wing. Red is driven by x and lights on the +x wing;
+green is driven by −y and lights on the −x wing; they alternate. No
+contradiction, just two ways of saying it — and the README now says so.
+
+**"Would maximal LED current affect the LF412's output stages?"** No, and the
+numbers say why rather than my saying so. The three colours are on *three
+different op-amps* (x is U1A, −y is U1B, z is U2A), so no single output carries
+more than about 1.2 mA against the LF412's ±20 mA. Closed-loop output
+impedance is about 0.01 Ω, so 1.2 mA moves the output by 12 µV on a 2 V
+signal — six parts per million, and the LED's nonlinearity is divided by the
+same loop gain. U2B sinks all three at once: 2.2 mA, also nothing.
+
+So the resistors did not *have* to go up. They went up anyway where the
+pictures said so, which brings us to:
+
+### A hundred wirings, rendered
+
+**[The gallery is here.](docs/lamp/index.html)** Open it and use the arrow
+keys. It is also published at
+<https://claude.ai/artifact/C1J4srKW8hEECXYcDzqvy6> if flipping through it on
+a phone is easier.
+
+Each picture is 145 seconds of the lamp at the "slow!" setting, read left to
+right, wrapping at the end of every row with a black row between passes,
+4.7 ms per pixel. To make one I had to answer three questions with numbers:
+
+1. **Voltage to current.** A diode I-V curve anchored on the datasheet's
+   forward voltage at 20 mA, with an ideality factor and series resistance,
+   inverted on a log grid.
+2. **Current to light.** The datasheet's luminous intensity at 20 mA, scaled
+   as `(I/20 mA)^γ` with γ slightly above 1, because efficiency falls away
+   from the rated current and that is the honest direction at 0.2–3 mA.
+3. **Light to a pixel.** Each die's spectrum, built from its peak wavelength
+   and linewidth, integrated against the real **CIE 1931 2° observer**,
+   summed as tristimulus and converted to sRGB. Brightness is compressed
+   before the gamma, the way a dark-adapted eye compresses it — without that
+   the pictures are a hard on/off and every shade in between is lost.
+
+`python3 scripts/lamp_model.py` self-tests the colour pipeline: equal-energy
+white lands at x = y = 0.3333, ȳ peaks at 555 nm, four published monochromatic
+chromaticities match, and — the check that actually matters — **each die's
+computed dominant wavelength comes out within 5 nm of the figure on its own
+datasheet** (621/520/465 nm). That is an independent confirmation that both
+the observer table and the spectrum model are right.
+
+The sweep varies four things: which signal drives which die (6 ways), common
+cathode or common anode (the same package, two part numbers, pins 1 and 4
+exchanged), the reference voltage from −8 V to +1 V, and four rules for
+picking the series resistors. 660 combinations, scored on how much the colour
+actually moves and whether anything is visible at all in millicandela — not
+against the picture's own exposure, or a lamp running at two microamps scores
+beautifully. 505 survive; the gallery shows the hundred least like each other.
+
+Each option carries everything needed to build it: the part number, the two
+E24 resistors that make its reference from the ±12 V rails, the three series
+resistors, and the peak and mean current per colour.
+
+Worth knowing before you choose:
+
+* **Reference below −2 V** keeps all three above their turn-on voltage all the
+  time, and the colour wanders continuously — pretty, but no switching.
+* **Reference near 0 V** gives the sharpest wing-to-wing switching, because
+  each colour crosses its threshold as the trajectory changes lobes.
+* **Common anode** inverts every threshold: a colour then lights when its
+  signal goes *low*, which is the half of each signal the current design
+  cannot show.
+* z never goes negative, so blue behaves differently from the other two in
+  every option — that asymmetry is the attractor's, not the circuit's.
+
+The board still carries my pick (x→red, −y→green, z→blue, common cathode at
+−1.5 V, 1.5k/6.8k/4.7k) because something had to be drawn. Tell me a number
+and it is a four-line change.
+
+### The full design review
+
+`docs/DESIGN_REVIEW.md` has it item by item. The short version: **four bugs**,
+and the first one is embarrassing enough to lead with.
+
+**DRC had never read this project's design rules.** `pcbnew` writes a
+`.kicad_pro` next to any board it saves, filled with *default* rules, and
+`make.py` only put the real one back at the very end — after DRC had run. So
+every "DRC: 0 violations" this project has ever printed was measured against
+KiCad's defaults, not against the rules I wrote. Handing DRC the real rules
+turned up **203 violations** that had been there all along. The zone filler
+had the same problem from the other side: it works from the *board's* settings,
+and a board made by `CreateEmptyBoard()` carries defaults, so the pour was
+backing off 0.25 mm from holes while the rule asked for 0.3.
+
+With that fixed, three more fell out:
+
+* **Every via violated the annular-ring rule** — 0.6 mm on a 0.3 mm drill is
+  0.15 mm of annulus against a rule asking 0.25. Vias are now 0.8/0.3, and the
+  rule sits at 0.20 because the binding item turned out to be the four shell
+  tabs of KiCad's own USB-C footprint.
+* **Stitching vias were necking the pour** beside through-hole pads — a 0.08 mm
+  isthmus of copper, legal for clearance because it is the same net, and
+  pointless anyway: a through-hole pad already connects every layer, so it *is*
+  a stitching via.
+* **Both multipliers had no designator on the silkscreen** — which is exactly
+  what you noticed. The legend placer dodged pads and other legends but not
+  package bodies, so `U3` and `U4` were printed neatly underneath the chips.
+  It now treats every courtyard as occupied.
+
+On your checklist, with the answers that took actual work:
+
+* **Pin assignments, cross-checked.** `scripts/check_pinout.py` runs every
+  build: it writes out each IC's pin table from the datasheet named in the
+  code, compares it with the symbol used here, and compares it *again* with
+  KiCad's own library where the same part exists — drawn by other people from
+  the same document. KiCad ships `Analog:MPY634KU`, which agrees pin for pin
+  with what I transcribed from TI's SBFS017A.
+  Two things that could have bitten: the SOT-89 tab is pin 2, which is
+  **ground on the 78L12 but the input on the 79L12** — so U7's tab sits at
+  −15 V; and the A0515S has pins 1, 2, 4, 5, 6 with no pin 3, the gap being
+  the module's own isolation barrier, which this board puts the plane split
+  through.
+* **Packages, rotations, mirrors.** 82 footprints, none flipped, all on F.Cu,
+  every rotation 0° or 90°, no mirrored text on the front. Checked
+  mechanically, not by eye.
+* **Decoupling** was the one place the review changed the circuit. The
+  78L12/79L12 datasheets are characterised with 0.33 µF in and 0.1 µF out
+  *"located as close as possible"*, and the 10 µF bulk was 15 mm away. Four
+  100 nF parts now sit at the regulators' own pins.
+* **Power budget.** 20.0 mA on +12 V and 19.5 mA on −12 V against 100 mA
+  regulators; 25 mA per rail against a 67 mA module — and, the number that
+  actually matters, **3.5× the module's 7 mA minimum load**, below which its
+  output climbs. 186 mA from USB against a 500 mA fuse. 75 mW in each SOT-89.
+* **Converter noise.** ~100 mVpp of ripple, ~25 dB from the regulator, ~30 dB
+  from the op-amps' supply rejection: about 200 µV at an output whose full
+  scale is 2 V. That is a hundred times *below* the MPY634's own 30 mV of
+  feedthrough, so an RC filter would buy nothing the multiplier does not
+  already spend. Physically the switcher and its 6 mm switching loop are
+  inside the island in the far corner, behind the 1 mm plane gap.
+* **The split ground** is now checked rather than asserted: the build fails if
+  any net has pads on both sides of the gap, or if any track or via crosses it.
+* **Impedances and input ranges** are tabulated in the review against the
+  datasheet limit for each. The one thing worth saying out loud: the BNC
+  outputs want a **1 MΩ** scope input. Into 50 Ω the 100 Ω series resistor
+  divides by three.
+
+### "If these came back not working, what would it most likely be?"
+
+**Part rotation at the assembler.** Not the netlist, not the values, not the
+equations — those are proved from the netlist on every build. The CPL says
+which way each part is turned; the fab's library has its own idea of zero
+degrees, and where the two disagree a polarised part is fitted backwards. It
+is the most common first-article failure there is, and it is the one thing I
+cannot check from here.
+
+So `docs/MANUFACTURING.md` now has a **"Check these before you pay"** table:
+every polarised part, and which way it should face. JLCPCB renders every part
+on the board before you confirm the order — two minutes against that table and
+against `lorenz-assembly-top.pdf`, which prints 1:1, closes the gap.
+
+Second most likely: the **BNC footprint**, still drawn from SAMZO's drawing
+rather than from a connector in my hand. It is through-hole, so if it is wrong
+it will not fit, which is at least loud. Third: a **substituted MPY634** — the
+one part with no real second source, where an "equivalent" would not be.
+
+### The layout, rebuilt
+
+You were right that everything was bunched into the lower right. The
+multipliers now sit at the **far left**, in the third of the board that was
+empty, and everything else spread out behind them.
+
+![The board](docs/images/lorenz-render-top.png)
+
+* Each output row is now one straight line: **op-amp → probe pad → 100 Ω lying
+  horizontally → BNC**, with the probe pad's own name (`x`, `-y`, `z`) printed
+  beside it. What TP1/2/3 are for should be obvious now: they are the signal,
+  ahead of the series resistor.
+* **R10 has its designator and its value.** So do both multipliers —
+  "MPY634 multiplier" — and both op-amps, "LF412 op-amp".
+* The **SPEED SELECT** table has clear board around it: the middle capacitor
+  bank moved 4 mm further from its row to make that band, C17 moved away, and
+  the `C` column moved in next to the `6` column as you asked.
+* The **chaos lamp** has its own quarter of the board between two jacks, with
+  its three resistors lying horizontally and coming in from the left, each
+  labelled `red = x`, `grn = -y`, `blu = z`.
+* The **three rail lamps are gone**, with their resistors. You are right that
+  the chaos lamp cannot do anything sensible unless +12 V, −12 V, the
+  converter and the USB input are all up, so it *is* the power-on indicator —
+  and a dark room now has one lamp in it instead of four.
+* The **QR codes are 62 mm apart**, the most the board allows, each in a clear
+  20 mm square with no drilled hole in it. Two probe pads moved along their own
+  traces to make that true.
+* **"PCB by Jason Gallicchio and Claude Opus 5 Max"**, and the back's equations
+  and paragraph are flush left.
+
+### Things we could add next
+
+Ordered by how much I think Paul would like them, not by how hard they are.
+
+1. **A fourth output: the multiplier products, on a header.** `-xz/100` and
+   `-xy/100` already have probe pads. Two more 100 Ω resistors and a 3-pin
+   header would let you watch the *nonlinearity itself* on a scope — the term
+   that makes it chaotic rather than a damped oscillator. Cost: two resistors.
+2. **A "freeze" switch.** One more DIP pole shorting all three integrating
+   capacitors to their summing junctions stops the trajectory dead, and
+   releasing it starts from where it stopped. Two poles would give
+   freeze/run/reset. It makes the sensitive dependence demonstrable by hand:
+   freeze, nudge one output with a finger on a test point, release, and watch
+   the two runs diverge.
+3. **An r knob.** Replace R3 = 35.7 k with a fixed 27 k in series with a 20 k
+   trimmer and you can sweep r from about 18 to 37 — through the Hopf
+   bifurcation at r = 24.74, where the attractor *appears*, and down to the
+   stable fixed points below it. That is the single most instructive knob the
+   system has, and it is one resistor and one trimmer.
+4. **A second board's worth of x, on a 3.5 mm jack.** Two boards, one driving
+   the other's initial condition, is the classic synchronisation-of-chaotic-
+   systems demonstration (Pecora and Carroll). One jack and one resistor per
+   board.
+5. **A photodiode on the lamp.** Feed it back into the summing junction and
+   you have an optically-coupled perturbation you can block with a finger.
+   Whimsical, and it makes the lamp part of the circuit rather than an
+   indicator.
+6. **A slower "very slow" setting.** Both DIP banks on is already 572 nF and
+   τ = 572 ms; the silkscreen currently calls that a mistake. It could just be
+   labelled as the fourth speed.
+
+My pick would be **3, then 2**: the r knob turns a fixed demonstration into an
+experiment, and the freeze switch turns a picture into a proof.
+
+### Still rev A
+
+It stays rev A until you pay a fab. I have not looked at `next_prompt.md`.
