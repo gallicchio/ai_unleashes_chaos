@@ -165,6 +165,8 @@ def stage_project():
 def stage_selftest():
     banner("self-tests")
     sys_py("selftest_rotation.py")
+    sys_py("qrcode_gen.py")
+    sys_py("lamp_model.py")
 
 
 def clean():

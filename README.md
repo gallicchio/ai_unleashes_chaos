@@ -504,3 +504,53 @@ $ ./make.py
 === documentation ===================== docs/MANUFACTURING.md
 === project files ===================== .kicad_pro last, so cross-probing works
 ```
+
+
+## Prompt 3
+
+
+On your brilliantly-named "chaos lamp":
+* The way you drew the RGBs in the schematic was very concerning. For a while, it looked like they were taking current from the *input* of an opamp rather than the *output*. Tracing through the circuit, I think it's ok, but why aren't the RGB LED's resistors and the LEDs themselves hanging down from a spot just before each signal goes through its 100R resistor on its way to the output BNC?
+* In your schematic, you claim that red and green are x and -y, but in much your text, you say things like "Red therefore marks the +x wing and green the -x wing". Is this wrong, or does a positive x often imply a negative y in the Lorenz solution?
+* If the op-amp outputs were all toward the top of their ranges, and the LEDs were drawing maximal current, would it affect the LF412's output stages? If so, increase the value of the RGB LED's resistors. The "CHAOS LAMP" does not need to be bright to be interesting. 
+* With this circuit, what would the LED actually look like? Make an image of your estimated LED color over time (wrapping around when a row of pixels reaches the end and leaving a row of black.) Sample it at a slow enough rate to have it explore the space by the time it reaches the bottom right of the image, but not so slow that each pixel isn't obviously related to the previous one. You'll need some estimate of the voltage to LED current, the current to brightness for the particular LED you chose for the BOM, and an estimate of how those 3 RGB brightnesses are perceived (mapped to RGB computer pixels) Iterate on 
+ - the values of the LED resistors
+ - the mapping of which channel becomes which color, and
+ - the sign and magnitude of the 4th opamp's LED return voltage (flipping the direction of the LEDs if necessary).
+I'm looking for an interesting result that captures some of the *feeling* of chaos from the Lorenz Attractor. Maybe your scheme to flip between red and green will turn out to be best. Present me with around 100 non-boring options. I'll flip through the images to find the one I like best. This kind of obsessiveness, about something that most people would dismiss as "good enough", would make Paul proud!
+
+Do a full design review and fix any errors you find. In addition to whatever you think you should do, be sure to do the following:
+* Double check that all packages are being used appropriately: no mirrors or flips or rotations.
+* Trace all power paths from the USB-C input to every chip, making sure everything gets power properly and nothing can cause problems.
+* Double check that your split ground really is the right decision here.
+* Make sure the power budget is appropriate.
+* Trace all signal paths and ensure the design properly handles them.
+* Make sure that output impedances are driving appropriate input impedances.
+* Make sure any constraints on things like input voltage ranges are properly dealt with through the signal path in a way that makes sense and doesn't violate any datasheet specs.
+* Trace all configuration pins and make sure they are valid.
+* Make sure all decoupling is appropriate.
+* Make sure the power converter or any digital logic won't add much noise to the analog section. (At the schematic level, this is appropriate power supply management, but at the PCB level this is appropriate grounding and physical separation.)
+* Make sure the schematic pages have no text overlapping other text or boxes or wires, especially if it makes it difficult to read.
+* Make sure the important things on silk screen have no overlap
+* Double check all pin assignments on all ICs in both the schematic and the PCB from the datasheet and cross check it with some other source of truth if you can find one
+
+If I got these back and told you that they didn't work, what would be the most likely cause? I want them to work on the first try. I can't be spending much time on this going back and forth, and let's face it, Paul's not getting any younger! (Did you bother reading this far, Paul? *wink*)
+
+
+Other mostly aesthetic things, from most important to least:
+* Most pressing: Why is everything on the PCB bunched up on the lower right of the board? The board's left third is almost totally empty. If you had started with the MPY634's further to the left, you could spread everything else out so much more uniformly, and you'd have plenty of room for labels without having to move labels far away from what they label. Examples of things that are so bunched together that they forced the labels to move are: 
+ - TP8 and TP9, the +15V and -15V test points.
+ - What are TP1, TP2, and TP3 supposed to be? If I probe them, what should I see? Are they "x", "-y", and "z" before the 100R? That's not immediately obvious now how they are arranged. Those 100R's should be horizontal and come straight left from the BNC. Then the test points should be even further left on on that same straight-line trace If everything was more spread and the test point wasn't right next to everything else, the purpose of the test point and its label would be more clear.
+ - R10 seems to have no label.
+ - C17's value is too low and is almost part of the SPEED SELECT table. The SPEED SELECT table and switch should have more empty area around them. This should be a clear and obvious focal point, since it's the only way that people interact with a running circuit.
+ - the C column of the table could be closer to the "6" column. It would leave more room for other labels.
+ - TP2 is too low on that trace. It and the "-y" label made R9's "100R" go off to the side.
+ - It looks like you crammed the test points, LEDs, and LED resistors in at the last minute, which I did ask you to do, but I expected that you'd move the MPY634's further to the left to more evenly spread everything out. The RGB LED and its resistors should also have a lot more room around them. Those resistors should also be horizontal and "come in from the left" toward the RGB LED, should should be to the left of the BNCs. Again, moving MPY634's further left would free up a lot of space to spread out in a component rearrangement.
+* The Multipliers don't have a silkscreened "U" number and they don't say something like "MPY634 multiplier". The Opamps have a part number, but should also say "op-amp"
+* With the output RGB led, I'm having second thoughts about the individual power supply LEDs. If the RGB can only do an obvious "right thing" when the power supplies are on, get rid of the yellow, green, and white LEDs along with their resistors. This should free up more space and room for labels. It will also mean that the "chaos lamp" in a dark room isn't mixed with these status LEDs.
+* The QR codes should be farther away from each other to more easily take a picture of one without the other in the way. They are going to be quite small. There is room to move the github.com one over. Don't obsess too much about a random plated through hole test point or via in the middle of the silkscreen on the back. Certainly don't bunch everything toward the BNC connectors for this. Some of the test points can be moved arond along their traces to be both clear on the top and avoid silkscreen on the bottom.
+* The "PCB by Jason Gallicchio and Claude" should be "PCB by Jason Gallicchio and Claude Opus 5 Max"
+* The equations and text starting with "Every term weighs" should all be left justified, not centered.
+
+
+Since we have to do at least one more prompt, where I tell you which RGB LED configuration I liked best, please suggest some other simple things we could do or add to this circuit (like we added the RGB LED). If I think Paul would like one, you'll get to build it.
