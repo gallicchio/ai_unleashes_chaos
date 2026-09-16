@@ -31,15 +31,17 @@ attractor's owl's face appears within a second of power-up.
   *maximum resistance*, never an open circuit.
 * **A chaos lamp.** One RGB LED whose colour is the state vector, with the
   reference, the die mapping and all three resistors chosen by modelling the
-  LEDs against the CIE 1931 observer and rendering [660 wirings of
-  it](docs/lamp/). Mostly deep blue, with a swirl through the colour wheel
-  every time the trajectory changes wings.
+  LEDs against the CIE 1931 observer, rendering 660 wirings of it and
+  [publishing the hundred most different](docs/lamp/) to flip through.
+  Mostly deep blue, with a swirl through the colour wheel every time the
+  trajectory changes wings.
 * **A real isolated ground split.** The DC/DC converter's isolation is
   actually used: analog ground and USB ground are separate pours with a 1 mm
   gap, bridged only by 1 M, 2.2 nF and a solder jumper, so no mains-referenced
   loop runs through a signal whose full scale is 2 V.
 * **`SYNC IN X`.** A fourth BNC and a weight knob: feed it another board's `x`
-  output and the two boards synchronise — Pecora–Carroll on the bench. Pull
+  output and the two boards synchronise — chaotic synchronisation on the
+  bench. Pull
   the cable and they diverge again from states that agreed to a few
   millivolts. The knob is linear in coupling strength from 0 to 10, with the
   locking threshold at about 70 % of rotation.
