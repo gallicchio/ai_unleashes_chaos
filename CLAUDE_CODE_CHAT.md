@@ -2,6 +2,12 @@
 
 Lorenz Attractor Circuit by Paul Horowitz in KiCAD
 
+Every prompt is verbatim; every response is what Claude wrote at the time.
+Each response opens with the board and schematic **as they stood when that
+response was written**, pulled back out of the git history -- because what
+the next prompt asks for only makes sense against what was on the screen
+when it was typed.  The board as it stands now is in [README.md](README.md).
+
 ## Prompt 1
 
 In graduate school I worked with Paul Horowitz, of [Art of Electronics](https://artofelectronics.net/) fame. I even contributed a few bits and pieces to the 3rd edition. (I am thanked in the footnotes, one of which simply says, "Jason, again.) I want you to build a nice little present for Paul, which could also live on as an open source project and a kit that people could build.
@@ -33,6 +39,14 @@ Make a KiCAD 10 project, schematic, and PCB to implement [Paul's Lorenz Attracto
 Record your response below in this document. Do this regularly, and check things into git as you go.
 
 ## Response 1
+
+*The board and schematic as they stood when this was written — four layers, three rail lamps, and the owl on the back.  The schematic links to its PDF.*
+
+| front | | back |
+|---|---|---|
+| ![front](docs/history/response-1/render-top.png) | ![iso](docs/history/response-1/render-iso.png) | ![back](docs/history/response-1/render-bottom.png) |
+
+[![schematic](docs/history/response-1/schematic.png)](docs/history/response-1/schematic.pdf)
 
 *(This section is the reply as it was written. Response 2 below changed some of
 it — most visibly, there is no longer a four-layer board.)*
@@ -220,6 +234,14 @@ Misc:
 
 
 ## Response 2
+
+*The board and schematic as they stood when this was written — two layers, the isolated ground split, the chaos lamp and the QR codes.  The schematic links to its PDF.*
+
+| front | | back |
+|---|---|---|
+| ![front](docs/history/response-2/render-top.png) | ![iso](docs/history/response-2/render-iso.png) | ![back](docs/history/response-2/render-bottom.png) |
+
+[![schematic](docs/history/response-2/schematic.png)](docs/history/response-2/schematic.pdf)
 
 *(As written. Response 3 changed two things here: the three rail lamps are
 gone, because the chaos lamp cannot light unless every rail is up, and the
@@ -563,6 +585,14 @@ Since we have to do at least one more prompt, where I tell you which RGB LED con
 
 ## Response 3
 
+*The board and schematic as they stood when this was written — rebuilt around the multipliers, every probe pad named.  The schematic links to its PDF.*
+
+| front | | back |
+|---|---|---|
+| ![front](docs/history/response-3/render-top.png) | ![iso](docs/history/response-3/render-iso.png) | ![back](docs/history/response-3/render-bottom.png) |
+
+[![schematic](docs/history/response-3/schematic.png)](docs/history/response-3/schematic.pdf)
+
 ### The chaos lamp
 
 **"It looked like they were taking current from the *input* of an op-amp."**
@@ -871,6 +901,14 @@ Minor:
 
 
 ## Response 4
+
+*The board and schematic as they stood when this was written — the r knob, the SYNC IN pad, and the lamp wired as option 038.  The schematic links to its PDF.*
+
+| front | | back |
+|---|---|---|
+| ![front](docs/history/response-4/render-top.png) | ![iso](docs/history/response-4/render-iso.png) | ![back](docs/history/response-4/render-bottom.png) |
+
+[![schematic](docs/history/response-4/schematic.png)](docs/history/response-4/schematic.pdf)
 
 ### What your nine favourites have in common
 
@@ -1199,6 +1237,14 @@ Thinking of the switches as a binary number, it seems that 1, 2, and 3 are the L
 
 ## Response 5
 
+*The board and schematic as they stood when this was written — SYNC IN X on its own BNC with a weight knob, the switch reading in binary.  The schematic links to its PDF.*
+
+| front | | back |
+|---|---|---|
+| ![front](docs/history/response-5/render-top.png) | ![iso](docs/history/response-5/render-iso.png) | ![back](docs/history/response-5/render-bottom.png) |
+
+[![schematic](docs/history/response-5/schematic.png)](docs/history/response-5/schematic.pdf)
+
 ### The DIP switch: yes, pin 1 is on the "off" side
 
 On the KingTek DSIC06LSGET drawing, the six position numbers are printed along
@@ -1389,3 +1435,174 @@ Remove `next_prompt.md` and remove it from the repository if it's there.
 Move README.md to `CLAUDE_CODE_CHAT.md`, changing only the title to `Chat with Claude Opus 5 Max about the AI UNLEASHES CHAOS Circuit and PCB`.
 
 Make README.md a very brief summary of the project. Its title should be just "AI UNLEASHES CHAOS", as is printed on the top of the board. The content should be "Lorenz Attractor Circuit by Paul Horowitz in KiCAD" and the first paragraph of Prompt 1. Then a very brief summary which would appeal to the excited nerds of the world, like those on the EEVblog forum. Show the most up-to-date 3D renderings of the board (lorenz-render-iso.png, lorenz-render-top.png, lorenz-render-bottom.png). Link to DESIGN_NOTES.md and CLAUDE_CODE_CHAT.md. If it's not already there, update DESIGN_NOTES.md with information about the RGB LED, which was not in Paul's original (especially how we settled on the right orientation and set of resistors by simulation and color-space mapping, which was a  tour de force. Give minimal bash commands to run make.py, including setting the kicad path. I'll put it from github on a fresh computer and check everything. If it's good, I'll send it off to get built and assembled and sent to me for testing. If it works, we'll see if Paul likes it!
+
+## Response 6
+
+*The board and schematic as they stood when this was written — the board as it stands.  The schematic links to its PDF.*
+
+| front | | back |
+|---|---|---|
+| ![front](docs/history/response-6/render-top.png) | ![iso](docs/history/response-6/render-iso.png) | ![back](docs/history/response-6/render-bottom.png) |
+
+[![schematic](docs/history/response-6/schematic.png)](docs/history/response-6/schematic.pdf)
+
+*(Written up after the fact: the reply to prompt 6 was given at the terminal
+and never recorded here, which is the gap prompt 7 asks me to stop leaving.)*
+
+Done, and verified the way you will do it: fresh `git clone`, `export
+KICAD_APPRUN=...`, `./make.py` -- green in 37 s, with every generated file
+byte-identical to what is committed except the raytraced ISO render, which
+resamples every run.
+
+**What changed**
+
+* **`next_prompt.md` is gone** -- removed from the repository and from disk
+  (never read), and added to `.gitignore` so a future scratch draft cannot
+  drift back in.
+* **`README.md` became `CLAUDE_CODE_CHAT.md`**, with only the title changed.
+* **A new `README.md`**: the title as printed on the board, the tagline, your
+  first paragraph of prompt 1 verbatim, the three renders, and a short "what
+  it is" -- the four speeds, the r knob and its grit-proof wiper, the chaos
+  lamp, the isolated ground split that is actually used, `SYNC IN X`, and the
+  fact that nothing is hand-edited.  Then the build recipe and links onward.
+* **`DESIGN_NOTES.md` gained "Choosing the chaos lamp"** -- why it is a
+  four-way decision that cannot be made by inspection; what is in the LED
+  model (data-sheet I-V, the nonlinear intensity curve, a spectrum, the CIE
+  1931 observer, D65 sRGB, an adaptation curve); the thirteen assertions that
+  keep the model honest; the 660 wirings rendered and thinned to 100; and the
+  table showing what your nine favourites had in common -- including that 47
+  of the 100 have a die that never lights, and none of yours was one of those.
+
+**One real bug found while testing this.**  `./make.py --clean && ./make.py`
+failed: the self-tests check the generated symbol and footprint libraries, but
+ran *before* the stage that writes them.  A fresh clone was fine, because
+those files are committed -- a cleaned tree was not.  The self-tests now run
+straight after the libs stage.  An orphaned footprint from an earlier revision
+is also dropped.
+
+Two claims I pulled back after writing them: the lamp bullet now says 660
+wirings rendered and the hundred most different published, and "Pecora-Carroll
+on the bench" became "chaotic synchronisation on the bench" -- our coupling is
+diffusive, not their drive-response replacement, and the distinction is drawn
+properly in the design notes.
+
+## Prompt 7
+
+I have kicad10 as $HOME/.local/bin/kicad-10.0.6-x86_64.AppImage and when I set
+
+A few minor edits to README.md and the like:
+
+* Make the first text, "Lorenz Attractor Circuit" a link to the seti.harvard page with the circuit.
+* After the paragraph that starts with in "In graduate school," add a new paragraph that says: "The entire PCB and additions to Paul's original circuit was designed in a few hours of prompts to [Claude Opus 5 Max](link to the chat markdown). I typed prompts and used KiCAD only to look at the output of Claude's [python scripts](link to scripts), which generated almost everything else."
+* Move the "Everything is generated" out of "The interesting bits:" list and into its own paragraph. Change the name of "The interesting bits:" to something like "fun additions to Paul's original circuit.
+* Add "git clone https://github.com/gallicchio/ai_unleashes_chaos.git" and "cd ai_unleashes_chaos" and "export KICAD_SHARE_DIR=$HOME/.local/share/kicad/10.0" to the bash instructions with appropriate comments.
+* In "CLAUDE_CODE_CHAT.md", the images shown are always of the most recent renders.  Show all 3 historic renders along with a PNG (liked to a PDF) of the schematic at each response stage, and show them inline in each response (yes, you are changing your responses slightly to add these images, but the context of the next prompt depends on what I saw.)
+* When I tried to run it on a different computer with a fresh KiCAD 10 AppImage, I got the error below:
+
+```
+=== self-tests ======================================================
+Traceback (most recent call last):
+  File "/home/jason/Downloads/ai_unleashes_chaos/scripts/selftest_rotation.py", line 63, in <module>
+    sys.exit(main())
+  File "/home/jason/Downloads/ai_unleashes_chaos/scripts/selftest_rotation.py", line 26, in main
+    sch.place("Amplifier_Operational:LM2904", ref, "LM2904", x, y,
+  File "/home/jason/Downloads/ai_unleashes_chaos/scripts/schlib.py", line 101, in place
+    self._resolve(lib_id)
+  File "/home/jason/Downloads/ai_unleashes_chaos/scripts/schlib.py", line 55, in _resolve
+    node = self.libs.get(lib, name)
+  File "/home/jason/Downloads/ai_unleashes_chaos/scripts/sexp_parse.py", line 141, in get
+    node = self._raw(lib, name)
+  File "/home/jason/Downloads/ai_unleashes_chaos/scripts/sexp_parse.py", line 135, in _raw
+    raise KeyError(f"symbol {lib}:{name} not found under {self.share}")
+KeyError: 'symbol Amplifier_Operational:LM2904 not found under /home/jason/.local/share/kicad/10.0/symbols'
+
+BUILD FAILED: selftest_rotation.py failed
+```
+
+(And: on that computer `/home/jason/.local/share/kicad/10.0/symbols` is empty.)
+
+(And: from now on, reply in CLAUDE_CODE_CHAT.md like you used to reply when it was README.md.)
+
+## Response 7
+
+### The crash: a directory that is called "symbols" but is not KiCad's
+
+`~/.local/share/kicad/10.0/symbols` is where *your own* libraries go.  On a
+fresh install it exists and is **empty** — you confirmed that is what it looks
+like on that machine.  `kienv.py` accepted any directory that had `symbols/`
+and `footprints/` in it, so `KICAD_SHARE_DIR` pointing there passed the check
+and then failed 40 lines later, inside a symbol lookup, which is a terrible
+place to learn about it.
+
+Two fixes, and I did not document the setting you suggested, because it is the
+thing that broke it:
+
+1. **A candidate is only the stock tree if a stock library is in it.**
+   `_looks_right()` now requires `symbols/Device.kicad_symdir` (or
+   `.kicad_sym`) *and* `footprints/Resistor_SMD.pretty`.  An empty personal
+   directory has neither.  If `KICAD_SHARE_DIR` fails that test the build says
+   so by name — *"no stock libraries in it — is that your personal library
+   directory?"* — and carries on looking instead of dying later.
+
+2. **A plain `.AppImage` now works with nothing set at all.**  The libraries
+   inside an unextracted AppImage only exist while it is mounted, so the build
+   mounts it: `kicad-*.AppImage --appimage-mount` prints a mount point and
+   holds it open, and `kienv` keeps that process alive for the whole build,
+   exports `KICAD_APPRUN` and `KICAD_SHARE_DIR` into the environment so every
+   script it shells out to shares the one mount, and unmounts on exit.  It
+   looks in `~/.local/bin`, `~/Downloads`, `~/Applications`, `~/bin`,
+   `~/.local/opt` and `/opt`, and **prefers a KiCad 10 image** — your machine
+   has `kicad-9.0.9.1-x86_64.AppImage` sitting next to the 10, and building
+   against KiCad 9's libraries would have failed somewhere much less obvious.
+
+I tested it the way you hit it.  With the extracted AppDir moved out of the
+way and `kicad-cli` off `PATH`, a fresh clone with nothing but
+`~/.local/bin/kicad-10.0.6-x86_64.AppImage` builds green in 39 s and
+reproduces every deliverable byte-identically:
+
+```
+KiCad 10.0.6
+  runner    /tmp/.mount_kicadremXXXXXXXX/AppRun
+  mounted   /home/jason/.local/bin/kicad-10.0.6-x86_64.AppImage
+  libraries /tmp/.mount_kicadremXXXXXXXX/usr/share/kicad
+```
+
+There is also a version guard now: if the KiCad that turns up is not 10.x the
+build stops and says which one it found, rather than failing on a missing
+symbol much later.
+
+### The README edits
+
+All four done.  One change from what you asked: the bash block has the clone
+and the `cd`, but **not** `export KICAD_SHARE_DIR=$HOME/.local/share/kicad/10.0`
+— that is the directory that caused the crash.  What is there instead is a
+comment saying nothing needs setting if a KiCad 10 AppImage is in one of the
+usual places, `export KICAD_APPIMAGE=...` if it is somewhere else, and
+`KICAD_APPRUN=...` for an already-extracted one.  Underneath, in as many words,
+is a warning not to point `KICAD_SHARE_DIR` at `~/.local/share/kicad/10.0`.
+
+"Everything is generated" is its own paragraph now, and the list above it is
+**"Fun additions to Paul's original circuit"**.
+
+### The historic pictures
+
+Every response now opens with the three renders and the schematic **as they
+were when that response was written**, pulled out of the git history at the
+commit that ended each prompt's work, and stored in `docs/history/response-N/`
+(8.7 MB for all six).  The schematic PNG links to the PDF of the same vintage.
+
+* response 1 — `066e515`, four layers, "rails OK" green LED, R3 = 35.7k
+* response 2 — `20a537e`, two layers, the isolated split, the lamp, the QR codes
+* response 3 — `4f69691`, rebuilt around the multipliers
+* response 4 — `4533bb6`, the r knob and the SYNC IN pad
+* response 5 — `ca308bd`, SYNC IN X on its own BNC
+* response 6 — `5025355`, as it stands
+
+While doing it I found that **Response 6 was never written into this file** —
+prompt 6 was answered at the terminal only.  It is there now, marked as
+written after the fact, and from here on the replies live in this file.
+
+### Also
+
+`./make.py --clean && ./make.py` still works, and the clean message now names
+`docs/history/` and `docs/lamp/` as source rather than build output.

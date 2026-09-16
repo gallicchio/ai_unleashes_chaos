@@ -1,8 +1,13 @@
 # AI UNLEASHES CHAOS
 
-Lorenz Attractor Circuit by Paul Horowitz in KiCAD
+[Lorenz Attractor Circuit](https://seti.harvard.edu/unusual_stuff/misc/lorenz.htm) by Paul Horowitz in KiCAD
 
 In graduate school I worked with Paul Horowitz, of [Art of Electronics](https://artofelectronics.net/) fame. I even contributed a few bits and pieces to the 3rd edition. (I am thanked in the footnotes, one of which simply says, "Jason, again.) I want you to build a nice little present for Paul, which could also live on as an open source project and a kit that people could build.
+
+The entire PCB and additions to Paul's original circuit was designed in a few
+hours of prompts to [Claude Opus 5 Max](CLAUDE_CODE_CHAT.md). I typed prompts
+and used KiCAD only to look at the output of Claude's [python
+scripts](scripts/), which generated almost everything else.
 
 ![The board](docs/images/lorenz-render-iso.png)
 
@@ -19,7 +24,7 @@ analog multipliers — Paul's exact parts, in hand-solderable packages, so the
 circuit stays literally his. Hang a scope on `x` and `z` in X-Y and the
 attractor's owl's face appears within a second of power-up.
 
-**The interesting bits:**
+**Fun additions to Paul's original circuit:**
 
 * **Four speeds on a DIP switch** — `fast!` (τ = 2.2 ms) through `slower!`
   (572 ms), the six sliders reading left to right as a two-digit binary
@@ -45,12 +50,13 @@ attractor's owl's face appears within a second of power-up.
   the cable and they diverge again from states that agreed to a few
   millivolts. The knob is linear in coupling strength from 0 to 10, with the
   locking threshold at about 70 % of rotation.
-* **Everything is generated.** There is no hand-edited schematic or board.
-  `./make.py` writes the symbols, footprints, 3D models, schematic, placement,
-  routing, silkscreen, gerbers, BOM and CPL from Python, then checks them:
-  141 circuit assertions read the exported netlist back and re-derive the
-  equations, the QR codes on the back are decoded out of the gerbers, and a
-  clean clone rebuilds byte-identically.
+**Everything here is generated.** There is no hand-edited schematic or board:
+`./make.py` writes the symbols, footprints, 3D models, schematic, placement,
+routing, silkscreen, gerbers, BOM and CPL from Python, and then checks them.
+141 circuit assertions read the exported netlist back and re-derive the
+equations from the resistors that are really attached; the QR codes on the
+back are decoded out of the gerbers they were plotted into; and a clean clone
+rebuilds every deliverable byte-identically.
 
 ![Front](docs/images/lorenz-render-top.png)
 ![Back](docs/images/lorenz-render-bottom.png)
@@ -64,12 +70,23 @@ Needs KiCad 10, and Python 3 with `numpy` and `Pillow`; `pdftoppm`
 (poppler-utils) for the preview images.
 
 ```bash
-# point at an extracted KiCad 10 AppImage (skip if kicad-cli is on your PATH)
-export KICAD_APPRUN=$HOME/.local/kicad10/AppDir/AppRun
+git clone https://github.com/gallicchio/ai_unleashes_chaos.git
+cd ai_unleashes_chaos
+
+# Nothing to configure if kicad-cli is on your PATH, or if a KiCad 10
+# AppImage is in ~/.local/bin, ~/Downloads, ~/Applications, ~/bin or /opt:
+# the build finds it and mounts it for as long as it runs.  Otherwise:
+export KICAD_APPIMAGE=$HOME/.local/bin/kicad-10.0.6-x86_64.AppImage
+# ...or, for an AppImage you have already extracted:
+# export KICAD_APPRUN=$HOME/.local/kicad10/AppDir/AppRun
 
 ./make.py                # build and check everything  (~40 s)
 ./make.py --clean        # delete everything it generates
 ```
+
+Do **not** set `KICAD_SHARE_DIR` to `~/.local/share/kicad/10.0`: that is where
+*your own* libraries go and is empty on a fresh install. KiCad's own libraries
+live with the program, inside the AppImage. The build says so if you try.
 
 Upload `out/lorenz/lorenz-gerbers.zip`, `-bom.csv` and `-cpl.csv` to a fab.
 Read **[docs/MANUFACTURING.md](docs/MANUFACTURING.md)** first — it lists the

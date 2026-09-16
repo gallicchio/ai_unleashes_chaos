@@ -62,8 +62,9 @@ def sys_py(script, *args):
 def kicad_py(script, *args, env=None):
     e = dict(os.environ)
     e.update(env or {})
-    if kienv.APPRUN:
-        cmd = [kienv.APPRUN, "python3.11", os.path.join(SCRIPTS, script), *args]
+    run = kienv.runner()
+    if run:
+        cmd = [run, "python3.11", os.path.join(SCRIPTS, script), *args]
     else:
         cmd = [sys.executable, os.path.join(SCRIPTS, script), *args]
     r = subprocess.run(cmd, capture_output=True, text=True, env=e)
@@ -206,8 +207,8 @@ def clean():
     print(f"\n{removed} generated file(s) removed"
           + (f", {kept} were already absent" if kept else "")
           + ".\nEverything else in the repository is source: scripts/, docs/*.md,\n"
-          "README.md, CLAUDE_CODE_CHAT.md, LICENSE and .gitignore.\n"
-          "./make.py rebuilds the rest.")
+          "README.md, CLAUDE_CODE_CHAT.md, LICENSE, .gitignore and the\n"
+          "docs/history/ and docs/lamp/ pictures.  ./make.py rebuilds the rest.")
     return 0
 
 
@@ -236,10 +237,11 @@ def main():
     if a.clean:
         return clean()
 
-    if kienv.APPRUN is None and kienv.PLAIN_CLI is None:
+    if not kienv.have_kicad():
         print("KiCad 10 was not found.\n"
-              "Install it, or point KICAD_APPRUN at an extracted KiCad\n"
-              "AppImage's AppRun -- see docs/MANUFACTURING.md.")
+              "Install it so that `kicad-cli` is on PATH, or point\n"
+              "KICAD_APPIMAGE at a KiCad 10 .AppImage (an extracted one works\n"
+              "too: KICAD_APPRUN=<AppDir>/AppRun) -- see docs/MANUFACTURING.md.")
         return 2
     print(kienv.describe())
 
