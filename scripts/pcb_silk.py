@@ -131,15 +131,15 @@ PART_LABELS = [
     ("U4", 0.0, 8.2, "MPY634   x y", 1.1),
     ("U1", 0.0, -5.2, "LF412 op-amp", 1.1),
     ("U2", 0.0, 5.2, "LF412 op-amp", 1.1),
-    ("U5", -9.0, -5.6, "5 V in", 1.0),
-    ("U5", 9.0, -5.6, "+/-15 V out", 1.0),
+    ("U5", -16.615, -3.0, "5 V in", 1.0),
+    ("U5", 1.385, -3.0, "+/-15 V out", 1.0),
     # The two knobs are 5 mm apart on the left edge with nothing but their
     # own pin-1 marks between them, so their legends go to the right, in the
     # band the multipliers leave clear.
-    ("RV2", 16.0, 0.96, "SYNC WEIGHT", 1.1),
-    ("RV2", 16.0, 3.26, "CW:  0 .. 10", 0.9),
-    ("RV1", 16.0, -2.54, "r  KNOB", 1.3),
-    ("RV1", 16.0, -0.24, "CW:  21 .. 37", 0.9),
+    ("RV2", 16.0, 3.5, "SYNC WEIGHT", 1.1),
+    ("RV2", 16.0, 5.8, "CW:  0 .. 10", 0.9),
+    ("RV1", 16.0, 0.0, "r  KNOB", 1.3),
+    ("RV1", 16.0, 2.3, "CW:  21 .. 37", 0.9),
     ("R19", 0.0, -2.6, "SYNC IN X adds here", 0.9),
     # The lamp's whole story, next to the lamp: which signal drives which die.
     ("D1", 0.0, -8.4, "CHAOS LAMP", 1.2),
@@ -161,6 +161,9 @@ FIELD_ANCHOR = {
     "SW": {"Reference": (-12.5, -1.0), "Value": (-12.5, 1.5)},
     "U6": {"Reference": (0.0, -3.6), "Value": (0.0, 3.6)},
     "U7": {"Reference": (0.0, -3.6), "Value": (0.0, 3.6)},
+    # The two trimmers are 5 mm apart on the left edge; without this their
+    # designators drift and it stops being obvious which 20k is which.
+    "RV": {"Reference": (-3.4, 7.3), "Value": (3.4, 7.3)},
     # "GND TIE" belongs under the credit line, not over it.
     "JP": {"Reference": (-4.6, -3.6), "Value": (0.9, -3.6)},
 }

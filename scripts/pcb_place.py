@@ -39,9 +39,9 @@ PLACE = {
     # x term it perturbs.  The r knob is directly below the weight knob, so
     # the two controls are on the same edge and turn the same way.
     "J5":  (7.0, 19.0, 180),    # SYNC IN X, barrel off the left edge
-    "RV2": (9.0, 33.54, 0),     # sync weight; body centres on (9, 31)
+    "RV2": (9.0, 31.0, 0),      # sync weight knob
     "R20": (18.0, 39.0, 90),    # 1M holding the wiper node down
-    "RV1": (9.0, 48.54, 0),     # r knob; body centres on (9, 46)
+    "RV1": (9.0, 46.0, 0),      # r knob
 
     # ---- multipliers, clear of the input edge ----------------------------
     "U3": (21.0, 26.5, 0),      # x*z  -> -y integrator
@@ -121,10 +121,11 @@ PLACE = {
     "TP7": (24.0, 79.5, 0), "TP13": (32.0, 79.5, 0),      # +5 V, GNDU
 
     # ---- the converter straddles the split ------------------------------
-    # Pin 1 is the footprint origin and the pins run +x on a 2.54 mm pitch,
-    # with the module's own barrier in the 5.08 mm gap between pins 2 and 4.
-    # Putting that gap over the board's gap is the whole trick.
-    "U5":  (37.92, 94.0, 0),
+    # The anchor is the middle of the body; pin 1 is 7.615 mm to its left and
+    # 2.6 mm below it, and the pins run +x on a 2.54 mm pitch with the
+    # module's own barrier in the 5.08 mm gap between pins 2 and 4.  Putting
+    # that gap over the board's gap is the whole trick.
+    "U5":  (45.535, 91.4, 0),
 
     # ---- the three parts that bridge the two grounds --------------------
     "JP1": (43.0, 79.0, 0), "R18": (43.0, 82.5, 0), "C25": (43.0, 86.0, 0),

@@ -79,11 +79,9 @@ def bnc():
 
 
 def dcdc():
-    """19.65 x 7.0 x 10.16 mm brick, pin 1 at the footprint origin."""
+    """19.65 x 7.0 x 10.16 mm brick, centred on the footprint origin."""
     s = HEAD
-    # footprint: pins on a 2.54 grid from x=0, body -2.21..17.44 in x and
-    # -6.1..0.9 in board y, which is +6.1..-0.9 in the model frame
-    s += box(7.615, 2.6, 5.08, 19.65, 7.0, 10.16, BLACK)
+    s += box(0, 0, 5.08, 19.65, 7.0, 10.16, BLACK)
     return "DCDC_SIP_A05xxS.wrl", s
 
 
@@ -132,12 +130,12 @@ def fuse1812():
 def trimpot():
     """Bourns 3386P: a 9.53 mm square, 4.83 mm tall body with a screw on top.
 
-    The body sits 2.54 mm off terminal 1 in board -Y, which is +Y here.
+    Centred on the footprint origin, which is the middle of the body.
     """
     s = HEAD
-    s += box(0, 2.54, 2.415, 9.53, 9.53, 4.83, (0.10, 0.18, 0.55))
-    s += box(0, 2.54, 4.90, 5.60, 5.60, 0.30, (0.85, 0.85, 0.88))
-    s += box(0, 2.54, 5.05, 3.15, 0.76, 0.30, (0.25, 0.25, 0.28))
+    s += box(0, 0, 2.415, 9.53, 9.53, 4.83, (0.10, 0.18, 0.55))
+    s += box(0, 0, 4.90, 5.60, 5.60, 0.30, (0.85, 0.85, 0.88))
+    s += box(0, 0, 5.05, 3.15, 0.76, 0.30, (0.25, 0.25, 0.28))
     return "Potentiometer_3386P.wrl", s
 
 

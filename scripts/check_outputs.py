@@ -108,6 +108,39 @@ def check(stem, layers, w, h, problems, notes):
     notes.append(f"{stem}: {len(placed)} placements, {len(bom_rows)} BOM "
                  f"lines, all with order codes")
 
+    # The JLC copy must be the same file, turned by exactly the amounts in the
+    # rotation table and by nothing else: same parts, same places, same sides.
+    jlc_path = os.path.join(ROOT, "out", stem, f"{stem}-cpl_jlc_corrected.csv")
+    if not os.path.exists(jlc_path):
+        problems.append(f"{stem}: no JLCPCB-corrected placement file")
+        return
+    lcsc_of = {}
+    for b in bom_rows:
+        for ref in b["Designator"].split(","):
+            lcsc_of[ref.strip()] = b["LCSC Part #"].strip()
+    jlc = {r["Designator"]: r for r in csv.DictReader(open(jlc_path))}
+    plain = {r["Designator"]: r for r in rows}
+    if set(jlc) != set(plain):
+        problems.append(f"{stem}: the JLCPCB placement file lists different "
+                        f"parts from {os.path.basename(cpl)}")
+        return
+    turned = 0
+    for ref, a in plain.items():
+        b = jlc[ref]
+        if (a["Mid X"], a["Mid Y"], a["Layer"]) != (b["Mid X"], b["Mid Y"],
+                                                    b["Layer"]):
+            problems.append(f"{stem}: {ref} moved in the JLCPCB placement "
+                            f"file; only rotations may differ")
+        want = (float(a["Rotation"])
+                + parts.JLC_ROTATION.get(lcsc_of.get(ref, ""), 0)) % 360.0
+        if abs(float(b["Rotation"]) - want) > 0.05:
+            problems.append(f"{stem}: {ref} is at {b['Rotation']} deg for "
+                            f"JLCPCB, expected {want:.1f}")
+        elif float(b["Rotation"]) != float(a["Rotation"]):
+            turned += 1
+    notes.append(f"{stem}: the JLCPCB placement file turns {turned} parts "
+                 f"and moves none")
+
 
 def check_models(stem, problems, notes):
     """Every 3D model a footprint names must actually be on disk.

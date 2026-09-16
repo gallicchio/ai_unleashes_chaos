@@ -115,6 +115,37 @@ PARTS = {
 }
 
 # Resistor and capacitor order codes, keyed by value.
+# --------------------------------------------------------- JLCPCB rotations
+# JLCPCB places from its own model of each part, and for some parts that model
+# is turned differently from KiCad's footprint.  A CPL that is right for every
+# other fab is then wrong for theirs by a fixed angle per part number -- not
+# per package: it is a property of JLC's drawing of that one LCSC part.
+#
+# These are the corrections read off JLC's own "Component Placements" preview,
+# in degrees counter-clockwise to ADD to the KiCad rotation.  They are written
+# into out/<board>/<board>-cpl_jlc_corrected.csv; the plain -cpl.csv stays
+# KiCad-canonical for anybody else.
+JLC_ROTATION = {
+    "C15322":    270,   # LF412CDR, SOIC-8             U1, U2
+    "C1523457":  270,   # MPY634KU, SOIC-16W           U3, U4
+    "C8615":     180,   # CJ78L12, SOT-89              U6
+    "C8626":     180,   # CJ79L12, SOT-89              U7
+    "C41416668":  90,   # BNC-KYWE-295-W4-N            J2, J3, J4, J5
+    "C54952":    270,   # DSIC06LSGET, 6-way DIP       SW1
+}
+
+# Parts whose orientation could not be read off that preview: JLC has no model
+# to draw for the lamp, and the trimmers and the converter were in the wrong
+# place to judge because their footprints put the pick-and-place point on pin 1
+# instead of the middle of the body.  That is fixed, but the angles have still
+# never been seen, so they are left alone and called out in MANUFACTURING.md.
+JLC_UNVERIFIED = {
+    "C2962095":  "D1, the RGB lamp -- JLC draws it as an unknown-part "
+                 "checkerboard, so its rotation cannot be read off the preview",
+    "C116287":   "RV1 and RV2, the trimmers -- were drawn off their pads",
+    "C19272710": "U5, the DC/DC module -- was drawn off its pads",
+}
+
 PASSIVES = {
     "100k":  dict(lcsc="C149504", mpn="0805W8F1003T5E", jlc_type="basic",
                   price=0.006, stock=4893299),

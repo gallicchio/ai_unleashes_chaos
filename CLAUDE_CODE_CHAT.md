@@ -137,18 +137,18 @@ footprint or dimensioned from a datasheet I read.
 `./make.py` now writes these into `docs/images/` every build, so they cannot
 drift from the design.
 
-![The board, front](docs/images/lorenz-render-iso.png)
-
 The back carries the equations, your suggested parameters and the attractor
 itself — the trace is the real solution, integrated by `scripts/lorenz_curve.py`:
 
-![The board, back](docs/images/lorenz-render-bottom.png)
 
-[The schematic](docs/images/schematic.png) ·
-[front silkscreen](docs/images/lorenz-silk-top.png) ·
-[back silkscreen](docs/images/lorenz-silk-bottom.png) ·
-[front copper](docs/images/lorenz-top.png) ·
-[back copper](docs/images/lorenz-bottom.png)
+(NOTE that these links point to the current revision, not what resulted 
+only from Prompt 1, which is why I included those as images at the start of each response.)
+
+* [The schematic](docs/images/schematic.png)
+* [front silkscreen](docs/images/lorenz-silk-top.png)
+* [back silkscreen](docs/images/lorenz-silk-bottom.png)
+* [front copper](docs/images/lorenz-top.png)
+* [back copper](docs/images/lorenz-bottom.png)
 
 *(Response 1 also built a four-layer board and pictured its two inner planes.
 Response 2 dropped it — see below for the measurement that decided it.)*
@@ -251,8 +251,6 @@ lanes.)*
 Everything below is built by `./make.py`, which now ends with **BUILD OK** only
 if ERC, DRC with schematic parity, 116 circuit checks, the schematic layout
 check, the fab-package checks and — new — a QR decoder all pass.
-
-![The board, front](docs/images/lorenz-render-top.png)
 
 ### The isolation: yes, use it
 
@@ -792,8 +790,6 @@ one part with no real second source, where an "equivalent" would not be.
 You were right that everything was bunched into the lower right. The
 multipliers now sit at the **far left**, in the third of the board that was
 empty, and everything else spread out behind them.
-
-![The board](docs/images/lorenz-render-top.png)
 
 * Each output row is now one straight line: **op-amp → probe pad → 100 Ω lying
   horizontally → BNC**, with the probe pad's own name (`x`, `-y`, `z`) printed
@@ -1606,3 +1602,114 @@ written after the fact, and from here on the replies live in this file.
 
 `./make.py --clean && ./make.py` still works, and the clean message now names
 `docs/history/` and `docs/lamp/` as source rather than build output.
+
+
+## Prompt 8
+
+I uploaded the gerbers, BOM, and CPL files. There were some issues.
+
+Make a lorenz-cpl_jlc_corrected.csv with the following information:
+* The D1 RGB LED has no footprint in their online Component Placements tab. It shows up as the "unknown part" checkerboard
+* J2, J3, J4, J5 BNC connectors needed 90 degrees CCW
+* R7 shows the 'unknown part" checkerboard. The other resistors are good.
+* The footprints for RV1 and RV2 (potentiometers) are never directly over the holes.
+* SW1 needed 270 degrees CCW
+* U1,U2 needed 270 CCW
+* U3,U4 needed 270 CCW
+* U5, the voltage converter, cannot rotate onto the pad. It's shifted like the potentiometers. There is no rotation that would put the purple dot over what you drew as what I'm interpreting as the "pin 1" circle.
+* U6 needed 180 CCW
+* U7 needed 180 CCW
+
+I don't know how to deal with the  "unknown part" checkerboards. I really don't know how to deal with the potentiometer and voltage converter, which are shifted and don't seem to have obvious ways of lining up at all. That seems like a problem with whatever custom thing you wrote for them.
+
+I made a few minor changes to .md files on my own. From now on, when you edit this CLAUDE_CODE_CHAT.md, only Include the new board images if they changed from the last time you included them.
+
+## Response 8
+
+`out/lorenz/lorenz-cpl_jlc_corrected.csv` is built by `./make.py` now, next to
+the plain `-cpl.csv`.  Upload the corrected one to JLCPCB and the plain one to
+anybody else; `docs/MANUFACTURING.md` has a new **Uploading to JLCPCB**
+section that says so, with the table below in it.
+
+### The shifted parts were my bug, and it is fixed
+
+RV1, RV2 and U5 were not a rotation problem at all, which is why no rotation
+fixed them.  A pick-and-place file says where the **middle** of a part goes.
+For every stock KiCad footprint the anchor is already the middle of the body,
+so KiCad's CPL export is right — but I drew those two footprints myself and
+put the anchor on **pin 1**:
+
+| part | anchor was | off by |
+|---|---|---|
+| RV1, RV2 (3386P trimmer) | terminal 1 | 2.54 mm |
+| U5 (A0515S DC/DC) | pin 1 | 7.6 mm across, 2.6 mm down |
+
+So JLC was placing the part exactly that far from its own pads, and no angle
+can undo a translation — exactly as you found.  Both footprints now have their
+anchor on the centre of the body, and the placements moved by the same amount
+in the other direction, so **every copper, mask, paste, drill and outline file
+is byte-for-byte what you already uploaded**.  Only the CPL changed, plus two
+designators on the front silkscreen that follow their parts.
+
+The centroids are now right where the pads say they should be:
+
+```
+RV1  9.000, 54.000   pads span y 43.46..48.54, centre 46.0  (CPL y is flipped)
+RV2  9.000, 69.000   pads span y 28.46..33.54, centre 31.0
+U5  45.535,  8.600   body 35.71..55.36 in x, centre 45.535
+```
+
+### The rotations
+
+Taken straight from what you read off the preview, as degrees counter-clockwise
+to add.  They are keyed by **LCSC part number**, not by package, because the
+angle is a property of JLC's own drawing of that one part:
+
+| parts | LCSC | turned by |
+|---|---|---|
+| U1, U2 (LF412, SOIC-8) | C15322 | 270 |
+| U3, U4 (MPY634, SOIC-16W) | C1523457 | 270 |
+| SW1 (6-way DIP) | C54952 | 270 |
+| U6 (78L12, SOT-89) | C8615 | 180 |
+| U7 (79L12, SOT-89) | C8626 | 180 |
+| J2, J3, J4, J5 (BNC) | C41416668 | 90 |
+
+`check_outputs.py` now proves the two placement files differ in nothing but
+those angles: same parts, same coordinates, same sides.  Eleven placements are
+turned; nothing moves.
+
+**Four parts are still unverified** and are deliberately left at 0, because
+their angle has never actually been seen: **D1** (JLC draws it as a
+checkerboard) and **RV1, RV2, U5** (which were sitting off their pads, so
+there was nothing to judge).  Please look at those four in the Component
+Placements view on the next upload — now that the three are in the right
+place, their angles will be readable — and tell me any that are turned.
+
+### The checkerboards
+
+A checkerboard means JLCPCB has no drawing of that part to show you.  It does
+not mean the part is unavailable — that shows up in the BOM tab, not this one
+— and it does not stop the order.  What it costs is the ability to check that
+part's orientation, which matters for exactly one of your two:
+
+* **R7 (374k, C2933427)** — harmless.  It is an 0805 resistor; it has no
+  orientation to get wrong.  Only the value matters (b = 1M/374k = 2.674), so
+  any 374k 1 % 0805 is a drop-in if the checkerboard bothers you.
+* **D1 (MHPA3528CRGBCT, C2962095)** — not harmless: it is the lamp, and it is
+  polarised.  Two ways to cover it, both now written into MANUFACTURING.md:
+  1. Note on the order: *"D1 is a common-anode RGB LED; pin 1 (the anode) is
+     the corner marked by the filled triangle on the front silkscreen, at the
+     bottom left of the part in lorenz-assembly-top.pdf."*  That drawing
+     prints 1:1 and the triangle is in the gerbers, so you and JLC are looking
+     at the same picture.
+  2. Or deselect D1 from the assembly and hand-solder it.  One PLCC-4 on four
+     pads, a minute's work, nothing else affected — and a lamp fitted
+     backwards simply never lights, so it is a cheap thing to get wrong.
+
+### What changed on the board
+
+Nothing electrical, and the schematic and the back are identical.  The front
+silkscreen has the two trimmer designators pinned under their own squares,
+which the anchor move had scattered:
+
+![front](docs/history/response-8/render-top.png)

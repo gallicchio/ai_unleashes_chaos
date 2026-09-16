@@ -104,25 +104,51 @@ def export_fab(stem, layers):
     return zpath, sorted(os.listdir(gdir))
 
 
-def export_cpl(stem):
-    """Pick-and-place in JLCPCB's column layout."""
+def export_cpl(stem, bom_lines):
+    """Pick-and-place in JLCPCB's column layout, twice.
+
+    `<stem>-cpl.csv` is KiCad-canonical: every angle is the one in the board
+    file, which is what any fab that reads the footprint should want.
+    `<stem>-cpl_jlc_corrected.csv` is the same file with JLCPCB's own
+    per-part rotation offsets applied, because JLC places from its model of
+    the part rather than from ours -- see parts.JLC_ROTATION.
+    """
     pcb, _ = board_files(stem)
     raw = os.path.join(OUT, stem, "_pos.csv")
     kienv.cli("pcb", "export", "pos", "--format", "csv", "--units", "mm",
               "--side", "both", "--use-drill-file-origin", "--exclude-dnp",
               "-o", raw, pcb)
     rows = list(csv.DictReader(open(raw)))
-    path = os.path.join(OUT, stem, f"{stem}-cpl.csv")
-    with open(path, "w", newline="") as fh:
-        w = csv.writer(fh)
-        w.writerow(["Designator", "Mid X", "Mid Y", "Layer", "Rotation"])
-        for r in rows:
-            w.writerow([r["Ref"], f'{float(r["PosX"]):.4f}',
-                        f'{float(r["PosY"]):.4f}',
-                        "Top" if r["Side"].lower().startswith("t") else "Bottom",
-                        f'{float(r["Rot"]):.1f}'])
     os.remove(raw)
-    return path, len(rows)
+
+    lcsc_of = {}
+    for line in bom_lines:
+        for ref in line["Designator"].split(","):
+            lcsc_of[ref.strip()] = line["LCSC Part #"]
+
+    def write(path, correct):
+        turned = []
+        with open(path, "w", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["Designator", "Mid X", "Mid Y", "Layer", "Rotation"])
+            for r in rows:
+                rot = float(r["Rot"])
+                if correct:
+                    d = parts.JLC_ROTATION.get(lcsc_of.get(r["Ref"], ""), 0)
+                    if d:
+                        rot = (rot + d) % 360.0
+                        turned.append(r["Ref"])
+                w.writerow([r["Ref"], f'{float(r["PosX"]):.4f}',
+                            f'{float(r["PosY"]):.4f}',
+                            "Top" if r["Side"].lower().startswith("t")
+                            else "Bottom", f'{rot:.1f}'])
+        return turned
+
+    path = os.path.join(OUT, stem, f"{stem}-cpl.csv")
+    write(path, False)
+    jlc = os.path.join(OUT, stem, f"{stem}-cpl_jlc_corrected.csv")
+    turned = write(jlc, True)
+    return path, jlc, len(rows), turned
 
 
 def by_lcsc():
@@ -311,13 +337,15 @@ def export_images(stem, layers):
 def run(stem, layers):
     os.makedirs(os.path.join(OUT, stem), exist_ok=True)
     zpath, names = export_fab(stem, layers)
-    cpl, ncpl = export_cpl(stem)
     bom, costed, lines, total, unknown = export_bom(stem)
+    cpl, jlc_cpl, ncpl, turned = export_cpl(stem, lines)
     export_prints(stem, layers)
     made, skipped = export_images(stem, layers)
     print(f"  {stem}: {len(names)} gerber/drill files -> "
           f"{os.path.relpath(zpath, ROOT)}")
     print(f"  {stem}: {ncpl} placements -> {os.path.relpath(cpl, ROOT)}")
+    print(f"  {stem}: {len(turned)} of them turned for JLCPCB -> "
+          f"{os.path.relpath(jlc_cpl, ROOT)}")
     print(f"  {stem}: {len(lines)} BOM lines, parts ${total:.2f}/board -> "
           f"{os.path.relpath(bom, ROOT)}")
     print(f"  {stem}: {len(made)} images -> docs/images/, plus STEP and stats")

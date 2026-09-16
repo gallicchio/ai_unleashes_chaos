@@ -262,8 +262,9 @@ def main():
     except Fail as e:
         print(f"\nBUILD FAILED: {e}")
         return 1
-    print(f"\nBUILD OK in {time.time() - t0:.0f} s. "
-          f"Upload out/<board>/<board>-gerbers.zip, -bom.csv and -cpl.csv.")
+    print(f"\nBUILD OK in {time.time() - t0:.0f} s.  Upload "
+          f"out/<board>/<board>-gerbers.zip and -bom.csv, plus\n"
+          f"-cpl_jlc_corrected.csv for JLCPCB or -cpl.csv for anyone else.")
     return 0
 
 

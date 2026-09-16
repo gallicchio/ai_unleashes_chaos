@@ -2,12 +2,12 @@
 
 [Lorenz Attractor Circuit](https://seti.harvard.edu/unusual_stuff/misc/lorenz.htm) by Paul Horowitz in KiCAD
 
-In graduate school I worked with Paul Horowitz, of [Art of Electronics](https://artofelectronics.net/) fame. I even contributed a few bits and pieces to the 3rd edition. (I am thanked in the footnotes, one of which simply says, "Jason, again.) I want you to build a nice little present for Paul, which could also live on as an open source project and a kit that people could build.
+In graduate school I worked with Paul Horowitz, of [Art of Electronics](https://artofelectronics.net/) fame. I even contributed a few bits and pieces to the 3rd edition. (I am thanked in the footnotes, one of which simply says, "Jason, again.") I want you to build a nice little present for Paul, which could also live on as an open source project and a kit that people could build.
 
-The entire PCB and additions to Paul's original circuit was designed in a few
-hours of prompts to [Claude Opus 5 Max](CLAUDE_CODE_CHAT.md). I typed prompts
-and used KiCAD only to look at the output of Claude's [python
-scripts](scripts/), which generated almost everything else.
+**Only Prompts:**
+As an experiment, the entire PCB, along with additions to Paul's original circuit were designed in a few
+hours of [prompts to Claude Opus 5 Max](CLAUDE_CODE_CHAT.md). I only typed prompts. 
+I only used KiCAD to look at the output of Claude's [python scripts](scripts/), which generated everything else.
 
 ![The board](docs/images/lorenz-render-iso.png)
 
@@ -22,7 +22,7 @@ A 100 x 100 mm, two-layer, USB-C-powered analog computer that solves
 in real time, continuously, with three op-amp integrators and two **MPY634**
 analog multipliers — Paul's exact parts, in hand-solderable packages, so the
 circuit stays literally his. Hang a scope on `x` and `z` in X-Y and the
-attractor's owl's face appears within a second of power-up.
+attractor's "owl's face" appears within a second of power-up.
 
 **Fun additions to Paul's original circuit:**
 
@@ -71,6 +71,7 @@ Needs KiCad 10, and Python 3 with `numpy` and `Pillow`; `pdftoppm`
 
 ```bash
 git clone https://github.com/gallicchio/ai_unleashes_chaos.git
+
 cd ai_unleashes_chaos
 
 # Nothing to configure if kicad-cli is on your PATH, or if a KiCad 10
@@ -84,13 +85,12 @@ export KICAD_APPIMAGE=$HOME/.local/bin/kicad-10.0.6-x86_64.AppImage
 ./make.py --clean        # delete everything it generates
 ```
 
-Do **not** set `KICAD_SHARE_DIR` to `~/.local/share/kicad/10.0`: that is where
-*your own* libraries go and is empty on a fresh install. KiCad's own libraries
-live with the program, inside the AppImage. The build says so if you try.
-
-Upload `out/lorenz/lorenz-gerbers.zip`, `-bom.csv` and `-cpl.csv` to a fab.
-Read **[docs/MANUFACTURING.md](docs/MANUFACTURING.md)** first — it lists the
-part rotations to check in the fab's preview before you pay.
+Upload `out/lorenz/lorenz-gerbers.zip` and `-bom.csv` to a fab, with
+`-cpl_jlc_corrected.csv` for the placements if that fab is JLCPCB and
+`-cpl.csv` if it is anyone else — JLCPCB turns six of the parts differently
+from KiCad, and the corrected file is the same placements with those angles
+applied. Read **[docs/MANUFACTURING.md](docs/MANUFACTURING.md)** first: it
+lists what to check in the fab's preview before you pay.
 
 ## More
 

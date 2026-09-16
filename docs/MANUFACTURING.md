@@ -74,6 +74,70 @@ plane.  That is why this project ships one board.
 
 Two boards is the sensible order: one for Paul and one to keep.
 
+## Uploading to JLCPCB
+
+| upload | file |
+|---|---|
+| gerbers | `lorenz-gerbers.zip` |
+| BOM | `lorenz-bom.csv` |
+| placements | **`lorenz-cpl_jlc_corrected.csv`** |
+
+Use the *corrected* placement file for JLCPCB, and the plain
+`lorenz-cpl.csv` for anyone else.  JLCPCB places from its own model of
+each part, and for some parts that model is turned differently from
+KiCad's footprint, so a file that is right everywhere else is wrong by
+a fixed angle there.  The angle belongs to the part number, not to the
+package: it is a property of JLC's drawing of that one LCSC part.
+
+| parts | LCSC | turned by |
+|---|---|---|
+| U1, U2 | C15322 | 270 deg counter-clockwise |
+| U3, U4 | C1523457 | 270 deg counter-clockwise |
+| SW1 | C54952 | 270 deg counter-clockwise |
+| U6 | C8615 | 180 deg counter-clockwise |
+| U7 | C8626 | 180 deg counter-clockwise |
+| J2, J3, J4, J5 | C41416668 | 90 deg counter-clockwise |
+
+Everything else -- every resistor, every capacitor -- is symmetric or
+already agrees, and is left alone.  `check_outputs.py` proves the two
+files differ in nothing but those angles.
+
+### Still unverified
+
+These could not be read off JLC's preview and are **not** corrected.
+Check them in the Component Placements view before paying, and if any
+of them is turned, say so and it goes in the table above:
+
+* **C116287** -- RV1 and RV2, the trimmers -- were drawn off their pads.
+* **C19272710** -- U5, the DC/DC module -- was drawn off its pads.
+* **C2962095** -- D1, the RGB lamp -- JLC draws it as an unknown-part checkerboard, so its rotation cannot be read off the preview.
+
+### The unknown-part checkerboards
+
+A checkerboard in the Component Placements view means JLCPCB has no
+drawing of that part to show you.  It does not mean the part is
+unavailable -- that would show up in the BOM tab -- and it does not
+stop the order.  What it costs you is the ability to check that part's
+orientation in the preview, which matters for exactly one of the two
+this board hits:
+
+* **R7 (374k, C2933427)** -- harmless.  It is an 0805 resistor: it has
+  no orientation to get wrong.  Any 374k 1 % 0805 would do, since only
+  the value matters (b = 1M/374k = 2.674), so swap it for one JLC can
+  draw if the checkerboard bothers you.
+* **D1 (MHPA3528CRGBCT, C2962095)** -- not harmless: it is the RGB lamp
+  and it is polarised.  Two ways to cover it:
+
+  1. Put a note on the order: *"D1 is a common-anode RGB LED; pin 1
+     (the anode) is the corner marked by the filled triangle on the
+     front silkscreen, at the bottom left of the part in
+     lorenz-assembly-top.pdf."*  That drawing prints 1:1 and the
+     triangle is in the gerbers, so both sides are looking at the same
+     picture.
+  2. Or deselect D1 from the assembly and solder it by hand.  It is one
+     PLCC-4 on four pads and takes a minute; the rest of the board is
+     unaffected, and a lamp fitted backwards simply never lights.
+
 ## Check these before you pay
 
 The one thing that cannot be checked from here is how the assembler

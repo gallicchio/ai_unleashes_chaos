@@ -159,25 +159,30 @@ def dcdc():
                   "Isolated dual-output DC/DC SIP module, 5 pins on 2.54mm grid "
                   "(pos 1,2,4,5,6), fits A0515S-2WR2 and A0515S-1WR3",
                   "DC-DC isolated SIP dual-output", "through_hole", 5.6)
-    PITCH, X0 = 2.54, 0.0
+    # The anchor is the centre of the body, not pin 1.  A pick-and-place file
+    # says where the *middle* of a part goes; an anchor on pin 1 puts the
+    # assembler's part 7.6 mm to one side of its own pads, and no rotation
+    # fixes a translation.
+    #
+    # Body: 19.65 long, pin 1 sits 2.21 mm in from the left end (2 W drawing);
+    # 7.0 mm deep with the pin row 0.9 mm from the front edge.
+    bx1, bx2 = -19.65 / 2, 19.65 / 2
+    by1, by2 = -7.0 / 2, 7.0 / 2
+    PITCH, X0, PY = 2.54, bx1 + 2.21, by2 - 0.9
     positions = {1: 0, 2: 1, 4: 3, 5: 4, 6: 5}
     for pin, slot in positions.items():
         x = X0 + slot * PITCH
         shape = "rect" if pin == 1 else "circle"
-        f.add(tht_pad(str(pin), x, 0, 1.0, 1.8, f"{name}/p{pin}", shape))
+        f.add(tht_pad(str(pin), x, PY, 1.0, 1.8, f"{name}/p{pin}", shape))
 
-    # Body: 19.65 long, pin 1 sits 2.21 mm in from the left end (2 W drawing);
-    # 7.0 mm deep with the pin row 0.9 mm from the front edge.
-    bx1, bx2 = -2.21, -2.21 + 19.65
-    by1, by2 = -6.1, 0.9
     rect_lines(f, bx1, by1, bx2, by2, "F.Fab", FAB_W, f"{name}/fab")
-    # Silk stops 1.3 mm above the pin row: the body really does reach y=+0.9,
-    # but an outline there crosses the pads.
-    rect_lines(f, bx1, by1, bx2, -1.3, "F.SilkS", SILK_W, f"{name}/silk")
-    f.add(circle(X0, -2.2, 0.3, "F.SilkS", SILK_W, f"{name}/silk/p1dot"))
-    rect_lines(f, bx1 - 0.25, by1 - 0.25, bx2 + 0.25, 1.5,
+    # Silk stops 1.3 mm above the pin row: the body really does reach the
+    # pads, but an outline there crosses them.
+    rect_lines(f, bx1, by1, bx2, PY - 1.3, "F.SilkS", SILK_W, f"{name}/silk")
+    f.add(circle(X0, PY - 2.2, 0.3, "F.SilkS", SILK_W, f"{name}/silk/p1dot"))
+    rect_lines(f, bx1 - 0.25, by1 - 0.25, bx2 + 0.25, PY + 0.6,
                "F.CrtYd", CRT_W, f"{name}/crt")
-    text_fab(f, "+/-15V", (bx1 + bx2) / 2, -2.6, f"{name}/fabtxt")
+    text_fab(f, "+/-15V", 0.0, PY - 2.6, f"{name}/fabtxt")
     model(f, "${KIPRJMOD}/lib/lorenz.3dshapes/DCDC_SIP_A05xxS.wrl",
           scale=MM_SCALE)
     return name, f
@@ -327,22 +332,21 @@ def trimpot():
                   "Bourns 3386P, 9.53 mm square single-turn cermet trimmer, "
                   "top adjust (LCSC C116287)",
                   "potentiometer trimmer trimpot Bourns 3386P vertical",
-                  "through_hole", 3.6)
-    cy = -2.54                       # body centre, relative to terminal 1
-    for (num, x, y, shape) in (("1", 0.0, 0.0, "rect"),
-                               ("2", 2.54, -2.54, "circle"),
-                               ("3", 0.0, -5.08, "circle")):
+                  "through_hole", 6.2)
+    # The anchor is the centre of the 9.53 mm body, so that the anchor and the
+    # centroid a pick-and-place file asks for are the same point.  Terminal 1
+    # is then 2.54 mm below it, terminal 3 2.54 above, wiper 2.54 to the side.
+    for (num, x, y, shape) in (("1", 0.0, 2.54, "rect"),
+                               ("2", 2.54, 0.0, "circle"),
+                               ("3", 0.0, -2.54, "circle")):
         f.add(tht_pad(num, x, y, 0.8, 1.6, f"{name}/p{num}", shape=shape))
-    rect_lines(f, -4.765, cy - 4.765, 4.765, cy + 4.765, "F.Fab", FAB_W,
-               f"{name}/fab")
-    f.add(circle(0, cy, 1.6, "F.Fab", FAB_W, f"{name}/screw"))
-    rect_lines(f, -4.87, cy - 4.87, 4.87, cy + 4.87, "F.SilkS", SILK_W,
-               f"{name}/silk")
+    rect_lines(f, -4.765, -4.765, 4.765, 4.765, "F.Fab", FAB_W, f"{name}/fab")
+    f.add(circle(0, 0, 1.6, "F.Fab", FAB_W, f"{name}/screw"))
+    rect_lines(f, -4.87, -4.87, 4.87, 4.87, "F.SilkS", SILK_W, f"{name}/silk")
     # the corner that says which end terminal 1 is
-    f.add(line(-4.87, 1.4, -3.5, 2.33, "F.SilkS", SILK_W, f"{name}/silk/p1"))
-    rect_lines(f, -5.12, cy - 5.12, 5.12, cy + 5.12, "F.CrtYd", CRT_W,
-               f"{name}/crt")
-    text_fab(f, "1", -2.2, 0.0, f"{name}/fab/p1", size=0.9)
+    f.add(line(-4.87, 3.94, -3.5, 4.87, "F.SilkS", SILK_W, f"{name}/silk/p1"))
+    rect_lines(f, -5.12, -5.12, 5.12, 5.12, "F.CrtYd", CRT_W, f"{name}/crt")
+    text_fab(f, "1", -2.2, 2.54, f"{name}/fab/p1", size=0.9)
     model(f, "${KIPRJMOD}/lib/lorenz.3dshapes/Potentiometer_3386P.wrl",
           scale=MM_SCALE)
     return name, f
