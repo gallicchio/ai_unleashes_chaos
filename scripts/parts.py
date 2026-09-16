@@ -68,11 +68,50 @@ PARTS = {
         process="SMT", stock=11413, price=0.118,
         footprint="Package_TO_SOT_SMD:SOT-89-3",
         desc="-12 V linear regulator (SOT-89: 1=GND 2=IN 3=OUT)"),
-    "LED": dict(
+    # Three rail lamps, three colours, all three JLCPCB Basic parts so they
+    # cost nothing extra to place.  Not red/green: red reads as "fault" when
+    # here it means the rail is up, and the RGB output lamp has already spoken
+    # for red, green and blue.
+    "LED_G": dict(
         value="green", mpn="KT-0805G", lcsc="C2297", jlc_type="basic",
-        process="SMT", stock=1542400, price=0.016,
+        process="SMT", stock=1542073, price=0.016,
         footprint="LED_SMD:LED_0805_2012Metric",
-        desc="Rails-OK indicator, runs from +12 V"),
+        desc="+12 V rail lamp"),
+    "LED_Y": dict(
+        value="yellow", mpn="KT-0805Y", lcsc="C2296", jlc_type="basic",
+        process="SMT", stock=526613, price=0.0152,
+        footprint="LED_SMD:LED_0805_2012Metric",
+        desc="+5 V (USB) rail lamp"),
+    "LED_W": dict(
+        value="white", mpn="KT-0805W", lcsc="C34499", jlc_type="basic",
+        process="SMT", stock=570707, price=0.0198,
+        footprint="LED_SMD:LED_0805_2012Metric",
+        desc="-12 V rail lamp"),
+    "LED_RGB": dict(
+        value="RGB", mpn="MHPC3528CRGBCT", lcsc="C2962096", jlc_type="extended",
+        process="SMT", stock=3789, price=0.0547,
+        footprint="lorenz:LED_RGB_PLCC4_3.5x2.8mm",
+        desc="Common-cathode RGB lamp, PLCC-4: red = x, green = -y, blue = z",
+        alt=["XL-A3528RGBC-BM / C3647023 (6451 in stock) and "
+             "TJ-S3528UG2W9TLCCSRGB-A5 / C20613304 are the same 3528 PLCC-4 "
+             "outline; check the pin order before substituting",
+             "MHSC110RGBCT / C482558 (10921 in stock) is the same idea in a "
+             "3.0 x 1.5 mm package -- smaller than this project wants to "
+             "hand-solder"]),
+    "TESTPOINT": dict(
+        value="", process="THT", in_bom=False,
+        footprint="TestPoint:TestPoint_THTPad_D1.5mm_Drill0.7mm",
+        desc="Probe pad: a 0.7 mm plated hole, nothing to buy or place"),
+    "SCOPE_GND": dict(
+        value="", process="THT", in_bom=False,
+        footprint="lorenz:ScopeGround_Loop",
+        desc="Two 1.1 mm holes 5.08 mm apart: solder a wire loop through "
+             "them and a scope ground clip has something to grab"),
+    "JUMPER": dict(
+        value="", process="THT", in_bom=False,
+        footprint="Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm",
+        desc="Solder jumper, left open: bridge it to tie the two grounds "
+             "together and give up the isolation"),
     "FUSE": dict(
         value="500mA", mpn="MF-MSMF050-2", lcsc="C17313", jlc_type="extended",
         process="SMT", stock=142624, price=0.068,
@@ -98,6 +137,14 @@ PASSIVES = {
                   price=0.006, stock=3917491),
     "4.7k":  dict(lcsc="C17673", mpn="0805W8F4701T5E", jlc_type="basic",
                   price=0.005, stock=5973538),
+    "2.2k":  dict(lcsc="C17520", mpn="0805W8F2201T5E", jlc_type="basic",
+                  price=0.0027, stock=3751757),
+    "1.5k":  dict(lcsc="C4310", mpn="0805W8F1501T5E", jlc_type="basic",
+                  price=0.0015, stock=585325),
+    "33k":   dict(lcsc="C17633", mpn="0805W8F3302T5E", jlc_type="basic",
+                  price=0.0028, stock=570100),
+    "6.8k":  dict(lcsc="C17772", mpn="0805W8F6801T5E", jlc_type="basic",
+                  price=0.0042, stock=382071),
     "2.2nF": dict(lcsc="C28260", mpn="CL21C222JBFNNNE", jlc_type="basic",
                   price=0.028, stock=179637, note="C0G/NP0 50V"),
     "100nF_C0G": dict(lcsc="C170182", mpn="1206N104J500CT", jlc_type="extended",

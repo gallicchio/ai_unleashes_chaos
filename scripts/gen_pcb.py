@@ -61,8 +61,9 @@ def read_netlist(path):
                 if nm not in ("Footprint", "Datasheet", "Description") and val:
                     fields[nm] = val
         ts = c.first("tstamps")
+        val = c.first("value").atom(0)
         comps[c.first("ref").atom(0)] = {
-            "value": c.first("value").atom(0),
+            "value": "" if val == "~" else val,
             "footprint": c.first("footprint").atom(0),
             "fields": fields,
             "tstamp": ts.atom(0) if ts is not None else "",
@@ -142,18 +143,30 @@ def add_routes(board, routes_path, layers):
                         layers)
 
     # Two layers: ground poured on both.  Four: signal / ground / power /
-    # signal, with the second inner layer carrying +12 V.
+    # signal, with the second inner layer carrying +12 V.  Every layer also
+    # carries the USB side's own ground in the bottom-left corner, cut out of
+    # the analog pour with a 1 mm gap, because the converter is isolated and
+    # the two grounds must not touch anywhere.
     cu = list(board.GetEnabledLayers().CuStack())
     plane_of = {l: "GND" for l in cu}
     if layers == 4 and len(cu) == 4:
         plane_of[cu[2]] = "+12V"
-    for l in cu:
+    plan = [(l, plane_of[l], (P.island_outline(0.3) if plane_of[l] == "GNDU"
+                              else P.ground_outline(0.3)), 0) for l in cu]
+    plan += [(l, "GNDU", P.island_outline(0.3), 1) for l in cu]
+    for (l, netname, outline_pts, priority) in plan:
         z = pcbnew.ZONE(board)
         z.SetLayer(l)
-        zn = nets.get(plane_of[l])
+        zn = nets.get(netname)
         if zn:
             z.SetNet(zn)
-        z.SetAssignedPriority(0)
+        # Distinct priorities, and not for the usual reason: two zones of equal
+        # priority on one layer are filled in whichever order the filler's
+        # threads get to them, and the results differ in the last nanometre of
+        # every arc.  Ranking them makes the fill -- and so the gerbers --
+        # reproducible.  The outlines do not overlap, so the ranking itself
+        # changes nothing.
+        z.SetAssignedPriority(priority)
         # Solid on SMD pads -- an 0805 or SOIC ground pad is too small for two
         # thermal spokes, and starving one is both an electrical and a DRC
         # problem.  Through-hole pads (BNC ground posts, the converter, the
@@ -166,9 +179,7 @@ def add_routes(board, routes_path, layers):
         z.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_ALWAYS)
         outline = z.Outline()
         outline.NewOutline()
-        m = 0.3
-        for (x, y) in ((m, m), (P.BOARD_W - m, m),
-                       (P.BOARD_W - m, P.BOARD_H - m), (m, P.BOARD_H - m)):
+        for (x, y) in outline_pts:
             outline.Append(mm(x), mm(y))
         board.Add(z)
     pcbnew.ZONE_FILLER(board).Fill(board.Zones())
@@ -266,13 +277,23 @@ CANDIDATES = [(0, -1), (0, 1), (-1, 0), (1, 0),
               (-1, -1), (1, -1), (-1, 1), (1, 1)]
 
 
-def place_field(field, space, fp, size, reserve):
-    """Nudge a footprint field outward until it clears every pad."""
+def place_field(field, space, fp, size, reserve, prefer=None):
+    """Nudge a footprint field outward until it clears every pad.
+
+    `prefer` is tried first: a row of identical probe pads needs its names
+    directly above it, not wherever the outward search finds a gap.
+    """
     style_text(field, size)
     field.SetVisible(True)
     cx = pcbnew.ToMM(fp.GetPosition().x)
     cy = pcbnew.ToMM(fp.GetPosition().y)
     field.SetTextAngleDegrees(0)
+    if prefer:
+        field.SetPosition(pt(cx + prefer[0], cy + prefer[1]))
+        box = bbox_mm(field)
+        if space.free(box):
+            space.claim(box)
+            return True
     for step in [x * 0.4 for x in range(2, 24)]:
         for (dx, dy) in CANDIDATES:
             field.SetPosition(pt(cx + dx * step, cy + dy * step))
@@ -314,8 +335,113 @@ def add_text(board, space, x, y, txt, size, layer=pcbnew.F_SilkS,
     return t
 
 
+def add_qr(board, url, cx, cy, module, missing, what):
+    """One QR code on the back, drawn as merged rows of filled rectangles.
+
+    Mirrored in board coordinates, because a back-layer drawing is seen from
+    the other side: exactly what SetMirrored does for back-layer text.  The
+    modules have to touch -- a QR decoder finds the symbol by the 1:1:3:1:1
+    run lengths across a finder pattern, and a gap of any size breaks that --
+    so each run of dark modules in a row becomes one rectangle.
+    """
+    import qrcode_gen
+    m = qrcode_gen.encode(url, "M")
+    n = len(m)
+    x0, y0 = cx - n * module / 2.0, cy - n * module / 2.0
+    rects = 0
+    for r in range(n):
+        c = 0
+        while c < n:
+            if not m[r][c]:
+                c += 1
+                continue
+            a = c
+            while c < n and m[r][c]:
+                c += 1
+            sh = pcbnew.PCB_SHAPE(board)
+            sh.SetShape(pcbnew.SHAPE_T_RECT)
+            # column j of the matrix is drawn at n-1-j: mirrored, so it reads
+            # the right way round when you turn the board over
+            sh.SetStart(pt(x0 + (n - c) * module, y0 + r * module))
+            sh.SetEnd(pt(x0 + (n - a) * module, y0 + (r + 1) * module))
+            sh.SetFilled(True)
+            sh.SetWidth(0)
+            sh.SetLayer(pcbnew.B_SilkS)
+            board.Add(sh)
+            rects += 1
+    # Prove the drawing is the code: sample the centre of every module out of
+    # the rectangles that were actually placed, and compare with the matrix.
+    ok = 0
+    for r in range(n):
+        for c in range(n):
+            x = x0 + (n - 1 - c) * module + module / 2.0
+            y = y0 + r * module + module / 2.0
+            hit = any(sh.GetShape() == pcbnew.SHAPE_T_RECT
+                      and sh.GetLayer() == pcbnew.B_SilkS
+                      and sh.GetStart().x <= mm(x) <= sh.GetEnd().x
+                      and sh.GetStart().y <= mm(y) <= sh.GetEnd().y
+                      for sh in board.GetDrawings()
+                      if isinstance(sh, pcbnew.PCB_SHAPE))
+            if hit == bool(m[r][c]):
+                ok += 1
+    if ok != n * n:
+        missing.append(f"{what} QR: {n * n - ok} module(s) drawn wrong")
+    return n, rects
+
+
+def add_speed_table(board, space, missing):
+    """The switch legend, set out over the switch it explains.
+
+    The six sliders run left to right, so each off/ON cell is centred on the
+    slider it refers to and a bar separates the two banks.  The row tells you
+    the speed; the columns tell you what to push.
+    """
+    fps = {fp.GetReference(): fp for fp in board.GetFootprints()}
+    sw = fps["SW1"]
+    poles = {}
+    for pad in sw.Pads():
+        if pad.GetNumber().isdigit() and int(pad.GetNumber()) <= 6:
+            poles[int(pad.GetNumber())] = pcbnew.ToMM(pad.GetPosition().x)
+    xs = [poles[i] for i in sorted(poles)]
+    mid = (xs[2] + xs[3]) / 2.0
+    y = SILK.SPEED_TABLE_Y
+    left = min(xs) - 2.0
+    right = max(xs) + 2.0
+
+    # header: which slider is which
+    for i, x in enumerate(xs):
+        if add_text(board, space, x, y, str(i + 1), 1.0, must_fit=False) is None:
+            missing.append(f"speed table pole {i + 1}")
+    add_text(board, space, left - 4.0, y, "SW1", 1.0, must_fit=False)
+    add_text(board, space, right + 7.0, y, "C", 1.0, must_fit=False)
+    for (i, (speed, a, b, cval, tau)) in enumerate(SILK.SPEED_ROWS):
+        ry = y + 1.8 + i * 1.8
+        add_text(board, space, left - 4.0, ry, speed, 1.0, must_fit=False)
+        for k, x in enumerate(xs):
+            add_text(board, space, x, ry, a if k < 3 else b, 0.9,
+                     must_fit=False)
+        add_text(board, space, right + 7.0, ry, cval, 1.0, must_fit=False)
+    bot = y + 1.8 + len(SILK.SPEED_ROWS) * 1.8 - 0.6
+    add_text(board, space, mid, y - 2.4, "SPEED SELECT", 1.0, must_fit=False)
+    below = pcbnew.ToMM(sw.GetBoundingBox().GetBottom()) + 1.7
+    if add_text_near(board, space, mid - 3.0, below,
+                     "ON is marked on the switch", 0.9, reach=3.0) is None:
+        missing.append("speed table footnote")
+    for (x1, y1, x2, y2) in ((mid, y - 1.4, mid, bot),          # between banks
+                             (left - 8.0, y + 0.9, right + 11.0, y + 0.9)):
+        seg = pcbnew.PCB_SHAPE(board)
+        seg.SetShape(pcbnew.SHAPE_T_SEGMENT)
+        seg.SetStart(pt(x1, y1))
+        seg.SetEnd(pt(x2, y2))
+        seg.SetWidth(mm(0.15))
+        seg.SetLayer(pcbnew.F_SilkS)
+        board.Add(seg)
+        space.claim((min(x1, x2) - 0.1, min(y1, y2) - 0.1,
+                     max(x1, x2) + 0.1, max(y1, y2) + 0.1))
+
+
 def add_silk(board):
-    """Legends on the front, the equations and the owl on the back."""
+    """Legends on the front, the equations, the owl and the codes on the back."""
     from lorenz_curve import owl_xz
     space = SilkSpace(board)
     back = SilkSpace.__new__(SilkSpace)      # back side: only the drilled pads
@@ -323,9 +449,9 @@ def add_silk(board):
     back.taken = []
     missing = []
 
-    # --- board title, across the free strip along the top ----------------
-    for (x, y, txt, size, ang) in SILK.FRONT_NOTES:
-        if add_text(board, space, x, y, txt, size, angle=ang) is None:
+    # --- whose circuit it is, and where to find it -----------------------
+    for (x, y, txt, size, thick) in SILK.FRONT_NOTES:
+        if add_text(board, space, x, y, txt, size, thickness=thick) is None:
             missing.append(f"front note {txt!r}")
 
     # --- what each connector does ----------------------------------------
@@ -336,59 +462,75 @@ def add_silk(board):
         y = pcbnew.ToMM(fp.GetPosition().y) + dy
         if add_text_near(board, space, x, y, txt, size, thickness=0.3) is None:
             missing.append(f"port label {txt}")
-    if add_text_near(board, space, 13.05, 80.0, "USB-C  5 V in", 1.6) is None:
+    for (ref, dx, dy, txt, size) in SILK.PART_LABELS:
+        fp = fps[ref]
+        x = pcbnew.ToMM(fp.GetPosition().x) + dx
+        y = pcbnew.ToMM(fp.GetPosition().y) + dy
+        if add_text_near(board, space, x, y, txt, size) is None:
+            missing.append(f"part label {txt} at {ref}")
+    if add_text_near(board, space, 13.05, 82.0, "USB-C  5 V in", 1.4) is None:
         missing.append("USB-C label")
-    if add_text_near(board, space, 94.0, 78.5, "rails OK", 1.2) is None:
-        missing.append("rails OK label")
 
-    # --- the speed table, beside the switch it belongs to -----------------
-    sx, sy = SILK.SPEED_AT
-    for i, line in enumerate(SILK.SPEED_TABLE):
-        if add_text(board, space, sx, sy + i * 1.7, line, 1.0) is None:
-            missing.append(f"speed table line {i}: {line!r}")
+    # --- the speed table, set out over the switch it explains -------------
+    add_speed_table(board, space, missing)
 
     # --- reference designator and value on every part ---------------------
-    for fp in sorted(board.GetFootprints(), key=lambda f: f.GetReference()):
+    # Parts with an anchored field go first: a row of identical probe pads is
+    # only readable if every name is in the same place relative to its pad, and
+    # the first legend to claim a spot keeps it.
+    def order(f):
+        ref = f.GetReference()
+        return (0 if ref[:2] in SILK.FIELD_ANCHOR else 1, ref)
+
+    for fp in sorted(board.GetFootprints(), key=order):
         ref = fp.GetReference()
         if ref.startswith("MH"):
             fp.Reference().SetVisible(False)
             fp.Value().SetVisible(False)
             continue
-        if not place_field(fp.Reference(), space, fp, 1.0, True):
+        anchor = SILK.FIELD_ANCHOR.get(ref[:2], {})
+        if not place_field(fp.Reference(), space, fp, 1.0, True,
+                           anchor.get("Reference")):
             missing.append(f"{ref} reference")
         val = fp.Value()
-        if ref.startswith("MH"):
-            # A mounting hole needs no legend: you can see it is a hole.
-            val.SetVisible(False)
-            fp.Reference().SetVisible(False)
-            continue
-        if val.GetText() and not place_field(val, space, fp, 0.9, True):
+        if val.GetText() and not place_field(val, space, fp, 0.9, True,
+                                             anchor.get("Value")):
             val.SetVisible(False)
             missing.append(f"{ref} value ({val.GetText()})")
 
-    # --- back side: the mathematics and the owl --------------------------
-    y = 7.0
+    # --- back side: title, mathematics, the owl and the two codes --------
+    # The codes go down first and claim their space, because they are the one
+    # thing on this board that cannot be nudged: a QR code is only a QR code
+    # at exactly the size and spacing it was generated at.
+    for (qx, qy, key, caption) in SILK.QR_CODES:
+        n, rects = add_qr(board, SILK.URLS[key], qx, qy, SILK.QR_MODULE,
+                          missing, key)
+        half = n * SILK.QR_MODULE / 2.0
+        back.claim((qx - half - 0.3, qy - half - 0.3,
+                    qx + half + 0.3, qy + half + 0.3))
+        for i, line in enumerate(caption):
+            if add_text(board, back, qx, SILK.QR_CAPTION_Y + i * 2.1, line,
+                        1.0, layer=pcbnew.B_SilkS) is None:
+                missing.append(f"QR caption {line!r}")
+    for (x, y, txt, size, thick) in SILK.BACK_TITLE:
+        if add_text(board, back, x, y, txt, size, layer=pcbnew.B_SilkS,
+                    thickness=thick) is None:
+            missing.append(f"back title {txt!r}")
+    bx, y = SILK.BACK_BLOCK_AT
     for (size, line) in SILK.BACK_BLOCK:
         if line:
-            if add_text(board, back, 50.0, y, line, size, layer=pcbnew.B_SilkS,
+            if add_text(board, back, bx, y, line, size, layer=pcbnew.B_SilkS,
                         thickness=0.25 if size > 2 else 0.15) is None:
                 missing.append(f"back line {line!r}")
-        y += (size + 1.6) if line else 1.8
-    if add_text(board, back, 50.0, 50.0,
-                "x and z on a scope in X-Y draw this:", 1.3,
+        y += (size * 1.5 + 0.9) if line else 1.4
+    ox, oy, ocap, osize = SILK.OWL_CAPTION[0], SILK.OWL_CAPTION[1], \
+        SILK.OWL_CAPTION[2], SILK.OWL_CAPTION[3]
+    if add_text(board, back, ox, oy, ocap, osize,
                 layer=pcbnew.B_SilkS) is None:
         missing.append("back owl caption")
-    for (yy, txt, size) in ((94.0, SILK.TITLE, 2.0),
-                            (96.6, SILK.CREDIT, 1.2),
-                            (98.5, SILK.DATE + "   " + SILK.REV, 0.9)):
-        if add_text(board, back, 50.0, yy, txt, size, layer=pcbnew.B_SilkS,
-                    thickness=0.2 if size > 1.5 else 0.15) is None:
-            missing.append(f"back credit {txt!r}")
     # The attractor is an open curve, so it is drawn as a run of segments; a
     # polygon would close it with a chord straight across the owl's face.
-    # A shorter run, sampled densely, rather than a long one thinned out.
-    pts = owl_xz(width=56.0, height=30.0, cx=50.0, cy=70.0,
-                 n_max=1100, n=24000)
+    pts = owl_xz(n_max=1100, n=24000, **SILK.OWL)
     for (a, b) in zip(pts, pts[1:]):
         seg = pcbnew.PCB_SHAPE(board)
         seg.SetShape(pcbnew.SHAPE_T_SEGMENT)
@@ -397,6 +539,7 @@ def add_silk(board):
         seg.SetWidth(mm(0.12))
         seg.SetLayer(pcbnew.B_SilkS)
         board.Add(seg)
+
     return missing
 
 
@@ -523,13 +666,35 @@ def build(layers, netlist_path, out_path):
             m.m_Scale = pcbnew.VECTOR3D(1 / 2.54, 1 / 2.54, 1 / 2.54)
             m.m_Show = True
             fp.Models().push_back(m)
-        if ref.startswith("MH"):
-            # mechanical only: nothing to buy, nothing to place
+        if ref[0:2] in ("MH", "TP") or ref[0:2] == "JP":
+            # Nothing to buy and nothing for the assembler to place: mounting
+            # holes, probe pads, the ground-tie jumper.  The symbols say the
+            # same, and DRC's parity check compares the two.
             fp.SetAttributes(fp.GetAttributes()
                              | pcbnew.FP_EXCLUDE_FROM_BOM
                              | pcbnew.FP_EXCLUDE_FROM_POS_FILES)
+        if ref.startswith("MH"):
             fp.Value().SetVisible(False)    # "MountingHole" is not a legend
         placed[ref] = fp
+
+    # Every pad on the USB side's ground has to sit inside the island that the
+    # GNDU pour covers, or it is a pad with no plane under it and DRC will say
+    # only "unconnected".  Check it here, where the reason is obvious.
+    stray = []
+    for fp in board.GetFootprints():
+        for pad in fp.Pads():
+            x = pcbnew.ToMM(pad.GetPosition().x)
+            y = pcbnew.ToMM(pad.GetPosition().y)
+            net = pad.GetNetname()
+            inside = P.in_island(x, y)
+            if net == "GNDU" and not inside:
+                stray.append(f"{fp.GetReference()}.{pad.GetNumber()} (GNDU) "
+                             f"at ({x:.2f}, {y:.2f}) is outside the island")
+            if net == "GND" and P.in_island(x, y, -P.ISLAND_GAP):
+                stray.append(f"{fp.GetReference()}.{pad.GetNumber()} (GND) "
+                             f"at ({x:.2f}, {y:.2f}) is inside the island")
+    if stray:
+        raise SystemExit("isolation split: " + "; ".join(stray))
 
     # Drill/place origin at the board's bottom-left corner, so gerbers, drill
     # files and the pick-and-place all share one frame with positive numbers.

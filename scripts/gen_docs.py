@@ -25,9 +25,15 @@ THT_PER_JOINT = 0.30        # JLCPCB's hand-soldering surcharge, if used
 
 
 def joint_counts(layers=2):
-    """Solder joints only: an unplated mounting hole is not one."""
+    """Solder joints only.
+
+    A mounting hole is not a joint, and neither is a probe pad or the open
+    ground-tie jumper: nothing is fitted in any of them, so the assembler
+    never touches them and they cost nothing per board.
+    """
     geom = json.load(open(os.path.join(OUT, f"pcb_geom_{layers}.json")))
-    real = [p for p in geom["pads"] if p["net"]]
+    real = [p for p in geom["pads"]
+            if p["net"] and p["ref"][:2] not in ("MH", "TP", "JP")]
     smt = sum(1 for p in real if not p["through"])
     tht = sum(1 for p in real if p["through"])
     tht_refs = sorted({p["ref"] for p in real if p["through"]})
@@ -63,14 +69,14 @@ def main():
     a = lines.append
     a("# Manufacturing")
     a("")
-    a("Two boards are built from one schematic: `lorenz` on two layers and")
-    a("`lorenz-4layer` on four.  They are electrically identical and share a")
-    a("footprint, a BOM and a pick-and-place file; the four-layer version adds")
-    a("a solid ground plane and a +12 V plane between the outer layers.")
+    a("One board, two layers, 100 x 100 mm.  It passes ERC, DRC (with")
+    a("schematic parity), the circuit checker and the fab-package checks with")
+    a("zero violations, and `./make.py` rebuilds and rechecks everything from")
+    a("scratch in about forty seconds.")
     a("")
-    a("Both pass ERC, DRC (with schematic parity) and the circuit checker with")
-    a("zero violations.  `./make.py` rebuilds and rechecks everything from")
-    a("scratch in about a minute.")
+    a("The copper is split: the USB input has its own ground plane in the")
+    a("bottom-left corner, isolated from the analog ground by the converter and")
+    a("bridged only by R21, C25 and JP1.  Do not scratch across the 1 mm gap.")
     a("")
     a("## What to upload")
     a("")
@@ -80,13 +86,11 @@ def main():
     a("| `out/lorenz/lorenz-bom.csv` | the BOM box (JLCPCB column layout) |")
     a("| `out/lorenz/lorenz-cpl.csv` | the CPL / pick-and-place box |")
     a("")
-    a("For the four-layer build use the matching files in `out/lorenz-4layer/`.")
-    a("")
     a("## Board options to pick")
     a("")
     a("| option | value | why |")
     a("|---|---|---|")
-    a("| Layers | 2 (or 4) | matches the gerber set you uploaded |")
+    a("| Layers | 2 | what the gerber set contains |")
     a("| Dimensions | 100 x 100 mm | the discounted size at all three houses |")
     a("| Thickness | 1.6 mm | the BNC flanges and the USB-C shell expect it |")
     a("| Surface finish | HASL or ENIG | either; ENIG is flatter for the 0.5 mm-pitch USB-C |")
@@ -118,8 +122,11 @@ def main():
         a(f"| **total** | **{money(tot)}**  ({money(tot / qty)} each) |")
         a("")
     p, pr, asm, ship, tot = quote(5, PCB_4L_5PCS, with_tht=True)
-    a(f"Five **four-layer** boards come to about {money(tot)} "
-      f"({money(tot / 5)} each): the only change is the bare-board price.")
+    a(f"Four layers would cost about {money(tot)} for five "
+      f"({money(tot / 5)} each) -- the only change is the bare-board price --")
+    a("and buys almost nothing here: tracks cover 1.2 % of the back copper, so")
+    a("the pour on the two-layer board is already 98.8 % of an unbroken ground")
+    a("plane.  That is why this project ships one board.")
     a("")
     a("Two boards is the sensible order: one for Paul and one to keep.")
     a("")

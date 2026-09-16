@@ -222,9 +222,67 @@ def dipsw():
     return name, f
 
 
+# ------------------------------------------------------------- RGB lamp ----
+def led_rgb():
+    """MEIHUA MHPC3528CRGBCT common-cathode RGB lamp, PLCC-4 (LCSC C2962096).
+
+    Datasheet LPDS-0001482 Rev.1 page 2: body 3.5 x 2.8 mm, 1.85 mm tall.
+    "Recommended solder pad" gives four 1.2 x 0.95 mm pads with 2.0 mm between
+    the two columns and 0.5 mm between the two rows, so the pad centres land
+    on +/-1.6 mm and +/-0.725 mm.  Pin 1 is bottom left in the top view and
+    the numbering runs anticlockwise: 1 = red anode, 2 = blue anode,
+    3 = green anode, 4 = common cathode.
+    """
+    name = "LED_RGB_PLCC4_3.5x2.8mm"
+    f = fp_header(name,
+                  "RGB LED, common cathode, PLCC-4 3.5x2.8mm, MEIHUA "
+                  "MHPC3528CRGBCT (LCSC C2962096); 1=R+ 2=B+ 3=G+ 4=K",
+                  "LED RGB PLCC-4 3528 common cathode", "smd", 2.9)
+    PX, PY, PW, PH = 1.6, 0.725, 1.2, 0.95
+    for (num, sx, sy) in (("1", -1, +1), ("2", -1, -1), ("3", +1, -1),
+                          ("4", +1, +1)):
+        f.add(smd_pad(num, sx * PX, sy * PY, PW, PH, f"{name}/p{num}"))
+    bw, bh = 3.5 / 2, 2.8 / 2
+    rect_lines(f, -bw, -bh, bw, bh, "F.Fab", FAB_W, f"{name}/fab")
+    # Silk only above and below the pads, where there is room for it.
+    f.add(line(-bw, -bh, bw, -bh, "F.SilkS", SILK_W, f"{name}/silk/t"),
+          line(-bw, bh, bw, bh, "F.SilkS", SILK_W, f"{name}/silk/b"))
+    # Pin-1 mark, well clear of pad 1 (which reaches x = -2.2, y = 1.2).
+    f.add(circle(-2.45, 1.45, 0.2, "F.SilkS", SILK_W, f"{name}/silk/p1"))
+    rect_lines(f, -2.45, -1.6, 2.45, 1.6, "F.CrtYd", CRT_W, f"{name}/crt")
+    text_fab(f, "K", 1.6, -1.15, f"{name}/fabk", size=0.6)
+    model(f, "${KIPRJMOD}/lib/lorenz.3dshapes/LED_RGB_PLCC4.wrl", scale=MM_SCALE)
+    return name, f
+
+
+# ------------------------------------------------- scope ground anchor ------
+def scope_gnd():
+    """Two plated 1.1 mm holes on 5.08 mm centres, both on the same net.
+
+    A scope ground clip needs something to grab.  Push a loop of wire -- a
+    resistor lead offcut does -- through the two holes and solder it, and the
+    clip has a post.  Nothing is fitted at the factory: this is two holes and
+    a legend, so it costs two drill hits and nothing else.
+    """
+    name = "ScopeGround_Loop"
+    f = fp_header(name,
+                  "Oscilloscope ground anchor: two 1.1mm plated holes on "
+                  "5.08mm centres for a hand-fitted wire loop",
+                  "test point ground loop scope", "through_hole", 4.2)
+    for (num, x) in (("1", -2.54), ("1", 2.54)):
+        f.add(tht_pad(num, x, 0, 1.1, 2.2, f"{name}/p{x}"))
+    # The loop the wire is meant to make, drawn so it is obvious what to do.
+    f.add(line(-2.54, -1.6, 2.54, -1.6, "F.SilkS", SILK_W, f"{name}/silk/arc"))
+    f.add(line(-2.54, -1.6, -2.54, -1.3, "F.SilkS", SILK_W, f"{name}/silk/l"),
+          line(2.54, -1.6, 2.54, -1.3, "F.SilkS", SILK_W, f"{name}/silk/r"))
+    rect_lines(f, -3.9, -2.0, 3.9, 1.4, "F.CrtYd", CRT_W, f"{name}/crt")
+    rect_lines(f, -3.7, -1.8, 3.7, 1.2, "F.Fab", FAB_W, f"{name}/fab")
+    return name, f
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
-    for maker in (bnc, dcdc, dipsw):
+    for maker in (bnc, dcdc, dipsw, led_rgb, scope_gnd):
         name, node = maker()
         path = os.path.join(OUT, name + ".kicad_mod")
         with open(path, "w") as fh:

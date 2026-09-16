@@ -110,6 +110,19 @@ def dipswitch():
     return "SW_DIP_x06_DSIC06.wrl", s
 
 
+def led_rgb():
+    """MEIHUA MHPC3528CRGBCT: 3.5 x 2.8 mm PLCC-4, 1.85 mm tall.
+
+    A white body with a clear dome, so the render shows the lamp rather than
+    another black rectangle.
+    """
+    s = HEAD
+    s += box(0, 0, 0.42, 3.5, 2.8, 0.84, WHITE)         # the PLCC cup
+    s += box(0, 0, 1.35, 3.1, 2.4, 1.02, (0.80, 0.82, 0.84))   # clear lens
+    s += box(0, 0, 0.30, 2.0, 1.4, 0.10, (0.35, 0.35, 0.38))   # the dies
+    return "LED_RGB_PLCC4.wrl", s
+
+
 def fuse1812():
     s = HEAD
     s += box(0, 0, 0.55, 4.5, 3.2, 1.1, CREAM)
@@ -118,7 +131,7 @@ def fuse1812():
 
 def main():
     os.makedirs(OUT, exist_ok=True)
-    for maker in (bnc, dcdc, usbc, fuse1812, dipswitch):
+    for maker in (bnc, dcdc, usbc, fuse1812, dipswitch, led_rgb):
         name, body = maker()
         with open(os.path.join(OUT, name), "w") as fh:
             fh.write(body)

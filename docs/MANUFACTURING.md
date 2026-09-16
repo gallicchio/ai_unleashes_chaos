@@ -1,13 +1,13 @@
 # Manufacturing
 
-Two boards are built from one schematic: `lorenz` on two layers and
-`lorenz-4layer` on four.  They are electrically identical and share a
-footprint, a BOM and a pick-and-place file; the four-layer version adds
-a solid ground plane and a +12 V plane between the outer layers.
+One board, two layers, 100 x 100 mm.  It passes ERC, DRC (with
+schematic parity), the circuit checker and the fab-package checks with
+zero violations, and `./make.py` rebuilds and rechecks everything from
+scratch in about forty seconds.
 
-Both pass ERC, DRC (with schematic parity) and the circuit checker with
-zero violations.  `./make.py` rebuilds and rechecks everything from
-scratch in about a minute.
+The copper is split: the USB input has its own ground plane in the
+bottom-left corner, isolated from the analog ground by the converter and
+bridged only by R21, C25 and JP1.  Do not scratch across the 1 mm gap.
 
 ## What to upload
 
@@ -17,13 +17,11 @@ scratch in about a minute.
 | `out/lorenz/lorenz-bom.csv` | the BOM box (JLCPCB column layout) |
 | `out/lorenz/lorenz-cpl.csv` | the CPL / pick-and-place box |
 
-For the four-layer build use the matching files in `out/lorenz-4layer/`.
-
 ## Board options to pick
 
 | option | value | why |
 |---|---|---|
-| Layers | 2 (or 4) | matches the gerber set you uploaded |
+| Layers | 2 | what the gerber set contains |
 | Dimensions | 100 x 100 mm | the discounted size at all three houses |
 | Thickness | 1.6 mm | the BNC flanges and the USB-C shell expect it |
 | Surface finish | HASL or ENIG | either; ENIG is flatter for the 0.5 mm-pitch USB-C |
@@ -34,9 +32,9 @@ For the four-layer build use the matching files in `out/lorenz-4layer/`.
 
 ## Cost
 
-The board has **158 SMT joints** and **24 through-hole joints** on
-23 BOM lines (10 JLCPCB Basic, 13 Extended).
-Parts alone are **$71.69 per board**, of which
+The board has **186 SMT joints** and **24 through-hole joints** on
+30 BOM lines (16 JLCPCB Basic, 14 Extended).
+Parts alone are **$71.86 per board**, of which
 $61.17 is the pair of MPY634 multipliers.
 
 **2 boards, two layers, fully assembled including through-hole**
@@ -44,32 +42,35 @@ $61.17 is the pair of MPY634 multipliers.
 | line | cost |
 |---|---|
 | bare PCBs | $2.00 |
-| parts ($71.69 x 2) | $143.38 |
-| assembly: setup $8.00 + stencil $1.50 + 316 SMT joints + 13 extended parts + 48 THT joints | $63.44 |
+| parts ($71.86 x 2) | $143.71 |
+| assembly: setup $8.00 + stencil $1.50 + 372 SMT joints + 14 extended parts + 48 THT joints | $66.53 |
 | shipping (DHL, worldwide) | $22.00 |
-| **total** | **$230.82**  ($115.41 each) |
+| **total** | **$234.25**  ($117.12 each) |
 
 **5 boards, two layers, fully assembled including through-hole**
 
 | line | cost |
 |---|---|
 | bare PCBs | $2.00 |
-| parts ($71.69 x 5) | $358.44 |
-| assembly: setup $8.00 + stencil $1.50 + 790 SMT joints + 13 extended parts + 120 THT joints | $85.84 |
+| parts ($71.86 x 5) | $359.28 |
+| assembly: setup $8.00 + stencil $1.50 + 930 SMT joints + 14 extended parts + 120 THT joints | $89.08 |
 | shipping (DHL, worldwide) | $22.00 |
-| **total** | **$468.29**  ($93.66 each) |
+| **total** | **$472.37**  ($94.47 each) |
 
 **10 boards, two layers, fully assembled including through-hole**
 
 | line | cost |
 |---|---|
 | bare PCBs | $4.00 |
-| parts ($71.69 x 10) | $716.89 |
-| assembly: setup $8.00 + stencil $1.50 + 1580 SMT joints + 13 extended parts + 240 THT joints | $123.19 |
+| parts ($71.86 x 10) | $718.57 |
+| assembly: setup $8.00 + stencil $1.50 + 1860 SMT joints + 14 extended parts + 240 THT joints | $126.66 |
 | shipping (DHL, worldwide) | $22.00 |
-| **total** | **$866.08**  ($86.61 each) |
+| **total** | **$871.23**  ($87.12 each) |
 
-Five **four-layer** boards come to about $491.29 ($98.26 each): the only change is the bare-board price.
+Four layers would cost about $495.37 for five ($99.07 each) -- the only change is the bare-board price --
+and buys almost nothing here: tracks cover 1.2 % of the back copper, so
+the pour on the two-layer board is already 98.8 % of an unbroken ground
+plane.  That is why this project ships one board.
 
 Two boards is the sensible order: one for Paul and one to keep.
 
@@ -105,21 +106,28 @@ Stock was checked at JLCPCB on 2026-09-15, the date on the silkscreen.
 
 | ref | value | LCSC | JLC | unit | stock then | notes |
 |---|---|---|---|---|---|---|
-| C1,C4,C7 | 2.2nF | C28260 | basic | $0.0280 | 179,637 | C0G/NP0 50V |
+| C1,C4,C7,C25 | 2.2nF | C28260 | basic | $0.0280 | 179,637 | C0G/NP0 50V |
 | C10,C12,C13,C14,C15 | 10uF | C15850 | basic | $0.0840 | 6,702,077 | X5R 25V, 0805 - bulk |
-| C11,C16,C17,C18,C19,C20,C21,C22,C23 | 100nF | C49678 | basic | $0.0190 | 18,183,154 | X7R 50V, 0805 - bypass |
+| C11,C16,C17,C18,C19,C20,C21,C22,C23,C24 | 100nF | C49678 | basic | $0.0190 | 18,183,154 | X7R 50V, 0805 - bypass |
 | C2,C5,C8 | 100nF | C170182 | extended | $0.1870 | 193,311 | C0G/NP0 50V, 1206 |
 | C3,C6,C9 | 470nF | C277483 | extended | $0.0320 | 190,079 | X7R 50V, 1206 |
-| D1 | green | C2297 | basic | $0.0160 | 1,542,400 | Rails-OK indicator, runs from +12 V |
+| D1 | yellow | C2296 | basic | $0.0152 | 526,613 | +5 V (USB) rail lamp |
+| D2 | green | C2297 | basic | $0.0160 | 1,542,073 | +12 V rail lamp |
+| D3 | white | C34499 | basic | $0.0198 | 570,707 | -12 V rail lamp |
+| D4 | RGB | C2962096 | extended | $0.0547 | 3,789 | Common-cathode RGB lamp, PLCC-4: red = x, green = -y, blue = z |
 | F1 | 500mA | C17313 | extended | $0.0680 | 142,624 | Resettable PTC on the USB input |
 | J1 | USB-C | C165948 | extended | $0.1860 | 230,097 | USB-C receptacle, power only (16 pin) |
 | J2,J3,J4 | BNC | C41416668 | extended | $1.5490 | 410 | 50 ohm BNC jack, right angle, 4 ground posts on 8x8 mm |
 | R1,R2 | 100k | C149504 | basic | $0.0060 | 4,893,299 |  |
 | R11,R12 | 5.1k | C27834 | basic | $0.0060 | 3,917,491 |  |
-| R13 | 4.7k | C17673 | basic | $0.0050 | 5,973,538 |  |
+| R13 | 2.2k | C17520 | basic | $0.0027 | 3,751,757 |  |
+| R14,R18,R19 | 4.7k | C17673 | basic | $0.0050 | 5,973,538 |  |
+| R16 | 1.5k | C4310 | basic | $0.0015 | 585,325 |  |
+| R17 | 6.8k | C17772 | basic | $0.0042 | 382,071 |  |
+| R20 | 33k | C17633 | basic | $0.0028 | 570,100 |  |
 | R3 | 35.7k | C843989 | extended | $0.0150 | 2,783 |  |
-| R4,R6 | 10k | C17414 | basic | $0.0040 | 53,835,303 |  |
-| R5 | 1M | C17514 | basic | $0.0050 | 2,688,974 |  |
+| R4,R6,R15 | 10k | C17414 | basic | $0.0040 | 53,835,303 |  |
+| R5,R21 | 1M | C17514 | basic | $0.0050 | 2,688,974 |  |
 | R7 | 374k | C2933427 | extended | $0.0040 | 18,582 |  |
 | R8,R9,R10 | 100R | C17408 | basic | $0.0040 | 10,085,527 |  |
 | SW1 | SW_DIP_x06 | C54952 | extended | $0.5710 | 2,140 | 6-way SMD DIP switch, 2.54 mm pitch - integrator speed select |
@@ -144,6 +152,10 @@ Stock was checked at JLCPCB on 2026-09-15, the date on the silkscreen.
 **A0515S-2WR2** (C19272710)
   - A0515S-2WR2L / C20622616 (233 in stock)
   - A0515S-1WR3 / C5369388 (920 in stock, 1W) - same footprint and pinout; 1W is enough for this board's ~20 mA/rail but leaves less margin
+
+**MHPC3528CRGBCT** (C2962096)
+  - XL-A3528RGBC-BM / C3647023 (6451 in stock) and TJ-S3528UG2W9TLCCSRGB-A5 / C20613304 are the same 3528 PLCC-4 outline; check the pin order before substituting
+  - MHSC110RGBCT / C482558 (10921 in stock) is the same idea in a 3.0 x 1.5 mm package -- smaller than this project wants to hand-solder
 
 The three BNC jacks are the thinnest line: about 400 in stock, so
 roughly 130 boards' worth.  All three listed alternates are the same

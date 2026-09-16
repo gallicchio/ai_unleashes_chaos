@@ -15,6 +15,8 @@ Writes out/routes_<n>.json    (segments, vias and stitches, in millimetres)
 """
 import heapq, json, math, os, sys
 import numpy as np
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pcb_place as P
 
 GRID = 0.20            # mm per cell
 CLEARANCE = 0.20       # matches the project design rules
@@ -39,7 +41,9 @@ POWER_NETS = {"+5V", "+12V", "-12V", "+15V", "-15V"}
 # Nets carried by a plane instead of tracks.  On two layers that is ground
 # alone; the four-layer stack adds +12 V on the second inner layer, which is
 # the classic signal / ground / power / signal arrangement.
-PLANES = {2: ["GND"], 4: ["GND"]}
+# GNDU is the USB side of the isolation barrier: its own pour in the bottom
+# left corner of the board, never touching the analog ground.
+PLANES = {2: ["GND", "GNDU"], 4: ["GND", "GNDU"]}
 # Nets that also get a plane of their own, but are still routed normally: the
 # plane is tied to the routed copper by vias dropped onto its own tracks.
 PLANE_TIED = {4: ["+12V"]}
@@ -399,6 +403,17 @@ def stamp_route(g, net, segs, vias):
         g.block_vias(v["x"] - k, v["y"] - k, v["x"] + k, v["y"] + k)
 
 
+def in_plane(net, x, y, margin=0.0):
+    """Is (x, y) inside the region this plane net is allowed to occupy?
+
+    A stitching via for one plane dropped inside the other plane's island
+    would be an isolated piece of copper at best and a short at worst, so
+    every via is tested against the same rectangle the zones are cut from.
+    """
+    inside = P.in_island(x, y, -margin)
+    return inside if net == "GNDU" else not P.in_island(x, y, margin + P.ISLAND_GAP)
+
+
 def stitch_vias(g, pads, net="GND", spacing=4.5, lattice=True):
     """Ground stitching vias wherever every layer is genuinely free.
 
@@ -438,6 +453,8 @@ def stitch_vias(g, pads, net="GND", spacing=4.5, lattice=True):
                     continue
                 if not room[iy, ix]:
                     continue
+                if not in_plane(net, *g.pos(ix, iy), margin=VIA_DIA / 2):
+                    continue
                 d = dx * dx + dy * dy
                 if best is None or d < best[0]:
                     best = (d, ix, iy)
@@ -448,6 +465,8 @@ def stitch_vias(g, pads, net="GND", spacing=4.5, lattice=True):
         for iy in range(r, g.ny - r, step):
             for ix in range(r, g.nx - r, step):
                 if not room[iy, ix]:
+                    continue
+                if not in_plane(net, *g.pos(ix, iy), margin=VIA_DIA / 2):
                     continue
                 room = place(ix, iy)
     return out
@@ -587,7 +606,9 @@ def main():
     stitches = []
     for i, net in enumerate(PLANES.get(layers, ["GND"])):
         stitches += [dict(v, net=net) for v in
-                     stitch_vias(best_g, best_pads, net=net, lattice=(i == 0))]
+                     stitch_vias(best_g, best_pads, net=net,
+                                 spacing=4.5 if net == "GND" else 3.5,
+                                 lattice=True)]
     for net in PLANE_TIED.get(layers, []):
         ties = plane_ties(best_g, routes.get(net, {}).get("segments", []), net)
         stitches += [dict(v, net=net) for v in ties]

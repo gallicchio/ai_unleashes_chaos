@@ -125,32 +125,36 @@ def export_cpl(stem):
     return path, len(rows)
 
 
-def lcsc_for(ref, value):
-    """The order code for one designator, from the single parts table."""
-    key = {"U1": "LF412", "U2": "LF412", "U3": "MPY634", "U4": "MPY634",
-           "U5": "DCDC", "U6": "REG_POS", "U7": "REG_NEG",
-           "J1": "USBC", "J2": "BNC", "J3": "BNC", "J4": "BNC",
-           "SW1": "SW_DIP6", "D1": "LED", "F1": "FUSE"}.get(ref)
-    if key:
-        p = parts.PARTS[key]
-        return p["lcsc"], p["mpn"], p["price"], p.get("jlc_type", "extended")
-    # passives are keyed by value; the 1206 C0G part is a special case
-    v = value
-    if ref.startswith("C") and v == "100nF" and int(ref[1:]) in (2, 5, 8):
-        v = "100nF_C0G"
-    p = parts.PASSIVES.get(v)
+def by_lcsc():
+    """Every order code the parts table knows, indexed by the code itself.
+
+    The schematic already carries an LCSC field on every symbol, so the BOM is
+    built from that rather than from a list of designators here -- adding a
+    part is then one edit in parts.py plus one placement, and there is no
+    second table to forget.
+    """
+    out = {}
+    for key, p in list(parts.PARTS.items()) + [(k, v) for k, v in
+                                               parts.PASSIVES.items()]:
+        if p.get("lcsc"):
+            out[p["lcsc"]] = p
+    return out
+
+
+def lcsc_for(code):
+    p = by_lcsc().get(code)
     if not p:
-        return "", "", 0.0, "extended"
-    return p["lcsc"], p["mpn"], p["price"], p.get("jlc_type", "extended")
+        return "", 0.0, "extended"
+    return p.get("mpn", ""), p.get("price", 0.0), p.get("jlc_type", "extended")
 
 
 def export_bom(stem):
     _, sch = board_files(stem)
     raw = os.path.join(OUT, stem, "_bom.csv")
     kienv.cli("sch", "export", "bom", "--fields",
-              "Reference,Value,Footprint,${QUANTITY}",
-              "--labels", "Reference,Value,Footprint,Qty",
-              "--group-by", "Value,Footprint", "--exclude-dnp",
+              "Reference,Value,Footprint,LCSC,${QUANTITY}",
+              "--labels", "Reference,Value,Footprint,LCSC,Qty",
+              "--group-by", "Value,Footprint,LCSC", "--exclude-dnp",
               "--ref-range-delimiter", "", "-o", raw, sch)
     groups = list(csv.DictReader(open(raw)))
     os.remove(raw)
@@ -158,8 +162,8 @@ def export_bom(stem):
     lines, unknown, total = [], [], 0.0
     for g in groups:
         refs = [r.strip() for r in g["Reference"].split(",") if r.strip()]
-        value, fp = g["Value"], g["Footprint"]
-        lcsc, mpn, price, jlc = lcsc_for(refs[0], value)
+        value, fp, lcsc = g["Value"], g["Footprint"], g["LCSC"].strip()
+        mpn, price, jlc = lcsc_for(lcsc)
         if not lcsc:
             unknown.append(f"{','.join(refs)} ({value})")
         qty = len(refs)
@@ -208,24 +212,37 @@ def export_prints(stem, layers):
             normalise_timestamps(os.path.join(d, name))
 
 
-def pdf_to_png(pdf, png, dpi=PNG_DPI, crop_mm=None):
-    """Rasterise page 1.  Optional: skipped with a note if poppler is absent.
+def pdf_to_png(pdf, png, dpi=PNG_DPI, crop=False):
+    """Rasterise page 1, optionally cropped to the board.
 
-    KiCad plots the board at its own coordinates with the page origin at the
-    top-left, and this board starts at (0, 0), so cropping to the board is a
-    fixed rectangle rather than a hunt for ink -- which keeps it deterministic
-    and needs no image library.
+    The crop hunts for ink rather than assuming a corner: a mirrored plot of a
+    back layer lands on the other side of the page, which is how an earlier
+    version of this quietly produced a blank picture of the back silkscreen.
+    Every view includes Edge.Cuts, so the ink is the board outline and the
+    result is the same every build.
     """
     if not shutil.which("pdftoppm"):
         return False
     stem = png[:-4] if png.endswith(".png") else png
-    cmd = ["pdftoppm", "-r", str(dpi), "-png", "-f", "1", "-l", "1",
-           "-singlefile"]
-    if crop_mm:
-        px = int(round(crop_mm * dpi / 25.4))
-        cmd += ["-x", "0", "-y", "0", "-W", str(px), "-H", str(px)]
-    subprocess.run(cmd + [pdf, stem], check=True, capture_output=True)
-    return os.path.exists(png)
+    subprocess.run(["pdftoppm", "-r", str(dpi), "-png", "-f", "1", "-l", "1",
+                    "-singlefile", pdf, stem], check=True, capture_output=True)
+    if not os.path.exists(png):
+        return False
+    if crop:
+        try:
+            from PIL import Image
+        except ImportError:
+            return True
+        im = Image.open(png).convert("L")
+        box = im.point(lambda v: 0 if v > 220 else 255).getbbox()
+        if box:
+            pad = int(round(1.0 * dpi / 25.4))
+            im = Image.open(png).crop((max(0, box[0] - pad),
+                                       max(0, box[1] - pad),
+                                       min(im.width, box[2] + pad),
+                                       min(im.height, box[3] + pad)))
+            im.save(png)
+    return True
 
 
 def export_images(stem, layers):
@@ -256,7 +273,7 @@ def export_images(stem, layers):
             args.insert(-1, "--mirror")
         kienv.cli(*args)
         png = os.path.join(IMAGES, name + ".png")
-        (made if pdf_to_png(tmp, png, crop_mm=P_BOARD + 1.0)
+        (made if pdf_to_png(tmp, png, crop=True)
          else skipped).append(name)
         os.remove(tmp)
 
@@ -314,7 +331,7 @@ def run(stem, layers):
 
 if __name__ == "__main__":
     bad = 0
-    for stem, layers in (("lorenz", 2), ("lorenz-4layer", 4)):
+    for stem, layers in (("lorenz", 2),):
         total, lines, unknown = run(stem, layers)
         bad += len(unknown)
     sys.exit(1 if bad else 0)

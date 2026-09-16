@@ -194,12 +194,69 @@ def dipsw():
                   units, ref_at=(0, 3.81), val_at=(0, -3.81))
 
 
+# --------------------------------------------------------- RGB lamp -------
+def led_rgb():
+    """Common-cathode RGB lamp, drawn as three diodes on one cathode bar.
+
+    Pin order follows the MHPC3528CRGBCT drawing: 1 = red anode, 2 = blue
+    anode, 3 = green anode, 4 = the common cathode.
+    """
+    body = []
+    # the shared cathode bar, on the right
+    body.append(poly([(2.54, 6.35), (2.54, -6.35)], width=0.4))
+    body.append(poly([(2.54, 0), (5.08, 0)]))
+    for (num, name, y) in (("1", "R", 5.08), ("3", "G", 0.0), ("2", "B", -5.08)):
+        body.append(poly([(0.0, y + 1.27), (0.0, y - 1.27), (2.54, y),
+                          (0.0, y + 1.27)], fill="background"))
+        body.append(poly([(-2.54, y), (0.0, y)]))
+        # the two light arrows, as every LED symbol has
+        for k in (0, 1):
+            bx = 0.6 + 0.9 * k
+            body.append(poly([(bx, y + 1.9), (bx + 1.0, y + 3.0)], width=0.15))
+            body.append(poly([(bx + 1.0, y + 3.0), (bx + 0.35, y + 2.9)],
+                             width=0.15))
+            body.append(poly([(bx + 1.0, y + 3.0), (bx + 0.9, y + 2.35)],
+                             width=0.15))
+        body.append(pin("passive", "line", -5.08, y, 0, 2.54, name, num))
+    body.append(pin("passive", "line", 7.62, 0, 180, 2.54, "K", "4"))
+    return symbol("LED_RGB_CC", "D", "RGB",
+                  "https://www.lcsc.com/product-detail/C2962096.html",
+                  "RGB LED, common cathode, PLCC-4",
+                  "LED RGB common cathode",
+                  "LED*RGB*PLCC4*",
+                  [(1, body)], ref_at=(-5.08, 8.89), val_at=(-5.08, -8.89))
+
+
+# ------------------------------------------------- the second ground ------
+def gndu():
+    """The USB side's ground, drawn as an earth glyph so the split is visible.
+
+    The converter is isolated, so the board has two grounds that never touch.
+    Giving the USB one a different symbol means you can see at a glance which
+    side of the barrier any part of the drawing is on.
+    """
+    body = [poly([(0, 0), (0, -1.27)]),
+            poly([(-1.27, -1.27), (1.27, -1.27)], width=0.3),
+            poly([(-0.85, -1.9), (0.85, -1.9)], width=0.3),
+            poly([(-0.42, -2.54), (0.42, -2.54)], width=0.3),
+            pin("power_in", "line", 0, 0, 270, 0, "", "1")]
+    s = symbol("GNDU", "#PWR", "GNDU",
+               "", "Power symbol: the USB side of the isolation barrier",
+               "power global ground isolated", "",
+               [(1, body)], ref_at=(0, -6.35), val_at=(0, -4.6))
+    # A power symbol, so KiCad treats the value as a global net name -- which
+    # is how the stock power:GND works too.
+    s.kids.insert(0, S("power", "global"))
+    s.kids.insert(1, S("pin_numbers").add(S("hide", "yes")))
+    return s
+
+
 def main():
     lib = S("kicad_symbol_lib")
     lib.add(S("version", SYM_VERSION),
             S("generator", q("lorenz-gen")),
             S("generator_version", q("10.0")))
-    for maker in (lf412, mpy634, dcdc, dipsw):
+    for maker in (lf412, mpy634, dcdc, dipsw, led_rgb, gndu):
         lib.add(maker())
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w") as fh:

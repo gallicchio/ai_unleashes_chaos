@@ -1,0 +1,187 @@
+(footprint "ScopeGround_Loop"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "Oscilloscope ground anchor: two 1.1mm plated holes on 5.08mm centres for a hand-fitted wire loop")
+	(tags "test point ground loop scope")
+	(property "Reference" "REF**"
+		(at 0 4.2 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "871bbdeb-7189-54c6-bf4d-6bee20e4a045")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "ScopeGround_Loop"
+		(at 0 -4.2 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "dc5b6b1e-0f54-540b-9b90-92d8c7b155ab")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 -4.2 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "fb0010fc-f4a3-58bc-a674-2c1e6d4130b8")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" "Oscilloscope ground anchor: two 1.1mm plated holes on 5.08mm centres for a hand-fitted wire loop"
+		(at 0 -4.2 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "75fe2339-ada8-5ed7-9ed2-7bba0b0a3164")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_line
+		(start -2.54 -1.6)
+		(end -2.54 -1.3)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "0dee969e-6937-5289-b889-e5a4b84e4f57")
+	)
+	(fp_line
+		(start -2.54 -1.6)
+		(end 2.54 -1.6)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "113d8588-e17a-5b04-ae74-5e04e6eb29ce")
+	)
+	(fp_line
+		(start 2.54 -1.6)
+		(end 2.54 -1.3)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "0bde0e1c-4a5e-5fec-a2e4-3d5dbab4088b")
+	)
+	(fp_line
+		(start -3.9 -2)
+		(end 3.9 -2)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "821744d4-7058-5fd2-ba02-49fbbb442064")
+	)
+	(fp_line
+		(start -3.9 1.4)
+		(end -3.9 -2)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "369f0698-cfa4-5c5b-bf29-922cdc1e3ef0")
+	)
+	(fp_line
+		(start 3.9 -2)
+		(end 3.9 1.4)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "21561bc8-836a-5629-9f88-7eb84625972f")
+	)
+	(fp_line
+		(start 3.9 1.4)
+		(end -3.9 1.4)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "77279964-2e60-52e1-a81c-6ab0adffd8d5")
+	)
+	(fp_line
+		(start -3.7 -1.8)
+		(end 3.7 -1.8)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "9cb1d81b-2bda-5ab1-a7d3-6157903390e7")
+	)
+	(fp_line
+		(start -3.7 1.2)
+		(end -3.7 -1.8)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "0a4cc5e2-d5cf-5e38-9079-338ad006114d")
+	)
+	(fp_line
+		(start 3.7 -1.8)
+		(end 3.7 1.2)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "1ce45068-3756-53eb-bd0c-ff92f5daa325")
+	)
+	(fp_line
+		(start 3.7 1.2)
+		(end -3.7 1.2)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "a000c83a-64dd-5d9a-9544-69a87af805fe")
+	)
+	(pad "1" thru_hole circle
+		(at -2.54 0)
+		(size 2.2 2.2)
+		(drill 1.1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "5a2246a2-8912-5e68-8155-4d2aae70c608")
+	)
+	(pad "1" thru_hole circle
+		(at 2.54 0)
+		(size 2.2 2.2)
+		(drill 1.1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "9d89c648-f838-51ff-9769-8b6c58c2d035")
+	)
+	(embedded_fonts no)
+)

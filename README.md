@@ -34,6 +34,9 @@ Record your response below in this document. Do this regularly, and check things
 
 ## Response 1
 
+*(This section is the reply as it was written. Response 2 below changed some of
+it — most visibly, there is no longer a four-layer board.)*
+
 Built. `./make.py` regenerates everything from scratch in about 40 seconds and
 refuses to finish unless every check passes. Current state:
 
@@ -104,6 +107,9 @@ fully assembled, two layers, including through-hole assembly and DHL: about
 **$231**, so roughly $115 each. Five is about $74 each. Four layers adds $23 to
 the order. `docs/MANUFACTURING.md` breaks it down and is regenerated from the
 same parts table the BOM comes from, so it cannot drift.
+*(Response 2 added twenty more components — three rail lamps, the chaos lamp
+and its drive, the barrier parts — for **$0.17** a board. The current number is
+in `docs/MANUFACTURING.md`.)*
 
 ### Biggest risk
 
@@ -128,9 +134,10 @@ itself — the trace is the real solution, integrated by `scripts/lorenz_curve.p
 [front silkscreen](docs/images/lorenz-silk-top.png) ·
 [back silkscreen](docs/images/lorenz-silk-bottom.png) ·
 [front copper](docs/images/lorenz-top.png) ·
-[back copper](docs/images/lorenz-bottom.png) ·
-4-layer [ground plane](docs/images/lorenz-4layer-in1-ground.png) and
-[+12 V plane](docs/images/lorenz-4layer-in2-power.png)
+[back copper](docs/images/lorenz-bottom.png)
+
+*(Response 1 also built a four-layer board and pictured its two inner planes.
+Response 2 dropped it — see below for the measurement that decided it.)*
 
 Every one of these is byte-reproducible except `lorenz-render-iso.png`: KiCad's
 renderer jitters a rotated camera, so that one image differs slightly from build
@@ -210,3 +217,290 @@ Misc:
 * As part of the build process, generate PDFs and PNGs and 3D renders of the schematic and PCBs and include them here, as you've started to do.
 * Continue calling this "rev A" until I actually pay to fabricate a board.
 * As you are working, I might be updating next_prompt.md, but don't look at it until I put its content here and tell you to look at it.
+
+
+## Response 2
+
+Everything below is built by `./make.py`, which now ends with **BUILD OK** only
+if ERC, DRC with schematic parity, 116 circuit checks, the schematic layout
+check, the fab-package checks and — new — a QR decoder all pass.
+
+![The board, front](docs/images/lorenz-render-top.png)
+
+### The isolation: yes, use it
+
+The A0515S-2WR2 really is isolated — 1 kV, no DC path — and the board was
+throwing that away. It doesn't now. There are two grounds:
+
+* **GND**, everything downstream of the converter: both op-amps, both
+  multipliers, the BNC shells, the chaos lamp, every probe pad but one.
+* **GNDU**, everything upstream: the USB-C connector *and its shell*, the CC
+  pull-downs, the input bulk capacitors, the +5 V lamp.
+
+They are two separate copper pours with a 1 mm gap, and U5 sits across the gap
+with its own 5.08 mm barrier over it. You can see the island in the
+[front copper](docs/images/lorenz-top.png), bottom left.
+
+This is worth doing on *this* board specifically. Its whole purpose is to be
+watched on a scope, and a scope ground clip is bonded to mains earth. Tie the
+grounds and the loop runs scope earth → BNC shell → board ground → USB cable →
+laptop → earth; whatever that loop carries lands on signals whose full scale is
+2 V. Isolated, the scope clip is the only thing deciding where analog ground
+sits — which is exactly what you want when you are looking at 100 mV of chaos.
+
+It is not left completely adrift, because that would trade one problem for
+another. Across the barrier: **R21 = 1 M** drains static, **C25 = 2.2 nF**
+gives the converter's ~100 kHz common-mode current a way home (720 Ω there,
+1.2 GΩ at 60 Hz), and **JP1** is an open solder jumper marked `GND TIE` —
+bridge it and the two grounds are hard-tied again. Both R and C values were
+already in the BOM, so the whole thing costs two 0805s and no new order codes.
+
+The "the isolation is not used" note is gone from the sheet, replaced by a
+labelled `ISOLATION BARRIER` block that says what JP1 does.
+
+### The chaos lamp, and the negative-going problem
+
+Yes to the RGB LED, and the answer to *"I'm not sure how I'd deal with
+negative-going signals"* turns out to be the nicest part of the design: put
+the **common cathode below ground** and let each colour threshold itself.
+
+U2B — the half of U2 Paul never needed, previously parked as a grounded
+follower — buffers −1.50 V from a 4.7k/33k divider and holds the lamp's
+cathode there. Then:
+
+| colour | driven by | lights when | peak current |
+|---|---|---|---|
+| red | x through 1.5k | x > +0.25 V — the **+x wing** | 1.16 mA |
+| green | −y through 6.8k | y < −1.10 V — the **−x wing** | 0.23 mA |
+| blue | z through 4.7k | z > +1.10 V, brightness tracking z | 0.79 mA |
+
+So red and green **alternate as the trajectory switches wings** — which is the
+chaos itself, visible without a scope — while blue brightens with z and drops
+out at the bottom of each excursion. In `slow!` (τ = 472 ms) that happens at a
+few hertz; in `nice!` it is a flicker; in `fast!` it averages into a colour.
+
+On the nonlinearity you raised: a resistor and an LED is a soft threshold, and
+here that is a *feature*, not a defect. A proportional current drive would give
+a smooth fade and lose the wing-switching, which is the thing worth seeing.
+What did need care was perceived brightness — green is about five times
+brighter per milliamp than red and sits where the eye is most sensitive — so
+the three resistors are sized from the datasheet's luminous intensities rather
+than for equal current.
+
+The lamp taps the op-amp outputs *before* the 100 Ω series resistors, so none
+of its current flows in the BNC output impedance. Total peak draw is 2.2 mA,
+which U2B sinks without noticing. `check_circuit.py` recomputes the reference,
+all three thresholds, all three peak currents and the worst-case reverse
+voltage on each junction from the resistors actually fitted, so those numbers
+cannot drift away from the board.
+
+### Three rail lamps, and what "rails OK" was hiding
+
+You were right to ask. The old single green LED hung off +12 V and said
+`rails OK`, which was a lie: it knew nothing about −12 V and nothing about the
+USB input, so it could sit there looking healthy with half the board dead.
+
+Now there is one lamp per rail, each with its own name on the silkscreen right
+beside it:
+
+| lamp | rail | colour | current |
+|---|---|---|---|
+| D1 | +5 V (USB side of the barrier) | yellow | 1.27 mA |
+| D2 | +12 V | green | 2.09 mA |
+| D3 | −12 V | white | 0.98 mA |
+
+Three different colours as you suggested, and all three are JLCPCB **Basic**
+parts, so the extra colours cost nothing in setup fees. Not red: red reads as
+"fault" when here it would mean the rail is *up*, and red/green/blue are
+already spoken for by the chaos lamp. D3 runs ground → LED → resistor → −12 V,
+so it lights only if the negative rail is genuinely there.
+
+### Probe pads and scope grounds
+
+Thirteen plated holes, each with what it probes written next to it on the
+silkscreen (the name is the symbol's value, so the legend cannot disagree with
+the netlist):
+
+* **rails:** +5 V, +15 V, −15 V, +12 V, −12 V, GND, GNDU
+* **signals:** x, −y, z, −xz/100, −xy/100, and −1.5 V (the lamp reference)
+
+Three **SCOPE GND** anchors: two 1.1 mm holes on 5.08 mm centres. Push a loop
+of wire — a resistor lead offcut does — through and solder it, and an alligator
+clip has a post to bite. They cost two drill hits each and nothing else. One is
+beside the BNC column, one beside the probe row, one in the middle of the
+board.
+
+**One deliberate omission.** You listed `dx/dt = 10 (y - x)` among the
+interesting places to probe. There is no pad on the summing junctions, and
+that is a decision rather than an oversight: a summing junction is a virtual
+earth, so its *voltage* is zero by construction and carries no information —
+dx/dt exists there only as a **current**. It is also the one node on the board
+where a probe changes the answer: 15 pF against a 1 MΩ scale of impedances is a
+15 µs pole hanging off the integrator's input. What *is* worth doing is
+checking that each junction really sits at 0 V, and for that the summing
+resistor pads are the right place to put a tip. The multiplier outputs, which
+are real voltages carrying −xz/100 and −xy/100, do get pads.
+
+### The four-layer board: dropped, and here is the number
+
+On the routed two-layer board, tracks cover **1.2 % of the back copper** and
+2.6 % of the front. The back is therefore already 98.8 % of an unbroken ground
+plane. A dedicated plane layer recovers that last one per cent — against
+roughly four times the bare-board price, a second gerber set for somebody to
+pick the wrong one of, and (now) an isolation split that would have to be drawn
+on four layers instead of two. The fastest thing on this board is a 100 kHz
+switching converter and the signals are DC to about 700 Hz.
+
+So it is gone. `route.py` and `gen_pcb.py` still take a layer count and the
+four-layer code paths are in git history; nothing in the shipped package
+mentions it.
+
+That also answers the older question about two schematics: there is now one
+schematic, one board, one project. The duplicate only ever existed because
+KiCad binds a project to `<name>.kicad_pro` / `.kicad_sch` / `.kicad_pcb` by
+basename, and `kicad-cli pcb drc --schematic-parity` finds the schematic that
+way.
+
+### Cross-probing: fixed
+
+It wasn't working because nothing on the board said which symbol each footprint
+came from. Each footprint now carries the symbol's UUID as its sheet path plus
+`sheetname`/`sheetfile`, and `lorenz.kicad_pro` carries the root sheet in its
+`sheets` list. Click a part in either editor and it highlights in the other.
+(`make.py` regenerates the project file as its *last* step, because saving a
+board through `pcbnew` rewrites `.kicad_pro` and drops that entry.)
+
+### QR codes
+
+Both URLs are on the back, as codes and as text. Nothing in KiCad draws a QR
+code and the build has to work from a bare clone, so `scripts/qrcode_gen.py` is
+a QR encoder written for this: byte mode, versions 1–6, error correction L or
+M, Reed–Solomon over GF(256), all eight masks scored. Both codes are version 4
+at level M — 33 × 33 modules, 0.6 mm each, so 19.8 mm square.
+
+Writing your own encoder for something a phone camera has to read is a good way
+to ship a beautiful, unreadable rectangle, so it is checked three ways:
+
+1. `python3 scripts/qrcode_gen.py` self-tests: the 32 published format words
+   come out of its BCH, 36 symbols round-trip through a decoder written
+   alongside it (which verifies every Reed–Solomon block's syndromes), and the
+   finder patterns are checked module by module.
+2. Against two independent implementations. Its data placement, Reed–Solomon
+   and format information match the `qrcode` package **module for module**; its
+   mask penalty scoring matches `segno`'s on 200 random matrices. Both were
+   installed only as oracles and are not build dependencies. (The two libraries
+   disagree with *each other* on mask choice — `qrcode` implements the
+   pre-2015 rule 3 and `segno` scores a format region it hasn't written yet —
+   so the self-test checks what is actually normative.)
+3. `check_outputs.py` reads the rectangles back out of `lorenz.kicad_pcb`,
+   samples them into a matrix and decodes it. That check is part of every build.
+
+Two details that would each have shipped a broken code. The modules have to
+**touch** — a decoder locates the symbol by the 1:1:3:1:1 run lengths across a
+finder pattern, and I measured that even a 10 % gap is fatal — so each run of
+dark modules in a row is drawn as one filled rectangle. And the code has to be
+**mirrored in board coordinates**, exactly like back-layer text, or it reads
+correctly only through the board; I settled that by plotting a mirrored legend
+beside it and seeing which way round the legend read. As a final check, OpenCV
+read both codes straight out of the plotted `B.Silkscreen` PDF.
+
+### The switch table
+
+Rebuilt in both places.
+
+On the **board** it sits directly over the switch: each `off`/`ON` cell is
+centred on the slider it refers to, there is a silkscreen bar between the two
+banks of three, the speed names the row, and the capacitance and time constant
+are in their own columns on the right with their own header. Getting the six
+cells over the six sliders is what fixed the "`1-3` is above both columns"
+problem you spotted — the columns *are* the sliders now.
+
+```
+                     SPEED SELECT
+     SW1    1    2    3  |  4    5    6      C
+    -----------------------------------------------
+    fast!  off  off  off | off  off  off   2.2 nF
+    nice!  ON   ON   ON  | off  off  off   102 nF
+    slow!  off  off  off | ON   ON   ON    472 nF
+              [ the six sliders ]
+           ON is marked on the switch
+```
+
+That band had to be made: the middle capacitor bank moved 4 mm further from its
+row so the legend has somewhere to go that lines up with the sliders. On the
+**schematic** it is now a drawn table with ruled columns rather than three
+sentences, plus a line saying what happens if you turn both banks on.
+
+`ON` is printed on the switch body itself, and I have not held one, so the
+silkscreen says that rather than guessing which way the sliders push.
+
+### Paul's name and his page, on the front
+
+Front silkscreen, top of the board, in this order and these sizes:
+
+```
+             AI UNLEASHES CHAOS                       2.8 mm
+    Lorenz attractor  --  circuit by Paul Horowitz    1.6 mm
+     seti.harvard.edu/unusual_stuff/misc/lorenz.htm   1.1 mm
+ PCB by Jason Gallicchio and Claude   2026-09-15  rev A
+```
+
+The back carries the same title block, the equations, the attractor and both QR
+codes.
+
+### Labels
+
+Understood — one human-readable *comment* per signal, and the internal KiCad
+labels can be whatever gives the best error checking. So the sheet now names
+the three summing junctions `SJ_X`, `SJ_Y`, `SJ_Z` (they had auto-generated
+names before, which made every check message unreadable), while the drawn `x`
+still appears beside the bus every time it leaves for a load, the way Paul does
+it. A KiCad label is a connection; a drawn note is not.
+
+### Datasheets
+
+`python3 scripts/get_datasheets.py` pulls one PDF per LCSC code in
+`scripts/parts.py` — 30 order codes, connectors included — plus Paul's page, into
+`datasheets/`. It skips anything already there, including files you downloaded
+by hand under a different name. The directory is in `.gitignore`: not checked
+in, for copyright.
+
+### Other items
+
+* **The 3D model was missing parts.** The DIP switch, the A0515S module and now
+  the RGB lamp all have hand-written VRML stand-ins in
+  `hardware/lib/lorenz.3dshapes/`. The reason they were missing at all is worth
+  recording: `gen_models.py` existed but `make.py` never called it, so a fresh
+  clone had no models. It is wired in now, and `check_outputs.py` fails the
+  build if any footprint names a model that is not on disk. (Mounting holes,
+  probe pads and the solder jumper are allowed to have none — nothing is
+  fitted there.)
+* **`MountingHole` on the silkscreen** — gone, along with its reference
+  designator. The hole is self-explanatory.
+* **The layer images were mostly whitespace.** They now crop to the ink rather
+  than to an assumed corner, which also fixed a bug I had not noticed: the
+  back-silkscreen image was **completely blank**, because a mirrored plot lands
+  on the other side of the page and the old fixed crop was looking at the wrong
+  corner.
+* **`make.py --clean`** removes everything the build generates and prints what
+  it removed, so the list doubles as the answer to "what is generated and what
+  has to live in git". It leaves KiCad's own `.kicad_prl` alone if KiCad has
+  the project open.
+* **Still rev A**, and it stays rev A until you pay a fab.
+* I have not looked at `next_prompt.md`.
+
+### What the build does now
+
+```
+$ ./make.py
+=== self-tests ======================== rotation mapping vs KiCad's netlister
+=== symbol and footprint libraries ==== 6 symbols, 5 footprints, 6 3D models
+=== schematic ========================= ERC 0, 116 circuit checks, 316 text
+                                        items with no overlaps
+=== PCB: lorenz (2 layers) ============ 84 footprints, 581 tracks, 438 vias,
+                                        4 zones, DRC 0 with parity
+=== manufacturing outputs ============= gerbers, drill, BOM, CPL, PDFs, PNGs,
+                                        3D renders, STEP; both QR codes decoded
+=== documentation ===================== docs/MANUFACTURING.md
+=== project files ===================== .kicad_pro last, so cross-probing works
+```

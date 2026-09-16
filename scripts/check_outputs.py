@@ -131,7 +131,9 @@ def check_models(stem, problems, notes):
                     if p.atom(0) == "Reference"), "?")
         models = [m.atom(0) for m in fp.kids("model")]
         if not models:
-            if not ref.startswith("MH"):
+            # Nothing is fitted here -- a mounting hole, a probe pad, a solder
+            # jumper -- so there is nothing to draw.
+            if ref[:2] not in ("MH", "TP", "JP"):
                 missing.append(f"{ref} has no 3D model")
             continue
         for m in models:
@@ -145,6 +147,56 @@ def check_models(stem, problems, notes):
     for m in missing:
         problems.append(f"{stem}: missing 3D model, {m}")
     notes.append(f"{stem}: {ok} 3D model(s) resolve on disk")
+
+
+def check_qr(stem, problems, notes):
+    """Read the QR codes back out of the finished board and decode them.
+
+    The one thing on this board that can be silently, completely wrong: a
+    misplaced module still looks like a QR code.  So the rectangles that were
+    actually written to the .kicad_pcb are sampled back into a matrix and run
+    through the decoder, which checks the format information's BCH, every
+    Reed-Solomon block's syndromes, and the payload.
+    """
+    import qrcode_gen
+    import pcb_silk as SILK
+    pcb = os.path.join(ROOT, "hardware", stem + ".kicad_pcb")
+    if not os.path.exists(pcb):
+        return
+    board = parse_file(pcb)
+    rects = []
+    for r in board.kids("gr_rect"):
+        if (r.first("layer") is None
+                or r.first("layer").atom(0) != "B.SilkS"):
+            continue
+        a, b = r.first("start"), r.first("end")
+        rects.append((float(a.atom(0)), float(a.atom(1)),
+                      float(b.atom(0)), float(b.atom(1))))
+    mod = SILK.QR_MODULE
+    for (qx, qy, key, _cap) in SILK.QR_CODES:
+        want = SILK.URLS[key]
+        n = len(qrcode_gen.encode(want, "M"))
+        x0, y0 = qx - n * mod / 2.0, qy - n * mod / 2.0
+        m = []
+        for row in range(n):
+            line = []
+            for col in range(n):
+                # drawn mirrored, so column j lives at n-1-j
+                x = x0 + (n - 1 - col) * mod + mod / 2.0
+                y = y0 + row * mod + mod / 2.0
+                line.append(1 if any(rx0 <= x <= rx1 and ry0 <= y <= ry1
+                                     for (rx0, ry0, rx1, ry1) in rects) else 0)
+            m.append(line)
+        try:
+            got, mask, version = qrcode_gen.decode(m, "M")
+        except Exception as e:
+            problems.append(f"{stem}: the {key} QR code does not decode: {e}")
+            continue
+        if got != want:
+            problems.append(f"{stem}: the {key} QR code reads {got!r}")
+        else:
+            notes.append(f"{stem}: the {key} QR code on B.Silkscreen decodes "
+                         f"to {got} (version {version}, mask {mask})")
 
 
 def check_stock(problems, notes):
@@ -166,7 +218,7 @@ def check_stock(problems, notes):
 def main():
     problems, notes = [], []
     check("lorenz", 2, 100.0, 100.0, problems, notes)
-    check("lorenz-4layer", 4, 100.0, 100.0, problems, notes)
+    check_qr("lorenz", problems, notes)
     check_models("lorenz", problems, notes)
     check_stock(problems, notes)
     for n in notes:

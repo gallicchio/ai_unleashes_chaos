@@ -43,7 +43,7 @@ NET_CLASSES = [
      "priority": 1},
 ]
 
-POWER_NETS = ["GND", "+5V", "+12V", "-12V", "+15V", "-15V", "VBUS"]
+POWER_NETS = ["GND", "GNDU", "+5V", "+12V", "-12V", "+15V", "-15V", "VBUS"]
 
 
 def design_rules():
@@ -256,7 +256,7 @@ FP_LIB_TABLE = """(fp_lib_table
 
 def main():
     os.makedirs(HW, exist_ok=True)
-    for stem in ("lorenz", "lorenz-4layer"):
+    for stem in ("lorenz",):
         path = os.path.join(HW, stem + ".kicad_pro")
         with open(path, "w") as fh:
             json.dump(project(stem), fh, indent=2)

@@ -230,6 +230,9 @@
       "GND": [
         "Power"
       ],
+      "GNDU": [
+        "Power"
+      ],
       "+5V": [
         "Power"
       ],

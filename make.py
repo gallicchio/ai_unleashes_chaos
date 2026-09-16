@@ -3,7 +3,7 @@
 
     ./make.py              build and check everything
     ./make.py --quick      skip the self-tests
-    ./make.py --stage sch  run one stage only (libs, sch, pcb2, pcb4, out, docs)
+    ./make.py --stage sch  run one stage only (libs, sch, pcb2, out, docs)
     ./make.py --clean      delete everything the build generates
 
 Every stage that can be checked is checked, and the build stops at the first
@@ -18,7 +18,11 @@ OUT = os.path.join(ROOT, "out")
 sys.path.insert(0, SCRIPTS)
 import kienv                                     # noqa: E402
 
-BOARDS = [("lorenz", 2), ("lorenz-4layer", 4)]
+# One board.  The four-layer experiment is gone: measured on the routed
+# two-layer board, tracks cover 1.2 % of the back copper, so the pour there is
+# already 98.8 % of an unbroken ground plane and a dedicated plane layer buys
+# almost nothing at four times the bare-board price.  See docs/DESIGN_REVIEW.md.
+BOARDS = [("lorenz", 2)]
 
 # Everything ./make.py writes.  Kept explicit rather than inferred so that
 # --clean doubles as the answer to "what in this repository is generated and
@@ -27,8 +31,6 @@ BOARDS = [("lorenz", 2), ("lorenz-4layer", 4)]
 GENERATED = [
     "hardware/lorenz.kicad_sch", "hardware/lorenz.kicad_pcb",
     "hardware/lorenz.kicad_pro",
-    "hardware/lorenz-4layer.kicad_sch", "hardware/lorenz-4layer.kicad_pcb",
-    "hardware/lorenz-4layer.kicad_pro",
     "hardware/sym-lib-table", "hardware/fp-lib-table",
     "hardware/lib/lorenz.kicad_sym",
     "hardware/lib/lorenz.pretty/", "hardware/lib/lorenz.3dshapes/",
@@ -36,8 +38,7 @@ GENERATED = [
     "out/",
 ]
 # Written by KiCad itself while you have the project open, never by the build.
-ALSO_TRANSIENT = ["hardware/lorenz.kicad_prl", "hardware/lorenz-4layer.kicad_prl",
-                  "hardware/fp-info-cache"]
+ALSO_TRANSIENT = ["hardware/lorenz.kicad_prl", "hardware/fp-info-cache"]
 
 
 class Fail(Exception):
@@ -115,8 +116,6 @@ def stage_sch():
     out = sys_py("check_schematic.py", sch)
     if "no text overlaps" not in out:
         raise Fail("the schematic sheet has overlapping or stray text")
-    # the four-layer variant shares the schematic; keep the copy in step
-    shutil.copyfile(sch, os.path.join(HW, "lorenz-4layer.kicad_sch"))
 
 
 def stage_pcb(stem, layers):
@@ -125,7 +124,10 @@ def stage_pcb(stem, layers):
     net = os.path.join(OUT, "lorenz.net")
     kicad_py("gen_pcb.py", str(layers), net, pcb)
     sys_py("route.py", str(layers))
-    kicad_py("gen_pcb.py", str(layers), net, pcb, env={"LORENZ_STAGE": "route"})
+    out = kicad_py("gen_pcb.py", str(layers), net, pcb,
+                   env={"LORENZ_STAGE": "route"})
+    if "had nowhere to go" in out:
+        raise Fail("some silkscreen could not be placed")
     rpt = os.path.join(OUT, f"drc-{stem}.rpt")
     kienv.cli("pcb", "drc", "--format", "report", "--severity-all",
               "--schematic-parity", "-o", rpt, pcb, check=False)
@@ -205,12 +207,11 @@ STAGES = {
     "project": stage_project,
     "sch": stage_sch,
     "pcb2": lambda: stage_pcb(*BOARDS[0]),
-    "pcb4": lambda: stage_pcb(*BOARDS[1]),
     "out": stage_out,
     "docs": stage_docs,
     "selftest": stage_selftest,
 }
-ORDER = ["libs", "sch", "pcb2", "pcb4", "out", "docs", "project"]
+ORDER = ["libs", "sch", "pcb2", "out", "docs", "project"]
 
 
 def main():
