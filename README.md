@@ -1180,3 +1180,204 @@ on X-Y to see this"*.
 * `./make.py` is green end to end: 15 pinout checks, 13 colour-model checks,
   135 circuit checks, no schematic text overlaps, 0 ERC, 0 DRC, both QR codes
   decoding, 64 3D models resolving.
+
+## Prompt 5
+
+On all of the DIP switches I've seen, the word "ON" is on top when oriented horizontally. Is "pin one" always on the "off" side as you've drawn the triangle? I hope that JLCPCB's rotation viewer web interface can allow me to get this right.
+
+You added a lot of "pin 1" triangles to footprints that might already contain a smaller, but perfectly good, pin 1 triangle. There is now a both a big and a small triangle on MPY634, LF412, 78L12, 79L12. The RGB LED and DIP switch don't seem to have them, and I'm glad you added them.
+
+I've decided to make SYNC_IN a first-class citizen and give it its own BNC input on the left side of the board. It should be more clear that SYNC_IN is meant to be plugged into another board's "X" output rather than, say, "Z". Maybe call it "SYNC_IN_X" everywhere, although I'll continue to refer to it as "SYNC_IN" when I talk about the existing schematic and PCB. I also want a knob that can set how much "weight" SYNC_IN gets in the sum. I don't have a sense for how much "out X" from one should contribute. You chose to have it contribute through a 100k resistor. If we turned that into a potentiometer (really a resistor and potentiometer in series to keep it from going all the way to zero), what would be a good range to tune it? I want it to go from "it forces a close sync right away" to "its influence is just barely detectable and might take a long time to sync, if at all"? As long as unplugging it completely makes the new circuit act like the original, I think this is worth doing.
+
+I'm confused about how SYNC_IN was drawn on the schematic and PCB. When undriven, it really does add a "+0V" branch to the adder. I think this is fine. But the schematic and the way the board is laid out is confusing: the "sync in" line that comes into the adding junction in the schematic is next to the "dy/dt = r x - y - x z" incoming line, and test point is next to the "-xz/100" testpoint on the board. In the schematic, move the SYNC_IN test point and its two resistors more obviously "add" to the "x" summing-junction input. I would draw the "x" input (after its 27k) and the SYNC_IN input (after its 100k) as joining together first, and then the join continues left to meet the "-xz/100" (after its 10k) and "dy/dt = r x - y - x z" (after its 1M). Redrawing it this way should give the same circuit, but the schematic will be more clear. Remember, this is for Paul Horowitz, the master of cleanly-drawn schematics. Similarly for the PCB, it should be more obvious from the layout itself that SYNC_IN is conceptually meant to add a little perturbation to the "x" input.
+
+To make room for the new BNC SYNC_IN_X, feel free to either move the upper MPY634 further up or to put the BNC there at the top left in line with the "X" output. You should move the date and "rev A" somewhere else, maybe under the "PCB by Jason Gallicchio" text. The date and "rev A" are important to have on there somewhere, but should be the least prominent of the non-component notes.
+
+Change "put x and z on X-Y to see this" to "put x and z on 'scope X-Y to see this".
+
+Thinking of the switches as a binary number, it seems that 1, 2, and 3 are the LSB while 4, 5, and 6 are the MSB. Unless it creates a wiring nightmare, change their order on the switch and update all of the tables. While you're at it, 572 ms is not really "glacial!" compared to 472 ms. Maybe I asked you to be a bit too dramatic in your naming. Maybe change it to "slower!".
+
+## Response 5
+
+### The DIP switch: yes, pin 1 is on the "off" side
+
+On the KingTek DSIC06LSGET drawing, the six position numbers are printed along
+one long side of the body and **"ON" along the other**, so pin 1 is on the side
+*away* from the ON legend — which is where the triangle points. KiCad's own
+generic DIP-switch footprints agree: pads 1–6 down one side, an `on` marker on
+the far side. So your observation holds for this part, and the triangle is on
+the side you expected.
+
+It is a convention rather than a law, though, so here is the part that actually
+matters: **a DIP switch fitted 180° out is electrically identical.** Each pole
+connects pin *k* to pin *13−k*, and a 180° rotation maps *k* → *13−k*, so every
+pole still pairs with itself. Nothing shorts, nothing opens, no term changes.
+What you lose is the *labelling*: slider 1 ends up where slider 6 should be, so
+the two banks swap and the printed table reads backwards. That is a ten-second
+discovery at the bench, not a dead board.
+
+The board now prints **"ON faces the table above"** under the switch, so the
+part's own ON legend tells you at a glance whether it went in the right way
+round.
+
+On JLCPCB: yes. Their order flow renders every placed part on the board before
+you confirm, and rotations can be corrected there — that is exactly the check
+`docs/MANUFACTURING.md` asks you to make, and its table now leads with the
+triangles so you have something specific to compare against.
+
+### The doubled triangles are gone
+
+You are right, and it was sloppy of me to blanket the list. `PIN1_MARKS` is now
+**D1, SW1, RV1 and RV2** — the four parts whose own footprints have no mark you
+can read on a board. The MPY634s, the LF412s and the two SOT-89 regulators use
+KiCad's footprints, which already print a pin-1 dot or a notched corner, and a
+second bigger mark beside the first is two marks to reconcile instead of one to
+read.
+
+For the record, the lamp and the DIP switch *do* each carry a 0.2 mm dot inside
+their own courtyard — mine, from `gen_footprints.py`. It is there for anyone
+reusing the footprint and it is not legible on a finished board, which is why
+you did not see it and why the triangle earns its place.
+
+### SYNC IN X
+
+**It has its own BNC now**: `J5`, on the left edge, **in line with the x output
+on the right edge**, with its barrel pointing off the board the same way the
+three outputs do. The silkscreen says `SYNC IN X` above it and `from another
+board's x` beside it. Everything in the sources, the schematic, the notes and
+the documents calls it `SYNC IN X`.
+
+**The weight knob is `RV2`, and it is a divider, not a rheostat.** You asked for
+a resistor and a pot in series so the weight could not reach zero. I want to
+push back on one half of that and take the other half seriously, because the
+topology turns out to matter more than the range:
+
+* A **rheostat in series** with R19 makes `g = 1M/R`, which is hyperbolic in the
+  knob. With a 20 k pot and 100 k fixed, g would run 10 down to 1.7 — and the
+  locking threshold, at about g = 7, would sit inside the **first tenth** of
+  the rotation. Nine tenths of the knob would do nothing you could see.
+* A **divider across the incoming signal**, wiper into a fixed 100 k, makes
+
+  ```
+  g = 1M / 100k  ×  (fraction turned)  =  0 … 10
+  ```
+
+  which is **linear in the knob**, within 5 % — the wiper's own source
+  impedance peaks at a quarter of the 20 k track against R19's 100 k. The
+  threshold now lands at about **70 % of rotation**.
+
+And zero is the right bottom end, not a hazard. The danger a rheostat has at
+one end is *infinite* gain (R → 0 shorts the input into a virtual earth); zero
+gain is harmless, and it is exactly what an unplugged cable gives you. So the
+knob turns the sync off completely without touching the cable, which is a
+better demonstration, not a worse one. Your actual requirement — "unplugging it
+completely makes the new circuit act like the original" — holds either way.
+
+**The range, measured.** Two boards integrated together (b = 1M/374 k, 20 mV of
+initial mismatch, the receiver's r knob turned down by g so both solve the same
+equations):
+
+| knob | g | what happens |
+|---|---|---|
+| 0 % | 0 | nothing at all; the boards ignore each other |
+| 20 % | 2 | never locks |
+| 50 % | 5 | never locks — close approaches, then bursts apart |
+| ~70 % | ~7 | threshold |
+| 80 % | 8 | locks in 4.7 time units — **2.2 s** at `slow!` |
+| 100 % | 10 | locks in 3.1 time units — **1.5 s** at `slow!` |
+
+So the bottom seven tenths is your "influence just barely detectable, might
+take a long time if at all", and the top three tenths is your "forces a close
+sync right away". The interesting part — bursting in and out of
+synchronisation just below threshold — sits right where a knob is easiest to
+inch.
+
+Two more things the numbers settle. The maximum weight stays at **10** because
+that is what the r knob can take back: drive at r = 32 and the receiver's r
+knob reads **32 down to 22 as the sync knob goes 0 to full**, so the two knobs
+track each other one for one across their whole travel. And the divider loads
+the driving board with 20 k through its 100 Ω output resistor — a 0.5 % error,
+which the scope on the other leg of the splitter will not notice.
+
+`R20` = 1 M still holds the wiper node at ground, which is now the *wiper's*
+safety net rather than the pad's: if RV2's wiper ever lifts, the sync branch
+goes to 0 V and the board behaves as though unplugged. Note that this is the
+opposite wiring from RV1, deliberately — RV1's wiper is tied to terminal 1
+because an open wiper there would delete the `r x` term, so it must fail to
+*maximum resistance*; RV2's open wiper must fail to *no signal*. Different
+stakes, different wiring, and `check_circuit.py` asserts both.
+
+### Drawing the sum as a sum
+
+You were right that the old drawing said the wrong thing. Row 2's branches now
+run **−y, x·z, x** down the sheet, and the x branch and the sync branch **join
+on their own short rail** before that rail continues to the summing junction:
+
+```
+   -y  ──[ 1M  ]────────────────────────────┐
+   xz  ──[ 10k ]────────────────────────────┤
+                                            ├──  SJ_Y
+    x  ──[ RV1 ]──[ 27k ]──┬─────────────────┘
+                           │
+  SYNC IN X ──[ RV2 ]──[ 100k ]──┘
+```
+
+Same netlist, but now the drawing says "a perturbation on the x term" instead
+of "a fourth term". The board says it too: `R19` is the next resistor down the
+summing column from `R3`, with **"SYNC IN X adds here"** printed beside it, and
+the whole chain reads left to right along the top of the board — jack, weight
+knob, resistor, into the column.
+
+### Making room
+
+The two multipliers moved 9 mm right and the left edge became the input edge:
+**J5 at the top, RV2 below it, RV1 below that**, so both knobs are on the same
+edge and turn the same way. The back had to move with them — three drilled
+parts down that edge punch straight through the equations block, so the
+equations went from 2.4 mm to 2.0 mm and the constants split over two lines,
+and nothing now reaches past x = 14 mm.
+
+The `MPY634` value fields under the two multipliers are hidden now; the legend
+beside each one says **"MPY634  x z"** and **"MPY634  x y"**, which is the
+same information plus which product it forms, in less space.
+
+### The title block, swapped
+
+`PCB by Jason Gallicchio and Claude Opus 5 Max` moved up under `Lorenz
+attractor — circuit by Paul Horowitz`, so the two attributions sit together,
+largest first: whose circuit, then whose board. `seti.harvard.edu/...` took the
+credit line's old place in the open band above the power strip. The date and
+revision sit directly under the credit at **0.9 mm**, the smallest text on the
+front — present, and the least prominent thing that is not a component legend.
+
+### The switch reads as a binary number now
+
+Poles **1–3 carry the 470 nF** and **4–6 the 100 nF**, so left to right the six
+sliders count up:
+
+| setting | 1 2 3 | 4 5 6 | C | tau |
+|---|---|---|---|---|
+| fast! | off off off | off off off | 2.2 nF | 2.2 ms |
+| nice! | off off off | ON ON ON | 102 nF | 102 ms |
+| slow! | ON ON ON | off off off | 472 nF | 472 ms |
+| slower! | ON ON ON | ON ON ON | 572 nF | 572 ms |
+
+00, 01, 10, 11. No wiring nightmare at all: the only change is which pole each
+capacitor hangs on, and the `nice!` and `slow!` capacitors swapped positions on
+the board to match, so each one still sits over its own pole and no two
+branches cross.
+
+And you were right about "glacial!" — 572 ms against 472 ms is a fifth slower,
+not a geological epoch. It is **slower!** now, everywhere.
+
+### Small things
+
+* The owl caption reads **"put x and z on 'scope X-Y to see this"**.
+* Parts cost went from $72.32 to **$74.31** a board — one more BNC and one more
+  trimmer — and the through-hole count from 27 joints to 35.
+* `check_circuit.py` is up to **141 checks**, including that RV2 is wired as a
+  divider with terminal 3 on the jack and terminal 1 on ground, that the
+  maximum weight is no larger than the r knob's span so every setting can be
+  compensated, and that R19 and R3 land on the same node.
+* `./make.py` is green end to end: 0 ERC, 0 DRC, both QR codes decoding, and a
+  clean clone rebuilds byte-identically except the raytraced 3D render.

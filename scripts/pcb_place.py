@@ -32,50 +32,51 @@ ISLAND = (0.0, 77.0, 42.5, BOARD_H)       # x0, y0, x1, y1 of the GNDU plane
 ISLAND_GAP = 1.0                          # clearance to the GND plane
 
 PLACE = {
-    # ---- multipliers, out at the left edge where there is room -----------
-    # Pushed 5 mm further apart than they need to be: the gap between them is
-    # the only place on the board with room for a 9.5 mm trimmer and the two
-    # lines of legend that explain it.
-    "U3": (12.0, 26.5, 0),      # x*z  -> -y integrator
-    "U4": (12.0, 61.5, 0),      # x*y  ->  z integrator
-    "C20": (22.0, 21.5, 90), "C21": (22.0, 31.5, 90),     # U3 bypass
-    "C22": (22.0, 56.5, 90), "C23": (22.0, 66.5, 90),     # U4 bypass
+    # ---- the left edge is the input edge ---------------------------------
+    # SYNC IN X sits in line with the x output on the opposite edge, because
+    # that is what you plug into it, and its chain runs straight down the
+    # edge: jack, weight knob, then across into the summing column beside the
+    # x term it perturbs.  The r knob is directly below the weight knob, so
+    # the two controls are on the same edge and turn the same way.
+    "J5":  (7.0, 19.0, 180),    # SYNC IN X, barrel off the left edge
+    "RV2": (9.0, 33.54, 0),     # sync weight; body centres on (9, 31)
+    "R20": (18.0, 39.0, 90),    # 1M holding the wiper node down
+    "RV1": (9.0, 48.54, 0),     # r knob; body centres on (9, 46)
+
+    # ---- multipliers, clear of the input edge ----------------------------
+    "U3": (21.0, 26.5, 0),      # x*z  -> -y integrator
+    "U4": (21.0, 61.5, 0),      # x*y  ->  z integrator
+    "C20": (32.0, 22.0, 90), "C21": (32.0, 31.0, 90),     # U3 bypass
+    "C22": (32.0, 57.0, 90), "C23": (32.0, 66.0, 90),     # U4 bypass
     # The two multiplier products are probed where they arrive at their
     # summing resistors, which is both the clearest place on the front and
     # clear of the equations on the back.
-    "TP5": (28.0, 47.5, 0),     # -x z / 100, on its way into R4
-    "TP6": (28.0, 63.0, 0),     # -x y / 100, on its way into R6
+    "TP4": (30.0, 44.0, 0),     # -x z / 100, on its way into R4
+    "TP5": (30.0, 63.0, 0),     # -x y / 100, on its way into R6
 
     # ---- summing resistors, a column per band ---------------------------
+    # Row 2 reads down the column in the same order as the schematic, and the
+    # sync resistor is the next one down from R3: the two of them are the x
+    # term and the perturbation on it, and they meet before anything else.
     "R1": (35.0, 14.0, 0),     # -y -> x integrator
     "R2": (35.0, 20.0, 0),     #  x -> x integrator
-    "R3": (35.0, 38.0, 0),     #  x -> -y integrator
-
-    # The synchronisation input joins the circuit in the same row and on the
-    # same node as R3, because the r x term is the only one an inverting
-    # summing junction lets an outside voltage add to.  100k in, and 1M
-    # holding the pad at ground when nothing is plugged into it.
-    "TP4": (24.0, 38.0, 0), "R19": (30.0, 38.0, 0), "R20": (24.0, 42.5, 90),
-
+    "R5": (35.0, 38.0, 0),     # -y -> -y integrator
     "R4": (35.0, 44.0, 0),     # xz -> -y integrator
-    "R5": (35.0, 50.0, 0),     # -y -> -y integrator
+    "R3": (35.0, 50.0, 0),     #  x -> -y integrator
+    "R19": (35.0, 56.0, 0),    # SYNC IN X -> the same node as R3
     "R6": (35.0, 63.0, 0),     # xy -> z integrator
     "R7": (35.0, 69.0, 0),     #  z -> z integrator
-
-    # ---- the r knob, level with the row whose coefficient it sets --------
-    # The placement point of a 3386P is terminal 1, and the body reaches
-    # 2.54 mm past it, so the 9.5 mm square ends up centred on (14, 44) --
-    # in the gap between the two multipliers, where a screwdriver can get at
-    # it without going near anything else.
-    "RV1": (14.0, 46.54, 0),
 
     # ---- capacitor banks: fast / nice / slow, one row per integrator -----
     # The middle bank sits further from its row than the other two; that is
     # what leaves a clear band above the switch for the legend, which has to
     # line up with the six sliders and so cannot go anywhere else.
-    "C1": (43.0, 14.0, 90), "C2": (49.0, 14.0, 90), "C3": (55.0, 14.0, 90),
-    "C4": (43.0, 26.0, 90), "C5": (49.0, 26.0, 90), "C6": (55.0, 26.0, 90),
-    "C7": (43.0, 66.0, 90), "C8": (49.0, 66.0, 90), "C9": (55.0, 66.0, 90),
+    # The 470 nF hangs on poles 1-3, at the left-hand end of the switch, and
+    # the 100 nF on poles 4-6 at the right-hand end, so each capacitor sits
+    # over the pole it belongs to and no two branches have to cross.
+    "C1": (43.0, 16.0, 90), "C3": (49.0, 16.0, 90), "C2": (55.0, 16.0, 90),
+    "C4": (43.0, 26.0, 90), "C6": (49.0, 26.0, 90), "C5": (55.0, 26.0, 90),
+    "C7": (43.0, 66.0, 90), "C9": (49.0, 66.0, 90), "C8": (55.0, 66.0, 90),
     # The one control, turned so its six sliders run left to right with the
     # legend that explains them directly above.  It sits as high as the middle
     # capacitor bank allows, which is what leaves the bottom third of the board
@@ -94,7 +95,7 @@ PLACE = {
     # ---- the chaos lamp, between two jacks, fed from the left ------------
     "R13": (70.0, 48.0, 0), "R14": (70.0, 55.0, 0), "R15": (70.0, 62.0, 0),
     "D1":  (83.0, 56.5, 0),
-    "TP7": (88.0, 60.0, 0),     # the +3.2 V anode rail, beside the lamp
+    "TP6": (88.0, 60.0, 0),     # the +3.2 V anode rail, beside the lamp
     # the +3.2 V reference, in the band the switch used to occupy: R17 down
     # from +12 V, then R16 and C24 in parallel to ground
     "R17": (50.0, 59.0, 0), "R16": (55.0, 59.0, 90), "C24": (59.0, 59.0, 90),
@@ -117,7 +118,7 @@ PLACE = {
     "R11": (11.8, 88.8, 90), "R12": (14.8, 88.8, 90),
     "F1":  (24.0, 86.0, 0),
     "C10": (30.0, 86.0, 90), "C11": (34.0, 86.0, 90),
-    "TP8": (24.0, 79.5, 0), "TP14": (32.0, 79.5, 0),      # +5 V, GNDU
+    "TP7": (24.0, 79.5, 0), "TP13": (32.0, 79.5, 0),      # +5 V, GNDU
 
     # ---- the converter straddles the split ------------------------------
     # Pin 1 is the footprint origin and the pins run +x on a 2.54 mm pitch,
@@ -142,18 +143,18 @@ PLACE = {
     "C29": (76.5, 95.0, 90), "C15": (82.0, 95.0, 90),
 
     # ---- probe pads for the rails, in a row you can read ----------------
-    "TP9":  (50.0, 79.5, 0),    # +15 V
-    "TP10":  (57.0, 79.5, 0),    # -15 V
-    "TP11": (64.0, 79.5, 0),    # +12 V
-    "TP12": (71.0, 79.5, 0),    # -12 V
-    "TP13": (78.0, 79.5, 0),    # GND
+    "TP8":  (50.0, 79.5, 0),    # +15 V
+    "TP9":  (57.0, 79.5, 0),    # -15 V
+    "TP10": (64.0, 79.5, 0),    # +12 V
+    "TP11": (71.0, 79.5, 0),    # -12 V
+    "TP12": (78.0, 79.5, 0),    # GND
 
     # ---- wire loops for a scope's ground clip ---------------------------
     # One beside the jacks, one beside the probe row, one in the middle by the
     # capacitor banks, so a clip is never far from what you are probing.
-    "TP15": (92.0, 79.5, 0),
-    "TP16": (91.0, 90.5, 0),
-    "TP17": (56.0, 72.0, 0),
+    "TP14": (92.0, 79.5, 0),
+    "TP15": (91.0, 90.5, 0),
+    "TP16": (56.0, 72.0, 0),
 
     # ---- M3 mounting holes, one per corner ------------------------------
     "MH1": (4.0, 4.0, 0), "MH2": (96.0, 4.0, 0),

@@ -3,8 +3,8 @@
 	(generator "pcbnew")
 	(generator_version "10.0")
 	(layer "F.Cu")
-	(descr "RGB LED, common cathode, PLCC-4 3.5x2.8mm, MEIHUA MHPC3528CRGBCT (LCSC C2962096); 1=R+ 2=B+ 3=G+ 4=K")
-	(tags "LED RGB PLCC-4 3528 common cathode")
+	(descr "RGB LED, PLCC-4 3.5x2.8mm, MEIHUA MHPA3528CRGBCT common anode (LCSC C2962095); 1=A 2=B- 3=G- 4=R-")
+	(tags "LED RGB PLCC-4 3528 common anode")
 	(property "Reference" "REF**"
 		(at 0 2.9 0)
 		(unlocked yes)
@@ -42,7 +42,7 @@
 			)
 		)
 	)
-	(property "Description" "RGB LED, common cathode, PLCC-4 3.5x2.8mm, MEIHUA MHPC3528CRGBCT (LCSC C2962096); 1=R+ 2=B+ 3=G+ 4=K"
+	(property "Description" "RGB LED, PLCC-4 3.5x2.8mm, MEIHUA MHPA3528CRGBCT common anode (LCSC C2962095); 1=A 2=B- 3=G- 4=R-"
 		(at 0 -2.9 0)
 		(unlocked yes)
 		(layer "F.Fab")
@@ -168,10 +168,10 @@
 		(layer "F.Fab")
 		(uuid "c1c27e24-0b3b-5a2c-9fdc-1418ac3f3202")
 	)
-	(fp_text user "K"
-		(at 1.6 -1.15 0)
+	(fp_text user "A"
+		(at -1.6 1.15 0)
 		(layer "F.Fab")
-		(uuid "472ea364-ed27-55ba-8a4f-780e6f1a29f8")
+		(uuid "b6ea6d58-1189-5ba2-ad7f-51c048a7050f")
 		(effects
 			(font
 				(size 0.6 0.6)

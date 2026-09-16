@@ -492,7 +492,7 @@ def add_speed_table(board, space, missing):
     add_text(board, space, mid, y - 2.4, "SPEED SELECT", 1.0, must_fit=False)
     below = pcbnew.ToMM(sw.GetBoundingBox().GetBottom()) + 1.7
     if add_text_near(board, space, mid - 3.0, below,
-                     "ON is marked on the switch", 0.9, reach=3.0) is None:
+                     "ON faces the table above", 0.9, reach=3.0) is None:
         missing.append("speed table footnote")
     for (x1, y1, x2, y2) in ((mid, y - 1.4, mid, bot),          # between banks
                              (left - 8.0, y + 0.9, right + 8.5, y + 0.9)):
@@ -507,11 +507,15 @@ def add_speed_table(board, space, missing):
                      max(x1, x2) + 0.1, max(y1, y2) + 0.1))
 
 
-# Every part here can be fitted the wrong way round, and on most of them the
-# package gives no clue: a SOIC's own dimple is under the plastic, a SOT-89
-# looks the same both ways, and a DIP switch fitted backwards silently swaps
-# "nice!" for "slow!".  So the board says where pin 1 goes.
-PIN1_MARKS = ["U1", "U2", "U3", "U4", "U5", "U6", "U7", "D1", "SW1", "RV1"]
+# Parts that can be fitted the wrong way round and whose own footprint has no
+# pin-1 mark you can see across a bench.  The SOICs and the two SOT-89s are
+# not in the list: KiCad's footprints already print a pin-1 dot or a notched
+# corner on them, and a second, bigger mark beside the first is two marks to
+# reconcile instead of one to read.  The lamp and the DIP switch carry a
+# 0.2 mm dot inside their own courtyards, which is there for anyone reusing
+# the footprint but is not legible on a board; the trimmers have a square pad
+# 1 and a chamfered corner, which are shape cues, not marks.
+PIN1_MARKS = ["D1", "SW1", "RV1", "RV2"]
 
 
 def add_pin1_marks(board, space, missing):
@@ -624,6 +628,9 @@ def add_silk(board):
                            anchor.get("Reference")):
             missing.append(f"{ref} reference")
         val = fp.Value()
+        if ref in SILK.HIDE_VALUE:
+            val.SetVisible(False)
+            continue
         if val.GetText() and not place_field(val, space, fp, 0.9, True,
                                              anchor.get("Value")):
             val.SetVisible(False)

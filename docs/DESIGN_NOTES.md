@@ -58,16 +58,19 @@ Comfortable inside +/-12 V rails.
    `C_fast` 2.2 nF C0G is always fitted; a 6-way DIP switch adds 100 nF (bank A,
    poles 1-3) or 470 nF (bank B, poles 4-6) to all three integrators at once.
 
-   | setting | poles 1-3 | poles 4-6 | C      | Paul's value |
-   |---------|-----------|-----------|--------|--------------|
-   | fast!   | off       | off       | 2.2 nF | 2000 pF      |
-   | nice!   | **on**    | off       | 102 nF | 0.1 uF       |
-   | slow!   | off       | **on**    | 472 nF | 0.47 uF      |
-   | glacial!| **on**    | **on**    | 572 nF | —            |
+   Poles 1-3 carry the 470 nF and poles 4-6 the 100 nF, so the six sliders
+   read left to right as a two-digit binary number:
 
-   `glacial!` is the fourth speed both banks on give you for nothing: tau =
-   572 ms, slow enough to follow the trajectory around a wing by eye.  It is
-   printed on the silkscreen table with the other three.  Contact resistance is
+   | setting | poles 1-3 (470 nF) | poles 4-6 (100 nF) | C      | Paul's value |
+   |---------|--------------------|--------------------|--------|--------------|
+   | fast!   | off                | off                | 2.2 nF | 2000 pF      |
+   | nice!   | off                | **on**             | 102 nF | 0.1 uF       |
+   | slow!   | **on**             | off                | 472 nF | 0.47 uF      |
+   | slower! | **on**             | **on**             | 572 nF | —            |
+
+   `slower!` is the fourth speed both banks on give you for nothing: tau =
+   572 ms, a fifth slower again than `slow!`.  It is printed on the silkscreen
+   table with the other three.  Contact resistance is
    ~100 mohm in series with C; against a 100 kohm..1 Mohm integrating resistor
    that is a 1-ppm effect.
 
@@ -140,32 +143,65 @@ Comfortable inside +/-12 V rails.
    `r x` term vanishing altogether.  A worn wiper fails open; this wiring does
    not let it.
 
-7. **A synchronisation input.**  R19, 100k from a pad marked SYNC IN into the
-   dy/dt summing junction, with R20 = 1M holding the pad at ground when
-   nothing is plugged in.  Drive it from another board's x output and the two
-   boards lock together within a few seconds; pull the wire off and they drift
-   apart again from states that agreed to a few millivolts.
+7. **A synchronisation input, on its own BNC.**  `SYNC IN X` is a fourth BNC
+   on the left edge of the board, in line with the x output on the right,
+   because another board's x output is what you plug into it.  From there:
+   RV2 as a plain voltage divider across the incoming signal, then R19 = 100k
+   into the dy/dt summing junction, where it meets the x branch before the
+   two of them reach the summing node.  R20 = 1M holds the wiper node at
+   ground if the wiper ever lifts.
 
-   Both boards float, so they also need a ground in common before any of that
-   works: a coax from a BNC splitter carries board 1's ground on its screen and
-   does both jobs, or run a second wire between a SCOPE GND loop on each board.
-   The 100k (and the 1M to ground) load an output that drives through 100 ohm
-   by 0.1 %, so the scope on the other leg of the splitter sees no difference.
+   It has to be that junction and it has to be x.  The junction inverts, so
+   an injected voltage always arrives with a minus sign, and diffusive
+   coupling `g(x1 - x2)` is only available where the local term already
+   carries a plus -- which is the `+ r x` term of dy/dt and, through R1, the
+   `+ s y` term of dx/dt.  dz/dt has no such term: an injected z arrives as
+   `-g z1`, which is anti-diffusive, and simulated, the error grows with g
+   rather than shrinking.  Sign-correct coupling on z *does* lock, so this is
+   not a conditional-Lyapunov obstruction -- it just needs a `-z` output this
+   circuit does not make.
 
-   It has to be that junction.  The junction inverts, so an injected voltage
-   always arrives with a minus sign, and diffusive coupling `g(x1 - x2)` is
-   only available where the local term already carries a plus -- which is the
-   `+ r x` term of dy/dt and, through R1, the `+ s y` term of dx/dt.  dz/dt has
-   no such term: an injected z arrives as `-g z1`, which is anti-diffusive, and
-   simulated, the error grows with g rather than shrinking.  Sign-correct
-   coupling on z *does* lock, so this is not a conditional-Lyapunov
-   obstruction -- it just needs a `-z` output this circuit does not make.
+   **The weight knob.**  RV2 is a divider, not a rheostat in series with R19,
+   and that is the whole trick: the weight is then
 
-   1M/100k = 10 is the coupling strength, and because it lands on the `r x`
-   term it also adds 10 to the receiving board's own r.  Turn the receiver's
-   knob down by 10 -- drive at r = 32, receive at r = 22 -- and both boards
-   are solving the same equations.  That offset is why the knob was sized to
-   sweep more than 10.
+       g  =  1M / 100k  x  (fraction turned)  =  0 .. 10
+
+   which is *linear* in the knob, within 5 % -- the wiper's own source
+   impedance peaks at a quarter of the 20k track against R19's 100k.  A
+   rheostat would have made g go as 1/R and crammed everything interesting
+   into the first tenth of the rotation.  At the counter-clockwise stop the
+   wiper sits on ground and the branch contributes exactly nothing, which is
+   the same thing as unplugging the cable; at the clockwise stop it is the
+   g = 10 the board was already sized for.
+
+   Simulated (two boards, b = 1M/374k, 20 mV of initial mismatch, the
+   receiver's r knob turned down by g so both solve the same equations):
+
+   | knob | g | what happens |
+   |---|---|---|
+   | 0 %   | 0    | nothing at all; the two boards ignore each other |
+   | 20 %  | 2    | no lock, ever |
+   | 50 %  | 5    | still no lock: close approaches, then bursts apart |
+   | ~70 % | ~7   | threshold, measured at r = 32 |
+   | 80 %  | 8    | locks in about 5 time units -- 2.2 s at `slow!` |
+   | 100 % | 10   | locks in about 3 time units -- 1.5 s at `slow!` |
+
+   So the bottom seven tenths of the knob is "influence you can see but
+   never enough", and the top three tenths is "locked", which is the range
+   the demonstration wants.
+
+   Because the coupling lands on the `r x` term it also adds g to the
+   receiving board's own r.  Drive at r = 32 and the receiver's r knob then
+   reads 32 down to 22 as the sync knob goes 0 to full -- the two knobs track
+   each other one for one across their whole travel, which is why the r knob
+   was sized to sweep more than 10.
+
+   Both boards float on purpose, so they also need a ground in common before
+   any of this works: a coax from a BNC splitter carries board 1's ground on
+   its screen and does both jobs at once, or run a second wire between a
+   SCOPE GND loop on each board.  The 20k divider loads an output that drives
+   through 100 ohm by 0.5 %, so the scope on the other leg of the splitter
+   sees no difference.
 
 ## Part selection (JLCPCB stock checked 2026-09-15)
 
@@ -177,10 +213,10 @@ Comfortable inside +/-12 V rails.
 | U6 | CJ78L12 | C8615 | SOT-89 | 52154 | $0.10 |
 | U7 | CJ79L12 | C8626 | SOT-89 | 11413 | $0.12 |
 | J1 | TYPE-C-31-M-12 | C165948 | SMD | 230097 | $0.19 |
-| J2-J4 | BNC-KYWE-295-W4-N | C41416668 | THT right-angle | 410 | $1.55 |
+| J2-J5 | BNC-KYWE-295-W4-N | C41416668 | THT right-angle | 410 | $1.55 |
 | SW1 | DSIC06LSGET | C54952 | SMD DIP-6 | 2140 | $0.57 |
 | D1 | MHPA3528CRGBCT | C2962095 | PLCC-4 3.5x2.8 | 9796 | $0.07 |
-| RV1 | 3386P-1-203LF | C116287 | 9.5 mm square THT | 767 | $0.45 |
+| RV1,RV2 | 3386P-1-203LF | C116287 | 9.5 mm square THT | 767 | $0.45 |
 
 LF412 and MPY634 are Paul's exact parts — both still stocked, both in
 hand-solderable wide-body packages, so the circuit stays literally his.

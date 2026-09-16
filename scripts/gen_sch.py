@@ -24,6 +24,7 @@ ZJOG     = 101.6          # column for the multipliers' Z2-to-ground stub
 JOG_X    = 135.89         # column the multiplier outputs drop down
 RES_CX   = 146.05         # summing resistors  (pins 142.24 / 149.86)
 SJ_X     = 168.91         # summing-junction rail
+SJ_MERGE = 157.48         # where the x branch and the sync branch meet
 OPA_X    = 187.96         # op-amp body        (-in 180.34, out 195.58)
 OUT_X    = 215.9          # output node
 RS_CX    = 228.6          # 100 ohm series resistor
@@ -117,18 +118,18 @@ def build():
         dict(  # dx/dt = 10(y - x)
             opa=("U1", 1), out="x", y=ROW_Y[0],
             res=[("R1", "100k", -6.35, "-y"), ("R2", "100k", +6.35, "x")],
-            caps=("C1", "C2", "C3"), poles=(1, 4), outres="R8", bnc="J2",
+            caps=("C1", "C2", "C3"), poles=(4, 1), outres="R8", bnc="J2",
             label="x", sj="SJ_X", colour="green", die="3", note="dx/dt = 10 (y - x)"),
         dict(  # dy/dt = 28x - y - xz
             opa=("U1", 2), out="-y", y=ROW_Y[1],
-            res=[("R4", "10k", -12.7, "xz"), ("R3", "27k", 0.0, "x"),
-                 ("R5", "1M", +12.7, "-y")],
-            caps=("C4", "C5", "C6"), poles=(2, 5), outres="R9", bnc="J3",
+            res=[("R5", "1M", -19.05, "-y"), ("R4", "10k", -12.7, "xz"),
+                 ("R3", "27k", 0.0, "x")],
+            caps=("C4", "C5", "C6"), poles=(5, 2), outres="R9", bnc="J3",
             label="-y", sj="SJ_Y", colour="blue", die="2", note="dy/dt = r x - y - x z"),
         dict(  # dz/dt = xy - (8/3) z
             opa=("U2", 1), out="z", y=ROW_Y[2],
             res=[("R6", "10k", -6.35, "xy"), ("R7", "374k", +6.35, "z")],
-            caps=("C7", "C8", "C9"), poles=(3, 6), outres="R10", bnc="J4",
+            caps=("C7", "C8", "C9"), poles=(6, 3), outres="R10", bnc="J4",
             label="z", sj="SJ_Z", colour="red", die="4", note="dz/dt = x y - 2.674 z"),
     ]
 
@@ -179,13 +180,17 @@ def build():
             s.place("Device:R_US", ref, val, RES_CX, ry, rot=90,
                     footprint=rfp(), fields=passive_fields(val),
                     ref_off=(0, -7.0), val_off=(0, -3.7))
-            s.wire((149.86, ry), (SJ_X, ry))
+            s.wire((149.86, ry), (SJ_MERGE if ref == "R3" else SJ_X, ry))
             tap = knob(ry) if ref == "R3" else 142.24
             if src in feeds:
                 feeds[src].append((tap, ry))
         s.wire((SJ_X, min(ys)), (SJ_X, max(ys)))
         for ry in ys:
             s.junction(SJ_X, ry)
+        if row["sj"] == "SJ_Y":
+            # the x branch and the sync branch join on their own short rail,
+            # and the sum of the two continues to the summing junction
+            s.wire((SJ_MERGE, y), (SJ_X, y))
         # rail up into the capacitor bank, and across to the op-amp
         s.wire((SJ_X, min(ys)), (SJ_X, y - BANK_LO))
         s.wire((SJ_X, y_neg), (180.34, y_neg))
@@ -260,45 +265,77 @@ def build():
         s.label({"x": "x", "-y": "-y", "z": "z"}[row["out"]],
                 OUT_X, y_out + 11.43, size=1.5)
         s.text(row["label"], 232.41, y_out - 3.81, size=3.2)
-        s.text(row["note"], SJ_X - 1.27, y + 16.51, size=1.8, justify="right")
+        # row 2's caption sits above its own merge rail rather than below the
+        # row, where the sync branch now runs
+        s.text(row["note"],
+               (SJ_MERGE if row["sj"] == "SJ_Y" else SJ_X) - 1.27,
+               y + (6.35 if row["sj"] == "SJ_Y" else 16.51),
+               size=1.8, justify="right")
 
     # ======================================== the synchronisation input =====
-    # One extra summing resistor into SJ_Y, brought out to a pad.  Drive it
-    # from another board's x output and the two boards lock together; pull the
-    # wire off and they drift apart again from almost identical states, which
-    # is the demonstration a freeze switch was going to be for.
+    # A BNC of its own, a knob that sets how much of it gets in, and one
+    # summing resistor into the dy/dt junction, where it joins the x branch
+    # before the two of them reach the summing node.  Drive it from another
+    # board's x output and the two boards lock together; pull the cable off
+    # and they drift apart again from almost identical states, which is the
+    # demonstration a freeze switch was going to be for.
     #
-    # It has to be SJ_Y.  The junction is inverting, so anything injected
-    # arrives with a minus sign, and diffusive coupling k(x1 - x2) is only
-    # available where the local term already enters with a *plus*: that is the
-    # + r x term of dy/dt, and (through R1) the + s y term of dx/dt.  z has no
-    # such term, and driving z does not lock -- see the notes on the right.
+    # It has to be that junction, and it has to be x.  The junction inverts,
+    # so anything injected arrives with a minus sign, and diffusive coupling
+    # k(x1 - x2) is only available where the local term already enters with a
+    # *plus*: that is the + r x term of dy/dt, and (through R1) the + s y term
+    # of dx/dt.  dz/dt has no such term at all.
     #
-    # 100k gives a coupling strength of 1M/100k = 10, which also adds 10 to
-    # the receiver's own r, so the receiving board is turned down by 10 on its
-    # knob.  That is exactly the span the knob was sized for.
-    SYNC_Y = ROW_Y[1] + 30.48
-    s.wire((SJ_X, ROW_Y[1] + 12.7), (SJ_X, SYNC_Y))
+    # RV2 is a plain voltage divider across the incoming signal, not a
+    # rheostat in series with R19, so the weight is *linear* in the knob:
+    # g = 1M/100k x (fraction turned) = 0 to 10, within 5 % of linear because
+    # the wiper's own source impedance never exceeds a quarter of the 20k
+    # track against R19's 100k.  At the counter-clockwise stop the wiper sits
+    # on ground and the branch contributes nothing at all, which is the same
+    # thing as unplugging the cable.  The threshold for locking is about
+    # g = 7, so the bottom seven tenths of the knob is "close but never
+    # quite", and the top three tenths locks in a couple of seconds at slow!.
+    SYNC_Y = ROW_Y[1] + 16.51         # the sync branch, one row below x
+    SYNC_IN = ROW_Y[1] + 12.7         # the BNC and the weight knob
+    GND_ROW = ROW_Y[1] + 5.08         # where this block's ground stubs end
+    s.place("Connector:Conn_Coaxial", "J5", "BNC", 57.15, SYNC_IN, rot=180,
+            footprint=fp("BNC"), fields=part_fields("BNC"),
+            ref_off=(-6.35, 3.81), val_off=(-6.35, 7.0),
+            ref_justify="right", val_justify="right")
+    s.wire(s.pin("J5", 1, "1"), (85.09, SYNC_IN))
+    s.wire(s.pin("J5", 1, "2"), (57.15, GND_ROW))
+    gnd(57.15, GND_ROW, key="syncbnc", up=True)
+    s.text("SYNC IN X", 63.5, SYNC_IN - 7.1, size=2.2)
+    s.text("from another board's x", 63.5, SYNC_IN - 3.81, size=1.4)
+
+    s.place("Device:R_Potentiometer_Trim_US", "RV2", "20k", 88.9, SYNC_IN,
+            rot=270, footprint=fp("POT"), fields=part_fields("POT"),
+            ref_off=(2.8, 3.4), val_off=(2.8, 6.6),
+            ref_justify="left", val_justify="left")
+    s.wire((92.71, SYNC_IN), (99.06, SYNC_IN), (99.06, GND_ROW))
+    gnd(99.06, GND_ROW, key="syncpot", up=True)
+    s.text("weight", 88.9, SYNC_IN - 6.6, size=2.0, justify=None)
+    s.text("0 .. 10", 100.33, SYNC_IN + 1.8, size=1.5)
+
+    # wiper -> R19 -> the x branch, which the two of them then share
+    s.wire(s.pin("RV2", 1, "2"), (142.24, SYNC_Y))
     s.place("Device:R_US", "R19", "100k", RES_CX, SYNC_Y, rot=90,
             footprint=rfp(), fields=passive_fields("100k"),
             ref_off=(0, -7.0), val_off=(0, -3.7))
-    s.wire((149.86, SYNC_Y), (SJ_X, SYNC_Y))
-    s.wire((127.0, SYNC_Y), (142.24, SYNC_Y))
-    s.junction(127.0, SYNC_Y)
-    testpoint(127.0, SYNC_Y - 6.35, "SYNC IN", rot=180, dx=-2.2,
-              dy=-1.0, justify="right")
-    s.wire((127.0, SYNC_Y), (127.0, SYNC_Y - 6.35))
-    s.place("Device:R_US", "R20", "1M", 127.0, SYNC_Y + 6.35, footprint=rfp(),
+    s.wire((149.86, SYNC_Y), (SJ_MERGE, SYNC_Y))
+    s.wire((SJ_MERGE, ROW_Y[1]), (SJ_MERGE, SYNC_Y))
+    s.junction(SJ_MERGE, ROW_Y[1])
+
+    s.place("Device:R_US", "R20", "1M", 114.3, SYNC_Y - 5.08, footprint=rfp(),
             fields=passive_fields("1M"),
             ref_off=(2.54, -2.2), val_off=(2.54, 1.1),
             ref_justify="left", val_justify="left")
-    s.wire((127.0, SYNC_Y), (127.0, SYNC_Y + 2.54))
-    s.wire((127.0, SYNC_Y + 10.16), (127.0, SYNC_Y + 13.97))
-    gnd(127.0, SYNC_Y + 13.97, key="sync")
-    # The rest of the story -- that the two boards also need a ground in
-    # common -- is in the SYNCHRONISING TWO BOARDS note on the right.
-    s.text("1M holds the pad at 0 V", 133.35, SYNC_Y + 6.35, size=1.4)
-    s.text("with nothing plugged in", 133.35, SYNC_Y + 9.05, size=1.4)
+    s.wire((114.3, SYNC_Y), (114.3, SYNC_Y - 1.27))
+    s.junction(114.3, SYNC_Y)
+    s.wire((114.3, SYNC_Y - 8.89), (114.3, GND_ROW))
+    gnd(114.3, GND_ROW, key="sync", up=True)
+    s.text("1M holds this node at 0 V if the wiper lifts",
+           100.33, SYNC_Y + 2.8, size=1.4)
 
     # ==================================================== multipliers ======
     # U3 forms -xz/100 and U4 forms -xy/100.  The sign inversions come free
@@ -815,9 +852,9 @@ def build():
     y += 5.0
     for (speed, a, b, cval, tau) in (
             ("fast!", "off", "off", "2.2 nF", "2.2 ms"),
-            ("nice!", "ON", "off", "102 nF", "102 ms"),
-            ("slow!", "off", "ON", "472 nF", "472 ms"),
-            ("glacial!", "ON", "ON", "572 nF", "572 ms")):
+            ("nice!", "off", "ON", "102 nF", "102 ms"),
+            ("slow!", "ON", "off", "472 nF", "472 ms"),
+            ("slower!", "ON", "ON", "572 nF", "572 ms")):
         s.text(speed, C0, y, size=1.9)
         for i, px in enumerate(POLE):
             s.text(a if i < 3 else b, px, y, size=1.9, justify=None)
@@ -837,7 +874,13 @@ def build():
     s.text("stocks a 3-pole 3-position switch; 2.2 nF is always fitted.  Both banks",
            L, y, size=1.9)
     y += 4.2
-    s.text("ON adds a fourth speed Paul never had, slow enough to watch by eye.",
+    s.text("ON adds a fourth speed Paul never had.  Poles 1-3 switch in the",
+           L, y, size=1.9)
+    y += 4.2
+    s.text("470 nF and poles 4-6 the 100 nF, so the six sliders read left to",
+           L, y, size=1.9)
+    y += 4.2
+    s.text("right as a two-digit binary number counting 00, 01, 10, 11.",
            L, y, size=1.9)
 
     # --- second column: the two things you can actually do to the board ---
@@ -859,46 +902,50 @@ def build():
         "Between 27 % and 33 % -- eighteen degrees of screw -- chaos and",
         "the two fixed points are both stable, and which one you land in",
         "depends on where you started.  Elsewhere r moves about 0.05 per",
-        "degree, so a few percent of knob is a visible change and you can",
-        "still find your way back to a setting you liked.",
+        "degree, so you can find a setting you liked again.",
         "",
-        "The knob is wired as a rheostat, terminal 3 and the wiper, with",
-        "terminal 1 tied to the wiper.  That short is the point: if grit ever",
-        "lifts the wiper, the whole 20k track still bridges the branch, so r",
-        "goes to its minimum instead of the r x term disappearing.  Wipers",
-        "fail open, and this one is not trusted not to.",
+        "The knob is a rheostat, terminal 3 and the wiper, with terminal 1",
+        "tied to the wiper.  That short is the point: if grit ever lifts the",
+        "wiper, the whole 20k track still bridges the branch, so r goes to",
+        "its minimum instead of the r x term disappearing.",
     ):
         if line:
             s.text(line, L2, y, size=1.7)
-        y += 3.9
+        y += 3.4
     y += 4.0
     s.text("SYNCHRONISING TWO BOARDS", L2, y, size=2.6)
     y += 6.0
     for line in (
-        "Run a wire from one board's x output to a second board's SYNC IN",
-        "pad, and tie the two analog grounds together -- a coax screen does",
+        "Run a cable from one board's x output to a second board's SYNC IN X",
+        "jack, and tie the two analog grounds together -- a coax screen does",
         "both at once.  Both boards float, so with no common ground nothing",
         "happens at all.",
         "",
-        "Within a few seconds the second board is drawing the first board's",
-        "trajectory, whatever state it was in when you connected it.  Pull the",
-        "wire off and the two drift apart again from states that agree to a",
-        "few millivolts.  That is the demonstration, and it needs no switch.",
+        "Turn the weight knob up and within a few seconds the second board is",
+        "drawing the first board's trajectory, whatever state it was in when",
+        "you connected it.  Pull the cable off and the two drift apart again",
+        "from states that agree to a few millivolts.  That is the whole",
+        "demonstration, and it needs no switch.",
         "",
-        "R19 = 100k makes the coupling 1M/100k = 10.  It lands on the r x",
-        "term, so it also adds 10 to the receiving board's r: drive at",
-        "r = 32, receive at r = 22, and both are solving the same equations.",
-        "That offset is why the knob spans more than 10.",
+        "RV2 is a divider across the incoming signal, so the weight is linear",
+        "in the knob: g = 1M/100k x (fraction turned) = 0 to 10.  Below about",
+        "g = 7 they never lock however long you wait; above it they lock in a",
+        "couple of seconds.  At the counter-clockwise stop the wiper is on",
+        "ground and the branch contributes nothing, exactly as if unplugged.",
         "",
-        "x gets the pad because the knob absorbs that offset.  -y would lock",
+        "The coupling lands on the r x term, so it also adds g to the",
+        "receiving board's own r: drive at r = 32 and the receiver's r knob",
+        "reads 32 down to 22 as the sync knob goes 0 to full.",
+        "",
+        "x gets the jack because the knob absorbs that offset.  -y would lock",
         "too, but only with R1 changed as well, and there is no knob for s.",
         "z cannot be done at all: the junction inverts, so an injected z",
-        "arrives with a minus sign and drives the two boards apart.  The plus",
-        "sign would need a -z output, and this circuit does not make one.",
+        "arrives with a minus sign and drives the boards apart; the plus sign",
+        "would need a -z output, and this circuit does not make one.",
     ):
         if line:
             s.text(line, L2, y, size=1.7)
-        y += 3.9
+        y += 3.4
 
     # -------------------------------------------- mechanical --------------
     # Four M3 holes.  Three BNCs on one edge means cables lever on the board;

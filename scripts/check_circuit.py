@@ -18,7 +18,8 @@ from sexp_parse import parse_file
 
 S_TARGET, R_TARGET, B_TARGET = 10.0, 28.0, 8.0 / 3.0
 R_BISTABLE = 24.06       # below this the trace falls into a wing and stays
-POT = "RV1"              # the one adjustable element: the r knob
+POT = "RV1"              # the r knob, a rheostat in series with R3
+SYNC_POT = "RV2"         # the sync weight knob, a divider across the input
 POT_TRAVEL = 310.0       # degrees, Bourns 3386 "Mechanical Angle"
 SCALE = 1.0e6            # every coefficient is 1 MEG / R
 TOL = 0.01               # 1 % on the resistor ratios
@@ -207,15 +208,17 @@ def main():
                 if kind == "R":
                     rtot, src = upstream(nl, r, p, knob, meaning)
                     if rtot is None:
-                        # not a signal: the one branch allowed to end
-                        # somewhere else is the sync input, which ends on a pad
-                        pads = sorted(rr for (rr, _) in nl.nets.get(src, ())
-                                      if rr.startswith("TP"))
-                        if not pads:
+                        # Not a signal.  The one branch allowed to end
+                        # somewhere else is the sync input, which ends on the
+                        # wiper of the weight knob.
+                        wipers = sorted(rr for (rr, _) in nl.nets.get(src, ())
+                                        if rr.startswith("RV"))
+                        if not wipers:
                             problems.append(
                                 f"FAIL  {r} feeds {sj} from unknown net '{src}'")
                         elif record:
-                            injected.append((r, sj, ohms(nl.value[r]), pads[0]))
+                            injected.append((r, sj, ohms(nl.value[r]),
+                                             wipers[0], src))
                         continue
                     weight = SCALE / rtot
                     expr = padd(expr, meaning[src], -weight)
@@ -443,36 +446,63 @@ def main():
              f"current flows in the 100 ohm going to the BNC")
 
     # --- the synchronisation input ---------------------------------------
-    # One resistor from a pad into a summing junction.  It has to land on the
-    # r x term: the junction inverts, so an injected voltage always arrives
-    # with a minus sign, and diffusive coupling k(x1 - x2) is only available
-    # where the local term already carries a plus.  The pad also has to be
-    # held at ground when nothing is plugged into it, or 100k of open wire
-    # sits on a virtual earth picking up the mains.
-    need(len(injected) == 1, f"exactly one branch comes in from a pad "
+    # A BNC, a weight knob and one resistor into the dy/dt summing junction.
+    # It has to land on the r x term: the junction inverts, so an injected
+    # voltage always arrives with a minus sign, and diffusive coupling
+    # k(x1 - x2) is only available where the local term already carries a
+    # plus.  The knob is a divider across the incoming signal rather than a
+    # rheostat in series, which makes the weight linear in the knob and lets
+    # it reach zero -- the same thing as unplugging the cable.
+    need(len(injected) == 1, f"exactly one branch comes in from outside "
                              f"(found {[i[0] for i in injected]})")
-    for (res, sj, rval, pad) in injected:
+    for (res, sj, rval, pot, node) in injected:
         need(sj == nl.net("U1", "6"),
              f"{res} injects into the dy/dt summing junction, the one node "
              f"where an inverted input still adds to a + r x term")
+        need(sj == nl.net("R3", 1) or sj == nl.net("R3", 2),
+             f"{res} and R3 meet on the same node, so the sync input adds to "
+             f"the x term and to nothing else")
         gain = SCALE / rval
         need(5.0 < gain < 15.0,
-             f"{res} = {nl.value[res]} gives a coupling strength of "
-             f"{gain:.1f}, which also adds {gain:.1f} to the receiving "
+             f"{res} = {nl.value[res]} sets the *maximum* coupling to "
+             f"{gain:.1f}, which also adds up to {gain:.1f} to the receiving "
              f"board's r -- inside the {span:.1f} the knob can take back")
-        sync = nl.net(res, 1) if nl.net(res, 2) == sj else nl.net(res, 2)
-        holds = [r for (r, _) in nl.nets[sync]
-                 if r.startswith("R") and r != res]
+        need(gain <= span,
+             f"...and {gain:.1f} is no more than the r knob's {span:.1f}, so "
+             f"every weight setting can be compensated")
+        # the knob: terminal 3 to the connector, terminal 1 to ground, wiper
+        # to the series resistor.  Turning it clockwise moves the wiper toward
+        # terminal 3, which is the signal end, so clockwise raises the weight.
+        need(nl.net(pot, "2") == node,
+             f"{pot}'s wiper drives {res}")
+        need(nl.net(pot, "1") == "GND",
+             f"{pot} terminal 1 is grounded, so the knob reaches zero weight "
+             f"-- which is the same as unplugging the cable")
+        top = nl.net(pot, "3")
+        jacks = sorted(rr for (rr, _) in nl.nets.get(top, ())
+                       if rr.startswith("J"))
+        need(len(jacks) == 1,
+             f"{pot} terminal 3 is fed straight from a jack (found {jacks})")
+        for j in jacks:
+            need(nl.net(j, 2) == "GND", f"{j} shell grounded")
+        need(ohms(nl.value[pot]) * 0.25 < 0.1 * rval,
+             f"{pot} = {nl.value[pot]} adds at most "
+             f"{ohms(nl.value[pot]) * 0.25 / 1e3:.1f}k of wiper impedance to "
+             f"{res}'s {rval / 1e3:.0f}k, so the weight stays within 5 % of "
+             f"linear in the knob")
+        holds = [r for (r, _) in nl.nets[node]
+                 if r.startswith("R") and r != res and not r.startswith("RV")]
         need(len(holds) == 1 and "GND" in (nl.other_pin(holds[0], "1"),
                                            nl.other_pin(holds[0], "2")),
-             f"the {pad} pad is held at ground by {holds} when nothing is "
-             f"plugged in")
+             f"the wiper node is held at ground by {holds} if the wiper ever "
+             f"lifts off the track")
         if holds:
             leak = ohms(nl.value[holds[0]])
-            need(leak >= 10.0 * rval,
-                 f"{holds[0]} = {nl.value[holds[0]]} is {leak / rval:.0f}x "
-                 f"{res}, so it costs under {100 * rval / leak:.0f} % of the "
-                 f"injected signal")
+            need(leak >= 10.0 * ohms(nl.value[pot]),
+                 f"{holds[0]} = {nl.value[holds[0]]} is "
+                 f"{leak / ohms(nl.value[pot]):.0f}x the track, so it costs "
+                 f"under {100 * ohms(nl.value[pot]) / leak:.0f} % of the "
+                 f"divider's setting")
 
     # --- probe points -----------------------------------------------------
     # Every rail and every interesting node gets a pad, and nothing gets two.
@@ -481,7 +511,6 @@ def main():
     got_tp = {r: nl.net(r, "1") for r in nl.value if r.startswith("TP")}
     want = {"x", "-y", "z", "xz", "xy", vled,
             "+5V", "+15V", "-15V", "+12V", "-12V", "GNDU"}
-    want |= {nl.net(pad, "1") for (_, _, _, pad) in injected}
     probed = sorted(got_tp.values())
     for netname in sorted(want):
         need(probed.count(netname) == 1,

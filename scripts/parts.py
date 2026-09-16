@@ -84,10 +84,12 @@ PARTS = {
         value="20k", mpn="3386P-1-203LF", lcsc="C116287", jlc_type="extended",
         process="THT", stock=767, price=0.4458,
         footprint="lorenz:Potentiometer_Bourns_3386P_Vertical",
-        desc="20k single-turn cermet trimmer, 9.5 mm square, top adjust: "
-             "sets r.  Terminal 1 (CCW end) is tied to the wiper, so a speck "
-             "of grit under the wiper means maximum resistance, not an open "
-             "circuit",
+        desc="20k single-turn cermet trimmer, 9.5 mm square, top adjust.  "
+             "Two are fitted: RV1 sets r, as a rheostat with terminal 1 tied "
+             "to the wiper so grit means maximum resistance and never an "
+             "open; RV2 sets the sync weight, as a plain divider across the "
+             "incoming signal so the weight is linear in the knob and reaches "
+             "zero",
         alt=["3386P-1-103LF / C116281 (10k, 1700 in stock) with R3 raised to "
              "33k gives r = 23 to 30 -- a narrower sweep that never leaves "
              "the chaotic region"]),

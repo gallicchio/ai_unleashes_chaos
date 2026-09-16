@@ -601,3 +601,98 @@ Series resistors are now rot = 0 and lie along the signal flow -- R1-R7 into
 the summing junctions, R8/R9/R10 into the BNCs, R13-R15 into the lamp, F1 in
 the +5 V line -- and shunts are rot = 90 and stand across it.  Every one now
 matches the way it is drawn on the schematic.
+
+# Prompt 5: the sync input grows up, and two marks become one
+
+## Pin-1 marks, trimmed back
+
+Prompt 4 put a filled triangle beside pin 1 of every part that can be fitted
+turned.  Four of them already had a perfectly good mark of their own -- KiCad
+prints a pin-1 dot on its SOIC footprints and a notched corner on the SOT-89s
+-- so the board ended up carrying two marks per part, which is two marks to
+reconcile instead of one to read.  `PIN1_MARKS` is now **D1, SW1, RV1 and
+RV2**: the lamp and the DIP switch carry only a 0.2 mm dot inside their own
+courtyards, which is there for anyone reusing the footprint but is not legible
+on a board, and the trimmers have a square pad 1 and a chamfered corner, which
+are shape cues rather than marks.
+
+## The DIP switch, and which side pin 1 is on
+
+On the KingTek DSIC06LSGET drawing the switch positions 1..6 are printed along
+one long side of the body and "ON" along the other, so **pin 1 is on the side
+away from the ON legend** -- which is where the triangle points.  KiCad's own
+generic DIP-switch footprints agree: pads 1..6 on one side, an `on` marker on
+the far side.
+
+The reassuring part is what happens if the assembler gets it wrong.  Each pole
+connects pin k to pin 13-k, and a 180 degree rotation maps k to 13-k, so every
+pole still pairs with itself: a switch fitted backwards is **electrically
+identical**.  What it costs is the labelling -- slider 1 ends up where slider 6
+should be, so the two banks swap and the printed table reads backwards.  The
+board now prints "ON faces the table above" under the switch so that is
+visible at a glance.
+
+## The switch, read as a binary number
+
+Poles 1-3 now carry the 470 nF and poles 4-6 the 100 nF, so the six sliders
+read left to right as a two-digit binary number:
+
+| setting | poles 1-3 | poles 4-6 | C | tau |
+|---|---|---|---|---|
+| fast!   | off | off | 2.2 nF | 2.2 ms |
+| nice!   | off | ON  | 102 nF | 102 ms |
+| slow!   | ON  | off | 472 nF | 472 ms |
+| slower! | ON  | ON  | 572 nF | 572 ms |
+
+The capacitors swapped positions on the board to match, so each one still sits
+over the pole it belongs to and no two branches cross.  "glacial!" was too
+dramatic for a fifth again slower than "slow!"; it is "slower!" now.
+
+## SYNC IN X
+
+A fourth BNC on the left edge, in line with the x output on the right, because
+another board's x output is what goes in it.  Then a weight knob, then the
+100k into the dy/dt summing junction.
+
+**The knob is a divider, not a rheostat.**  A rheostat in series with R19
+would have made the weight go as 1/R: with a 20k pot and 100k fixed, g would
+run 10 down to 1.7 with everything interesting -- the locking threshold, which sits
+between g = 7 and g = 7.5 -- inside the first tenth of the rotation.  As a divider across the
+incoming signal the weight is *linear*:
+
+    g  =  1M / 100k  x  (fraction turned)  =  0 .. 10
+
+within 5 %, because the wiper's own source impedance peaks at a quarter of the
+20k track against R19's 100k.  The threshold lands at about 70 % of rotation, so the
+bottom seven tenths is "influence, but never enough" and the top three tenths
+locks, in about 2 seconds at `slow!`.
+
+It also reaches **zero**, which is what the prompt asked for by a different
+route: the user asked for a fixed resistor in series so the weight could not
+go all the way to zero, but the danger a rheostat has at zero is infinite
+gain, not zero gain.  A divider at zero simply grounds R19's input, which is
+exactly what an unplugged cable does.
+
+The failure mode is safe for the same reason.  RV1's wiper is tied to
+terminal 1 because an open wiper there would delete the r x term; RV2's wiper
+has R20 = 1M to ground, so an open wiper there leaves the sync branch at 0 V.
+Different stakes, different wiring.
+
+## Drawing the sum so it reads as a sum
+
+The old drawing brought the sync branch into the summing rail alongside the
+-y and x z branches, which said "here is a fourth term" when what is meant is
+"here is a perturbation on the x term".  Row 2's branches now run -y, x z, x
+down the sheet, and **the x branch and the sync branch join on their own short
+rail at x = 157.48 before that rail continues to the summing junction**.  The
+board says the same thing: R19 is the next resistor down the column from R3,
+with "SYNC IN X adds here" printed beside it, and the signal chain runs jack,
+knob, resistor, straight across into the column.
+
+## The left edge is the input edge
+
+Making room meant moving the two multipliers 9 mm right and putting the jack,
+both trimmers and the sync resistors down the edge they vacated.  The back
+side had to move with it: the three drilled parts down that edge punch through
+the equations block, so the equations dropped from 2.4 mm to 2.0 mm and the
+constants split over two lines, and neither now reaches past x = 14.

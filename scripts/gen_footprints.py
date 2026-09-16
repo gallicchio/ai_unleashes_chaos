@@ -224,20 +224,22 @@ def dipsw():
 
 # ------------------------------------------------------------- RGB lamp ----
 def led_rgb():
-    """MEIHUA MHPC3528CRGBCT common-cathode RGB lamp, PLCC-4 (LCSC C2962096).
+    """MEIHUA MHPA3528CRGBCT common-anode RGB lamp, PLCC-4 (LCSC C2962095).
 
     Datasheet LPDS-0001482 Rev.1 page 2: body 3.5 x 2.8 mm, 1.85 mm tall.
     "Recommended solder pad" gives four 1.2 x 0.95 mm pads with 2.0 mm between
     the two columns and 0.5 mm between the two rows, so the pad centres land
     on +/-1.6 mm and +/-0.725 mm.  Pin 1 is bottom left in the top view and
-    the numbering runs anticlockwise: 1 = red anode, 2 = blue anode,
-    3 = green anode, 4 = common cathode.
+    the numbering runs anticlockwise.  The land pattern is the same for both
+    of MEIHUA's 3528 lamps; only what sits on each pad differs.  This board
+    fits the common-*anode* MHPA3528CRGBCT: 1 = anode, 2 = blue cathode,
+    3 = green cathode, 4 = red cathode.
     """
     name = "LED_RGB_PLCC4_3.5x2.8mm"
     f = fp_header(name,
-                  "RGB LED, common cathode, PLCC-4 3.5x2.8mm, MEIHUA "
-                  "MHPC3528CRGBCT (LCSC C2962096); 1=R+ 2=B+ 3=G+ 4=K",
-                  "LED RGB PLCC-4 3528 common cathode", "smd", 2.9)
+                  "RGB LED, PLCC-4 3.5x2.8mm, MEIHUA MHPA3528CRGBCT common "
+                  "anode (LCSC C2962095); 1=A 2=B- 3=G- 4=R-",
+                  "LED RGB PLCC-4 3528 common anode", "smd", 2.9)
     PX, PY, PW, PH = 1.6, 0.725, 1.2, 0.95
     for (num, sx, sy) in (("1", -1, +1), ("2", -1, -1), ("3", +1, -1),
                           ("4", +1, +1)):
@@ -250,7 +252,7 @@ def led_rgb():
     # Pin-1 mark, well clear of pad 1 (which reaches x = -2.2, y = 1.2).
     f.add(circle(-2.45, 1.45, 0.2, "F.SilkS", SILK_W, f"{name}/silk/p1"))
     rect_lines(f, -2.45, -1.6, 2.45, 1.6, "F.CrtYd", CRT_W, f"{name}/crt")
-    text_fab(f, "K", 1.6, -1.15, f"{name}/fabk", size=0.6)
+    text_fab(f, "A", -1.6, 1.15, f"{name}/fab1", size=0.6)
     model(f, "${KIPRJMOD}/lib/lorenz.3dshapes/LED_RGB_PLCC4.wrl", scale=MM_SCALE)
     return name, f
 

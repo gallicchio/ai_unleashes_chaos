@@ -32,9 +32,9 @@ bridged only by R21, C25 and JP1.  Do not scratch across the 1 mm gap.
 
 ## Cost
 
-The board has **186 SMT joints** and **27 through-hole joints** on
+The board has **186 SMT joints** and **35 through-hole joints** on
 28 BOM lines (14 JLCPCB Basic, 14 Extended).
-Parts alone are **$72.32 per board**, of which
+Parts alone are **$74.31 per board**, of which
 $61.17 is the pair of MPY634 multipliers.
 
 **2 boards, two layers, fully assembled including through-hole**
@@ -42,32 +42,32 @@ $61.17 is the pair of MPY634 multipliers.
 | line | cost |
 |---|---|
 | bare PCBs | $2.00 |
-| parts ($72.32 x 2) | $144.63 |
-| assembly: setup $8.00 + stencil $1.50 + 372 SMT joints + 14 extended parts + 54 THT joints | $68.33 |
+| parts ($74.31 x 2) | $148.62 |
+| assembly: setup $8.00 + stencil $1.50 + 372 SMT joints + 14 extended parts + 70 THT joints | $73.13 |
 | shipping (DHL, worldwide) | $22.00 |
-| **total** | **$236.96**  ($118.48 each) |
+| **total** | **$245.75**  ($122.88 each) |
 
 **5 boards, two layers, fully assembled including through-hole**
 
 | line | cost |
 |---|---|
 | bare PCBs | $2.00 |
-| parts ($72.32 x 5) | $361.58 |
-| assembly: setup $8.00 + stencil $1.50 + 930 SMT joints + 14 extended parts + 135 THT joints | $93.58 |
+| parts ($74.31 x 5) | $371.55 |
+| assembly: setup $8.00 + stencil $1.50 + 930 SMT joints + 14 extended parts + 175 THT joints | $105.58 |
 | shipping (DHL, worldwide) | $22.00 |
-| **total** | **$479.16**  ($95.83 each) |
+| **total** | **$501.14**  ($100.23 each) |
 
 **10 boards, two layers, fully assembled including through-hole**
 
 | line | cost |
 |---|---|
 | bare PCBs | $4.00 |
-| parts ($72.32 x 10) | $723.16 |
-| assembly: setup $8.00 + stencil $1.50 + 1860 SMT joints + 14 extended parts + 270 THT joints | $135.66 |
+| parts ($74.31 x 10) | $743.11 |
+| assembly: setup $8.00 + stencil $1.50 + 1860 SMT joints + 14 extended parts + 350 THT joints | $159.66 |
 | shipping (DHL, worldwide) | $22.00 |
-| **total** | **$884.82**  ($88.48 each) |
+| **total** | **$928.77**  ($92.88 each) |
 
-Four layers would cost about $502.16 for five ($100.43 each) -- the only change is the bare-board price --
+Four layers would cost about $524.14 for five ($104.83 each) -- the only change is the bare-board price --
 and buys almost nothing here: tracks cover 1.2 % of the back copper, so
 the pour on the two-layer board is already 98.8 % of an unbroken ground
 plane.  That is why this project ships one board.
@@ -83,31 +83,36 @@ in backwards.  JLCPCB renders every part on the board before you
 confirm the order.  Compare that rendering with this table and with
 `lorenz-assembly-top.pdf`, which prints 1:1.
 
-Every part below that can be fitted turned now carries a filled
-triangle on the front silkscreen, printed just outside its outline and
-pointing at pin 1.  It is drawn from the real pad, so it is right by
+The lamp, the DIP switch and the two trimmers carry a filled triangle
+on the front silkscreen, printed just outside the outline and pointing
+at pin 1.  It is drawn from the real pad, so it is right by
 construction; use it as the reference when you compare the rendering.
+The SOICs and the two SOT-89s are not marked that way because KiCad's
+own footprints already print a pin-1 dot or a notched corner on them,
+and two marks beside each other are two marks to reconcile.
 
 | part | what to look for | should be |
 |---|---|---|
 | D1 | the RGB lamp's pin 1, the common anode | bottom left, the corner the triangle points at |
 | RV1 | the r trimmer, terminal 1 | the lower pad, the one the triangle points at; the screw is on top |
+| RV2 | the sync weight trimmer, terminal 1 | same part, same way up, directly above RV1 |
+| J5 | SYNC IN X | barrel pointing off the left edge, in line with the x output on the right |
 | U6 | 78L12, SOT-89 | pin 1 (OUT) on the left, tab to ground |
 | U7 | 79L12, SOT-89 | pin 1 (GND) on the left; its tab is at -15 V, not ground |
 | U1, U2 | LF412 SOIC-8 | pin 1 dot at the top left |
 | U3, U4 | MPY634 SOIC-16W | pin 1 dot at the top left |
 | J1 | USB-C receptacle | opening facing off the board edge |
-| SW1 | 6-way DIP switch | "ON" printing on the same side as the silkscreen table |
+| SW1 | 6-way DIP switch | slider 1 at the left, the part's own "ON" printing facing the "ON ->" arrow on the board |
 | U5 | the converter, hand-fitted | pin 1 is the square pad, at the left, marked on the silkscreen |
 | F1 | PTC fuse | not polarised |
 
-The three BNCs and the converter are through-hole and can be checked
+The four BNCs and the converter are through-hole and can be checked
 by eye after assembly: the converter's own printed face carries its pin
 numbers.
 
 ## The through-hole parts
 
-6 parts are through-hole: **J1, J2, J3, J4, RV1, U5** -- the three BNC jacks, the r trimmer, the DC/DC module and the USB-C shell tabs.
+8 parts are through-hole: **J1, J2, J3, J4, J5, RV1, RV2, U5** -- the four BNC jacks, the two trimmers, the DC/DC module and the USB-C shell tabs.
 They are included in the BOM and the CPL, so a fab that offers
 through-hole assembly will fit them.  If you would rather not pay for
 that, deselect them at checkout and solder them yourself: they are the
@@ -124,12 +129,13 @@ and capacitor) cannot go wrong.  These can:
 | part | what to look for |
 |---|---|
 | D1 | pin 1, the common anode, at the bottom left -- the die order is red, green, blue anticlockwise from it |
-| RV1 | terminal 1 at the bottom, terminal 3 at the top, wiper to the right |
+| RV1, RV2 | terminal 1 at the bottom, terminal 3 at the top, wiper to the right |
+| J5 | barrel off the left edge, the mirror image of J2, J3 and J4 |
 | U1, U2 | pin 1 dot at the top-left, toward C16 / C18 |
 | U3, U4 | pin 1 dot at the top-left |
 | U5 | pin 1 (+Vin) at the left, printed face up |
 | U6, U7 | tab toward the board centre; U6 tab is ground, U7 tab is -15 V |
-| SW1 | switch 1 at the top, 'ON' toward the left |
+| SW1 | slider 1 at the left; pin 1 is on the side *away* from the part's "ON" legend, which is where the board's triangle points |
 | J1 | opening facing off the bottom edge |
 
 ## Parts, stock and alternates
@@ -146,7 +152,7 @@ Stock was checked at JLCPCB on 2026-09-15, the date on the silkscreen.
 | D1 | RGB | C2962095 | extended | $0.0650 | 9,796 | Common-anode RGB lamp, PLCC-4: red = z, green = x, blue = -y |
 | F1 | 500mA | C17313 | extended | $0.0680 | 142,624 | Resettable PTC on the USB input |
 | J1 | USB-C | C165948 | extended | $0.1860 | 230,097 | USB-C receptacle, power only (16 pin) |
-| J2,J3,J4 | BNC | C41416668 | extended | $1.5490 | 410 | 50 ohm BNC jack, right angle, 4 ground posts on 8x8 mm |
+| J2,J3,J4,J5 | BNC | C41416668 | extended | $1.5490 | 410 | 50 ohm BNC jack, right angle, 4 ground posts on 8x8 mm |
 | R1,R2,R19 | 100k | C149504 | basic | $0.0060 | 4,893,299 |  |
 | R11,R12 | 5.1k | C27834 | basic | $0.0060 | 3,917,491 |  |
 | R13 | 3.9k | C17614 | basic | $0.0015 | 296,958 |  |
@@ -159,7 +165,7 @@ Stock was checked at JLCPCB on 2026-09-15, the date on the silkscreen.
 | R5,R18,R20 | 1M | C17514 | basic | $0.0050 | 2,688,974 |  |
 | R7 | 374k | C2933427 | extended | $0.0040 | 18,582 |  |
 | R8,R9,R10 | 100R | C17408 | basic | $0.0040 | 10,085,527 |  |
-| RV1 | 20k | C116287 | extended | $0.4458 | 767 | 20k single-turn cermet trimmer, 9.5 mm square, top adjust: sets r.  Terminal 1 (CCW end) is tied to the wiper, so a speck of grit under the wiper means maximum resistance, not an open circuit |
+| RV1,RV2 | 20k | C116287 | extended | $0.4458 | 767 | 20k single-turn cermet trimmer, 9.5 mm square, top adjust.  Two are fitted: RV1 sets r, as a rheostat with terminal 1 tied to the wiper so grit means maximum resistance and never an open; RV2 sets the sync weight, as a plain divider across the incoming signal so the weight is linear in the knob and reaches zero |
 | SW1 | SW_DIP_x06 | C54952 | extended | $0.5710 | 2,140 | 6-way SMD DIP switch, 2.54 mm pitch - integrator speed select |
 | U1,U2 | LF412 | C15322 | extended | $0.9060 | 1,037 | Dual JFET-input op-amp (Paul's original part) |
 | U3,U4 | MPY634 | C1523457 | extended | $30.5860 | 874 | Four-quadrant analog multiplier, W=(X1-X2)(Y1-Y2)/10 (Paul's part) |
@@ -189,8 +195,8 @@ Stock was checked at JLCPCB on 2026-09-15, the date on the silkscreen.
 **3386P-1-203LF** (C116287)
   - 3386P-1-103LF / C116281 (10k, 1700 in stock) with R3 raised to 33k gives r = 23 to 30 -- a narrower sweep that never leaves the chaotic region
 
-The three BNC jacks are the thinnest line: about 400 in stock, so
-roughly 130 boards' worth.  All three listed alternates are the same
+The BNC jacks are the thinnest line: about 400 in stock and four per
+board, so roughly 100 boards' worth.  All three listed alternates are the same
 'BNC-KYWE' body -- a 10 x 10 mm flange, four ground posts on an 8 x 8 mm
 square and a centre pin -- so the footprint takes any of them, but
 measure the drawing before you substitute.
@@ -202,14 +208,16 @@ measure the drawing before you substitute.
    it only comes on once the whole board works.
 2. Measure the rails at C14 and C15: +12.0 V and -12.0 V, a few tens of
    millivolts of ripple at most.  The board draws about 20 mA a rail.
-3. Set SW1 to *nice!* -- switches 1, 2 and 3 on, 4, 5 and 6 off.
+3. Set SW1 to *nice!* -- switches 4, 5 and 6 on, 1, 2 and 3 off.
 4. Scope on x and z, X-Y mode, about 1 V/div on both.  The owl's face
    should appear within a second or so of power-up; the circuit starts
    itself, because the origin is an unstable fixed point and op-amp
    offset is more than enough to push it off.
 5. `-y` is inverted on purpose, exactly as on Paul's original sheet.
-6. Try *fast!* (all switches off), *slow!* (4, 5, 6 only) and
-   *glacial!* (all six on).
+6. Try *fast!* (all switches off), *slow!* (1, 2, 3 only) and
+   *slower!* (all six on).  Poles 1-3 switch in the 470 nF and poles
+   4-6 the 100 nF, so the six sliders read left to right as a
+   two-digit binary number: 00, 01, 10, 11.
 7. Turn RV1 clockwise to raise r and anticlockwise to lower it.  About
    a third of the way round from the anticlockwise stop the attractor
    collapses into one wing and the lamp settles on a colour; back the
