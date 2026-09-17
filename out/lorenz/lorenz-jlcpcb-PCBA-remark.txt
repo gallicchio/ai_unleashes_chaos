@@ -1,0 +1,14 @@
+I cannot confirm placement of the following parts:
+
+D1 -- MHPA3528CRGBCT, common-anode RGB LED, PLCC-4.
+  No drawing for this part.  Pin 1 is ANODE with triangle silkscreen
+
+U5, RV1, RV2 -- through-hole, and keyed by their own hole patterns.  Each
+  fits the board in exactly one orientation
+
+J2, J3, J4, J5 -- BNC jacks point OFF the board edge
+
+J1 -- USB-C receptacle. Its body sits
+  almost flush with edge so that a cable with a moulded body can seat. 
+
+R7 -- resistor
