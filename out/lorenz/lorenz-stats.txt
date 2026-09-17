@@ -9,8 +9,8 @@ Board
 - Width: 100.0000 mm
 - Height: 100.0000 mm
 - Area: 9992.261 mm²
-- Front copper area: 9329.279 mm²
-- Back copper area: 9506.483 mm²
+- Front copper area: 9322.801 mm²
+- Back copper area: 9507.462 mm²
 - Min track clearance: 0.2500 mm
 - Min track width: 0.3000 mm
 - Min drill diameter: 0.3000 mm
@@ -31,7 +31,7 @@ Pads
 
 Vias
 ----
-- Through vias: 360
+- Through vias: 362
 - Blind vias: 0
 - Buried vias: 0
 - Micro vias: 0
@@ -51,7 +51,7 @@ Drill holes
 
 | Count | Shape |    X Size |    Y Size | Plated | Via/Pad | Start Layer | Stop Layer |
 |-------|-------|-----------|-----------|--------|---------|-------------|------------|
-|   360 | Round | 0.3000 mm | 0.3000 mm |    PTH |     Via |        F.Cu |       B.Cu |
+|   362 | Round | 0.3000 mm | 0.3000 mm |    PTH |     Via |        F.Cu |       B.Cu |
 |    16 | Round | 1.4000 mm | 1.4000 mm |    PTH |     Pad |        F.Cu |       B.Cu |
 |    13 | Round | 0.7000 mm | 0.7000 mm |    PTH |     Pad |        F.Cu |       B.Cu |
 |     6 | Round | 0.8000 mm | 0.8000 mm |    PTH |     Pad |        F.Cu |       B.Cu |

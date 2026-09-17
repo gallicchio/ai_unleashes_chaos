@@ -805,15 +805,6 @@ def build(layers, netlist_path, out_path):
             key = (ref, pad.GetNumber())
             if key in pad_net:
                 pad.SetNet(netmap[pad_net[key]])
-        # the bundled 3D library is a reduced set and has no model for these
-        local = {"J1": "USB_C_HRO_TYPE-C-31-M-12.wrl"}
-        if ref in local:
-            fp.Models().clear()
-            m = pcbnew.FP_3DMODEL()
-            m.m_Filename = ("${KIPRJMOD}/lib/lorenz.3dshapes/" + local[ref])
-            m.m_Scale = pcbnew.VECTOR3D(1 / 2.54, 1 / 2.54, 1 / 2.54)
-            m.m_Show = True
-            fp.Models().push_back(m)
         if ref[0:2] in ("MH", "TP") or ref[0:2] == "JP":
             # Nothing to buy and nothing for the assembler to place: mounting
             # holes, probe pads, the ground-tie jumper.  The symbols say the

@@ -1809,3 +1809,85 @@ Only the front silkscreen, and only around U5 — the dot inside its outline
 became a triangle beside pin 1. The schematic and the back are unchanged.
 
 ![front](docs/history/response-9/render-top.png)
+
+## Prompt 10
+
+In the screenshot I showed, which is JLCPCB's default, they put the USB low and
+I have to tell them to move it up. I want to make sure that it's not an error
+in your footprint or where you placed your footprint relative to the board.
+
+## Response 10
+
+You were right to push, and I was wrong to wave it away.  **It was an error in
+where I placed the footprint** — not in the footprint itself — and this is the
+second time I have got this same dimension wrong.
+
+### What the drawing actually says
+
+The HRO "RECOMMEND P.C.B LAYOUT" has a nested dimension chain, and I read it
+off the drawing this time instead of estimating.  Two of its numbers can be
+checked against KiCad's land pattern, which pins the datum beyond argument:
+
+| dimension | what it should be | KiCad's pads |
+|---|---|---|
+| 1.64 | signal-pad row top → upper shell-tab centre | −4.770 → −3.130 = **1.640** |
+| 4.18 | upper shell-tab → lower shell-tab | −3.130 → +1.050 = **4.180** |
+| 5.79 | upper shell-tab → **PCB EDGE** | ⇒ edge at **y = +2.660** |
+
+Both cross-checks land exactly, so the third number is trustworthy: the board
+edge belongs at y = +2.66 in footprint coordinates, which puts the connector's
+mating face (y = +3.65) **0.99 mm past the board edge**.  The overhang is the
+point — a plug's moulded body stops against the receptacle's face, and if the
+face is behind the laminate then the laminate is what the moulding hits.
+
+### What I had
+
+| revision | edge at | mating face |
+|---|---|---|
+| prompt 1–3 | +6.00 | 2.35 mm **inside** the board |
+| prompt 4 | +4.15 | 0.50 mm **inside** the board |
+| now | **+2.66** | 0.99 mm **past** the edge, as drawn |
+
+So it was still 1.49 mm too far back.  The reason is worth stating because it
+is the actual mistake: in prompt 4 I let KiCad's **silkscreen-to-edge rule**
+choose the number.  The footprint's outline runs forward to y = +3.9, so
+putting the connector where the drawing says made the silk print over thin air
+and DRC complained — and I moved the connector until DRC was quiet instead of
+fixing the silkscreen.  That is exactly backwards: a drawing rule does not get
+to overrule a mechanical dimension.
+
+### The fix
+
+`lorenz.pretty` now has its own copy of the footprint — KiCad's land pattern
+untouched, with the two silkscreen segments that would have been printed off
+the board trimmed at y = +2.45, and this project's own 3D model baked in
+rather than swapped on at board level.  The board then still matches its
+library, DRC is clean with 0 violations, and J1 sits at y = 97.34 where the
+drawing asks.  Copper comes no closer than 0.81 mm to the edge.
+
+And so it cannot drift again, `check_outputs.py` now re-derives the
+requirement on every build from the *placed* shell tabs — upper tab + 5.79 has
+to equal the board edge — rather than trusting a number in a table:
+
+```
+ok   lorenz: the USB-C sits where its drawing asks -- mating face 0.99 mm
+     past the board edge, so a moulded plug body clears it
+```
+
+### On their preview
+
+I should be careful about how much this explains.  The land pattern was never
+wrong, and their viewer's offset for U5 and the trimmers is a separate thing —
+their model's own origin, which nothing in a CPL can address.  I cannot claim
+the picture you were looking at was caused by this error.  What I can say is
+that you were right that something was wrong, it was mine, and it was worth
+the push: the connector was sitting a millimetre and a half too far into the
+board, which is the fault you asked me to fix two prompts before that.
+
+### What changed on the board
+
+J1 moved 1.49 mm toward the edge, so its pads and its two shell-tab holes
+moved with it — the front and the back both changed.  The schematic did not.
+
+![front](docs/history/response-10/render-top.png)
+![back](docs/history/response-10/render-bottom.png)

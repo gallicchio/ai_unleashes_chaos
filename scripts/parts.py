@@ -47,7 +47,7 @@ PARTS = {
     "USBC": dict(
         value="USB-C", mpn="TYPE-C-31-M-12", lcsc="C165948", jlc_type="extended",
         process="SMT", stock=230097, price=0.186,
-        footprint="Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12",
+        footprint="lorenz:USB_C_Receptacle_HRO_TYPE-C-31-M-12",
         desc="USB-C receptacle, power only (16 pin)"),
     "DCDC": dict(
         value="A0515S-2WR2", mpn="A0515S-2WR2", lcsc="C19272710", jlc_type="extended",

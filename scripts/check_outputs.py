@@ -186,6 +186,48 @@ def check_keying(stem, problems, notes):
                          f"way round, so no preview can mislead it")
 
 
+# HRO TYPE-C-31-M-12, "RECOMMEND P.C.B LAYOUT": the board edge belongs
+# 5.79 mm in front of the upper shell-tab centre, which leaves the connector's
+# mating face overhanging it by about 1 mm.  That overhang is what lets a plug
+# with a moulded body seat, so it is worth re-deriving from the placed pads
+# rather than trusting a number in a placement table.
+USB_TAB_TO_EDGE = 5.79
+
+
+def check_usb_setback(stem, height, problems, notes):
+    pcb = os.path.join(ROOT, "hardware", stem + ".kicad_pcb")
+    if not os.path.exists(pcb):
+        return
+    board = parse_file(pcb)
+    for fp in board.kids("footprint"):
+        ref = next((p.atom(1) for p in fp.kids("property")
+                    if p.atom(0) == "Reference"), "?")
+        if ref != "J1":
+            continue
+        at = fp.first("at")
+        oy = float(at.atom(1))
+        tabs = []
+        for pad in fp.kids("pad"):
+            if pad.atom(0) == "SH":
+                tabs.append(float(pad.first("at").atom(1)))
+        if not tabs:
+            problems.append(f"{stem}: J1 has no shell tabs to measure from")
+            return
+        edge = oy + min(tabs) + USB_TAB_TO_EDGE
+        if abs(edge - height) > 0.05:
+            problems.append(
+                f"{stem}: the USB-C wants the board edge {USB_TAB_TO_EDGE} mm "
+                f"in front of its upper shell tab, which is y = {edge:.2f}; "
+                f"the board ends at {height:.2f}, so the connector is "
+                f"{abs(edge - height):.2f} mm {'too far back' if edge < height else 'too far forward'}")
+        else:
+            notes.append(f"{stem}: the USB-C sits where its drawing asks -- "
+                         f"mating face {oy + 3.65 - height:.2f} mm past the "
+                         f"board edge, so a moulded plug body clears it")
+        return
+    problems.append(f"{stem}: no J1 on the board")
+
+
 def check_models(stem, problems, notes):
     """Every 3D model a footprint names must actually be on disk.
 
@@ -297,6 +339,7 @@ def main():
     check("lorenz", 2, 100.0, 100.0, problems, notes)
     check_qr("lorenz", problems, notes)
     check_keying("lorenz", problems, notes)
+    check_usb_setback("lorenz", 100.0, problems, notes)
     check_models("lorenz", problems, notes)
     check_stock(problems, notes)
     for n in notes:

@@ -18544,7 +18544,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12"
+		(property "Footprint" "lorenz:USB_C_Receptacle_HRO_TYPE-C-31-M-12"
 			(at 45.72 340.36 0)
 			(hide yes)
 			(show_name no)

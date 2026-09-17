@@ -104,14 +104,18 @@ PLACE = {
     # 13.05 rather than 13.0: that puts the 0.5 mm-pitch CC pads on the
     # router's 0.2 mm grid, which is the only way a 0.3 mm track escapes
     # between them with 0.2 mm clearance either side.
-    # The mating face of this receptacle is 3.65 mm in front of its origin
-    # and its printed outline another 0.25 mm in front of that, so 95.85
-    # leaves the connector half a millimetre inside the board edge with its
-    # silkscreen exactly on the 0.15 mm silk-to-edge rule.  That half
-    # millimetre is what a cable with a big moulded body needs: at the 6 mm
-    # setback this started at, the moulding hits the laminate before the plug
-    # is home.
-    "J1":  (13.05, 95.85, 0),
+    # Where the data sheet says, not where the silkscreen rule would prefer.
+    # The HRO drawing's recommended layout puts the PCB edge 5.79 mm in front
+    # of the upper shell-tab centre, which is y = +2.66 in footprint
+    # coordinates -- so the board edge at 100 means the anchor at 97.34, and
+    # the connector's mating face (y = +3.65) overhangs the edge by 0.99 mm.
+    # That overhang is the point: a plug's moulded body stops against the
+    # receptacle face, and if the face is behind the laminate the laminate is
+    # what the moulding hits.  Two earlier revisions had this wrong -- 6 mm of
+    # setback, then 4.15 -- both because something other than the drawing was
+    # allowed to choose.  The silkscreen that used to object is trimmed in
+    # this project's own copy of the footprint instead.
+    "J1":  (13.05, 97.34, 0),
     # The CC pull-downs sit directly above their own pads, so each escape from
     # the 0.5 mm-pitch row is a 2.5 mm straight run and neither competes with
     # VBUS for the corridor above the connector.

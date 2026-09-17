@@ -6,6 +6,7 @@ footprint's description, so the numbers can be re-checked against the PDF.
 """
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import kienv
 from sexp import S, q, n, uid, effects, stroke, at
 
 FP_VERSION = "20260206"
@@ -354,9 +355,70 @@ def trimpot():
     return name, f
 
 
+# ------------------------------------------------------------- USB-C -------
+# The land pattern is KiCad's and matches the HRO drawing, so it is copied
+# rather than redrawn.  Two things are changed.  The silkscreen outline runs
+# forward to y = +3.9, past where the board edge has to be (the data sheet's
+# recommended layout puts the edge at y = +2.66, with the connector's mating
+# face overhanging it by 1 mm), so the part of the outline that would be
+# printed over thin air is trimmed off.  And the 3D model is pointed at this
+# project's own, because the AppImage's bundled 3D set is a reduced one.
+#
+# Editing the footprint on the *board* instead would work too, but then the
+# board no longer matches its library and DRC says so, with reason.
+USBC_SRC = "Connector_USB.pretty/USB_C_Receptacle_HRO_TYPE-C-31-M-12.kicad_mod"
+USBC_SILK_LIMIT = 2.45          # board edge 2.66, less 0.15 rule and 0.06 pen
+
+
+def usbc(share):
+    from sexp_parse import parse_file, Sym
+    root = parse_file(os.path.join(share, "footprints", USBC_SRC))
+    name = root.atom(0)
+
+    def y_of(node, tag):
+        k = node.first(tag)
+        return float(k.atom(1)) if k is not None else None
+
+    keep = []
+    for it in root.items:
+        if not hasattr(it, "tag") or it.tag != "fp_line":
+            keep.append(it)
+            continue
+        lay = it.first("layer")
+        if lay is None or lay.atom(0) != "F.SilkS":
+            keep.append(it)
+            continue
+        ys = [y_of(it, "start"), y_of(it, "end")]
+        if min(ys) >= USBC_SILK_LIMIT:          # wholly over the edge
+            continue
+        for tag in ("start", "end"):
+            k = it.first(tag)
+            if float(k.atom(1)) > USBC_SILK_LIMIT:
+                k.items = [k.atoms()[0], Sym(f"{USBC_SILK_LIMIT}")]
+        keep.append(it)
+    root.items = keep
+
+    for it in list(root.items):
+        if hasattr(it, "tag") and it.tag == "model":
+            root.items.remove(it)
+    from sexp_parse import Node
+    def xyz(tag, v):
+        return Node(tag, [Node("xyz", [Sym(f"{v:g}")] * 3)])
+    root.items.append(Node("model", [
+        "${KIPRJMOD}/lib/lorenz.3dshapes/USB_C_HRO_TYPE-C-31-M-12.wrl",
+        xyz("offset", 0), xyz("scale", MM_SCALE), xyz("rotate", 0)]))
+    d = root.first("descr")
+    if d is not None:
+        d.items = [d.atom(0) + "; silkscreen trimmed at y=+2.45 so it stops "
+                   "at the board edge this project mounts it against"]
+    return name, root
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
-    for maker in (bnc, dcdc, dipsw, led_rgb, scope_gnd, ptc, trimpot):
+    share = kienv.share_dir()
+    for maker in (bnc, dcdc, dipsw, led_rgb, scope_gnd, ptc, trimpot,
+                  lambda: usbc(share)):
         name, node = maker()
         path = os.path.join(OUT, name + ".kicad_mod")
         with open(path, "w") as fh:

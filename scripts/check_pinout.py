@@ -10,7 +10,7 @@ library, which was drawn by different people from the same document.
 
     python3 scripts/check_pinout.py
 """
-import os, sys
+import os, re, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import kienv
 from sexp_parse import parse_file
@@ -65,10 +65,20 @@ FOOTPRINT_PINS = {
         {str(i) for i in range(1, 13)},
     "lorenz:TestPoint_ScopeGnd_Loop_2x1.1mm": {"1"},
     "lorenz:PTC_1812_4532Metric": {"1", "2"},
+    # KiCad's land pattern, copied locally with its silkscreen trimmed
+    "lorenz:USB_C_Receptacle_HRO_TYPE-C-31-M-12":
+        {"A1", "A4", "A5", "A6", "A7", "A8", "A9", "A12",
+         "B1", "B4", "B5", "B6", "B7", "B8", "B9", "B12", "SH"},
     # Bourns 3386 datasheet, "3386P" outline: 1 CCW, 2 wiper, 3 CW.
     "lorenz:Potentiometer_Bourns_3386P_Vertical": {"1", "2", "3"},
     "lorenz:BNC_KYWE_RightAngle": {"1", "2"},
 }
+
+
+def _padkey(p):
+    """Sort pad names so 2 comes before 10 and A2 before A10."""
+    m = re.match(r"([A-Za-z]*)(\d*)", p)
+    return (m.group(1), int(m.group(2) or 0))
 
 
 def sym_pins(lib_path, name):
@@ -131,7 +141,7 @@ def main():
                                   name + ".kicad_mod"))
         got = fp_pads(path)
         need(got == want,
-             f"{fpid}: pads {sorted(want, key=lambda s: int(s))} all present")
+             f"{fpid}: pads {sorted(want, key=_padkey)} all present")
 
     print("\n".join(notes))
     if problems:
