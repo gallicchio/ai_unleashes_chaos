@@ -1891,3 +1891,229 @@ moved with it — the front and the back both changed.  The schematic did not.
 
 ![front](docs/history/response-10/render-top.png)
 ![back](docs/history/response-10/render-bottom.png)
+
+## Prompt 11
+
+I submitted our design to JLCPCB. They returned with `out/lorenz/lorenz-gerbers_Y11` and asked to confirm. I can see nothing obviously wrong. The only suspicious thing was in out/lorenz/lorenz-gerbers_Y11/13544840a_y11/yg/GBR_12425659_1_snapshot.png and it was the comments:
+* 0.650 mm / 0.0256" (2 holes) (not plated)
+* 3.200mm / 0.1260" (4 holes) not plated)
+
+I can't tell from that PNG what those holes are, though I suspect the 4 3.2mm holes are the mounting holes.
+
+If you can find nothing wrong with the documents in `out/lorenz/lorenz-gerbers_Y11`, I will tell them to proceed with the PCB manufacture.
+
+Put your response here, like the others.
+
+## Response 11
+
+I read everything they sent back, including `ok/13544840a_y11.tgz`, which is
+their CAM system's own working copy of the board — three snapshots of it, in
+fact: `orig` as they imported it, `edit` as they will make it, and `net`. That
+makes the question answerable exactly rather than by eye: I can diff what they
+hold against what we sent, feature by feature.
+
+**Nothing is wrong.** The two not-plated lines are your own holes, and the
+legend only looks short because two legends are printed on top of each other.
+
+One thing is worth a decision before they start, and it is not a fault: they
+have reserved a square of the board for their own order code.
+
+### The two not-plated sizes are yours
+
+`out/lorenz/gerbers/lorenz-NPTH.drl` is six holes, and that is the entire file:
+
+```
+T1C0.650    X10.16 Y5.26   X15.94 Y5.26
+T2C3.200    X4 Y4    X4 Y96    X96 Y4    X96 Y96
+```
+
+* **3.200 mm × 4** — the mounting holes, 4 mm in from each corner, M3 clearance.
+  You had it right.
+* **0.650 mm × 2** — J1's two board-lock posts. The HRO receptacle has two pegs
+  under its shell that drop into the board and take the strain when someone
+  yanks the cable. They carry nothing, so they are not plated. They sit 5.78 mm
+  apart on the connector's centre line, which is exactly 15.94 − 10.16.
+
+The legend is not missing anything either. That snapshot is **both** drill maps
+drawn on one picture: KiCad writes one for the plated holes and one for the
+non-plated ones, and their viewer stacks them. The green non-plated legend's two
+lines are printed over the first two lines of the red plated legend, which are
+0.300 mm (362 holes) and 0.600 mm (4 slots). The red list you can read starts at
+its third line.
+
+Their tool table, read out of the CAM job, matches KiCad's own statistics line
+for line — same sizes, same counts, nothing merged and nothing dropped:
+
+| finished size | theirs | `lorenz-stats.txt` | what it is |
+|---|---|---|---|
+| 0.300 mm | 362 | 362 | vias |
+| 0.600 × 1.70 mm slot | 2 | 2 | J1's through-hole legs |
+| 0.600 × 1.20 mm slot | 2 | 2 | J1's through-hole legs |
+| 0.700 mm | 13 | 13 | plated, through-hole parts |
+| 0.800 mm | 6 | 6 | plated |
+| 1.000 mm | 5 | 5 | plated |
+| 1.100 mm | 6 | 6 | plated |
+| 1.300 mm | 4 | 4 | plated |
+| 1.400 mm | 16 | 16 | plated |
+| 0.650 mm | 2 | 2 | **not plated** — J1's board locks |
+| 3.200 mm | 4 | 4 | **not plated** — mounting holes |
+
+### Nothing was lost between here and there
+
+All fourteen files in `yg/` are byte-for-byte identical to
+`out/lorenz/gerbers/` — `cmp` reports no difference in any of them, drill files
+included. And `./make.py` run today rebuilds all twenty-one fab deliverables
+byte-identically from the tree, so the files on their server are still the files
+this repository produces.
+
+Their importer also read the board the way we meant it. From
+`4te.json` and `GBR_12425659_1.json`: twelve layers, every one mapped to the
+right place (`F_Cu → tl`, `B_Cu → bl`, `Edge_Cuts → gko`, and so on), **mirror
+flag 0, offset 0, negative-polarity flag 0 on all twelve**, EDA type KiCad.
+`B_Paste` and the `.gbrjob` were the only files ignored, which is right: all 66
+placements are on top, so the back paste layer is empty by design.
+
+What they measured off our data, against what we designed:
+
+| | theirs | ours |
+|---|---|---|
+| outline | 100.000 × 100.000 mm, 3 mm corners | same |
+| min track width | 0.300 mm | 0.300 mm |
+| min clearance | 0.300 mm | 0.250 mm rule, 0.300 mm actual |
+| min hole | 0.300 mm | 0.300 mm |
+| copper coverage | 90.1 % front, 93.1 % back | — |
+| half-holes, gold fingers, blind/buried | none | none |
+| test points | 287 | — |
+
+Their AutoCAM check file comes back with every rule flag clear and
+`AutoCAM_Checks_Result: 1`. The one negative line anywhere in the package is
+`拼板审核结果: -1 — 暂未支持的拼板方式`, their panelisation audit declining to
+run; the job is a single 100 mm piece with `panel_x = panel_y = 1`, so there is
+no customer panel for it to audit.
+
+The order itself, out of `erp_parameter_file.json`: five boards, 1.6 mm, 1 oz
+outer copper, green mask, white legend, lead-free HASL, **vias covered with
+mask** (`过孔盖油` — which is what we asked for, all 362 of them tented), and
+the SMT line switched on with one stencil.
+
+### What their CAM changed, exactly
+
+This is the part worth reading, because they do not hand the gerbers straight to
+the drill. Diffing `orig` against `edit` inside their job:
+
+**Every one of our features survives.** Not one positive feature on any layer
+was moved or deleted. On the copper, mask and drill layers the diff is *zero*
+positions dropped. On the silkscreens 192 flashes disappear from the front and
+four from the back, but every one of them is negative — the knockouts KiCad puts
+in so that silk does not print on a pad — and their CAM resolved them into
+filled outlines instead, 249 on the front where we had 12. I rendered both
+versions to check: the front silk gains 1.7 mm² of ink and loses 4.6 mm² out of
+556 mm². Had the knockouts actually been thrown away it would have gained a
+hundred times that.
+
+**Holes grown for plating.** Every plated hole is drilled 0.15 mm over size so
+that the finished hole is the one we asked for — 0.70 drilled at 0.85, 1.40 at
+1.55, the slots 0.60 at 0.751. The non-plated holes are grown 0.05 mm: 0.65
+drilled at 0.70, 3.20 at 3.25. Vias are left at 0.300. All the *finished* sizes
+are ours.
+
+**Etch and screen compensation.** Copper gains 0.0075 mm per edge, so a 0.30 mm
+track is plotted at 0.315 and lands at 0.30. Silk lines go from our 0.12 mm to
+0.13 mm.
+
+**Copper and silk pulled 0.2 mm back from the routed edge.** They cut a 0.4 mm
+negative stroke along the outline on all four artwork layers. Our copper's
+closest approach to the outline is **0.300 mm**, so it loses nothing. Our
+silkscreen loses one thing, and exactly one: the line at y = 0.21 mm running
+from x = 8.35 to 17.75 — the front edge of J1's outline, the one I trimmed back
+in prompt 10 so it would stop at the laminate. Its near edge is 0.149 mm from
+the outline, so about 0.05 mm of its 0.12 mm width falls inside their pullback
+and the rest may be too thin to print. It is under the connector's body. I would
+not spend a revision on it.
+
+**Two holes they added.** Their CAM drilled two 1.152 mm non-plated holes that
+are not ours, at **(1.56, 6.90)** and **(98.44, 93.04)** — bottom left and top
+right in the front view, about 1.5 mm in from an edge, each with copper cleared
+to 1.552 mm, mask opened to 1.352 mm and silk cleared around it. These are
+tooling holes. I checked what they land on:
+
+| | hole at (1.56, 6.90) | hole at (98.44, 93.04) |
+|---|---|---|
+| inside the pour? | yes, both layers | yes, both layers |
+| nearest track | 8.89 mm | 13.07 mm |
+| nearest via | 3.25 mm | 2.38 mm |
+| nearest pad | 2.19 mm (mounting hole) | 2.23 mm (mounting hole) |
+| silk underneath | none | none |
+
+So both sit in bare ground plane with millimetres to spare, and both fall in
+empty silkscreen. They cost us two 1.5 mm bald spots in the pour near opposite
+corners and nothing else.
+
+**The mask dam inside JP1 is gone.** JP1's two pads are 1.0 × 1.5 mm with a
+0.3 mm gap, and their CAM added a 0.3 × 1.5 mm opening at x = 43.0 joining the
+two into one window. Their minimum mask dam is wider than 0.3 mm, so rather than
+print a ridge that would not survive, they removed it. The jumper is still
+open — solder does not wet bare laminate — it will just look like one long opening
+instead of two. For a jumper meant to be bridged deliberately this is fine.
+
+**Sixty-seven pinholes I cannot account for.** They also flash a 0.15 mm dot in
+the solder mask over 55 vias on the back and 12 on the front. I tried to find
+the rule and failed: they are not one per net, not the vias with tracks on that
+side, not the vias near a mask opening, not the vias under silk. At 0.15 mm they
+are below the size at which mask reliably develops open, every one of them is on
+a tented via whose barrel is plated, and they change nothing electrically. It is
+the only thing in the package I cannot explain, and I would let it go — but if
+you want it closed, ask them what the 0.15 mm mask flashes on `bs` and `ts` are.
+
+### The one decision: their order code
+
+They have reserved space for their own production code — an **8 × 8 mm square**
+at x 0.89–8.89 mm, y 10.47–18.47 mm, with an **8 × 2 mm strip** under it. That
+is the `qrb` layer in their job, and `erp_parameter_file.json` confirms it: QR
+on, 8 mm, no customer code, no date.
+
+That rectangle is empty on the back and occupied on the front, which is why I
+think the back is where it is going — but the file does not say so outright, and
+it is a cheap thing to make explicit. Here is the same corner on both sides,
+from their own preview, with the reserved square in red and the code strip in
+orange (the blue circle is the tooling hole above):
+
+![front](docs/history/response-11/order-code-front.png)
+![back](docs/history/response-11/order-code-back.png)
+
+On the front it lands squarely on the two `USB-C` labels. On the back it is
+bare. So when you reply, say it plainly: **the order code goes on the back, in
+the corner they have chosen, not on the front.** If you would rather Paul's
+board carried no fab code at all, this is the moment to ask for that instead —
+afterwards it is in the artwork.
+
+### One thing that lives in the order, not in the files
+
+The finish is lead-free HASL. J1 is 0.5 mm pitch with 0.3 mm pads, which is
+right at the edge of what HASL does well — it is a bumpier surface than ENIG,
+and the USB-C is the one part on this board being machine-placed onto fine
+pitch. It will very probably be fine, and 0.5 mm is within what they accept.
+But it is a choice in the order rather than a fault in the documents, so if you
+were ever going to pay the ENIG difference, it is this board's one argument for
+it.
+
+### So: proceed
+
+I would tell them to go ahead. Everything they hold is ours, they read it
+correctly, and every change their CAM made is a manufacturing convention applied
+to data it did not otherwise touch. Two sentences back to them cover it:
+
+> Confirmed, please proceed. Please keep the order code on the **back**
+> silkscreen at the location you have chosen, not on the front.
+
+Two things this does not cover, both of them assembly rather than board: D1 is
+still the one part whose orientation their preview cannot draw — `out/lorenz/
+lorenz-assembly-notes.txt` carries the note, and leaving it off to hand-solder
+is still the cheap way out — and the placements must go up as
+`lorenz-cpl_jlc_corrected.csv`, not `lorenz-cpl.csv`.
+
+### What changed in the repo
+
+Nothing on the board, and nothing to re-send: the design is untouched and the
+gerbers still rebuild byte-identically. I added only the two pictures above,
+under `docs/history/response-11/`, cropped from JLCPCB's own preview.

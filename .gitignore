@@ -248,3 +248,6 @@ fp-info-cache
 
 # Scratch file for drafting the next prompt; not part of the project.
 /next_prompt.md
+
+# Unzipped gerbers back from JLCPCB
+out/lorenz/lorenz-gerbers_Y11/
