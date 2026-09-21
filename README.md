@@ -2,11 +2,11 @@
 
 [Lorenz Attractor Circuit](https://seti.harvard.edu/unusual_stuff/misc/lorenz.htm) by Paul Horowitz in KiCAD
 
-In graduate school I worked with Paul Horowitz, of [Art of Electronics](https://artofelectronics.net/) fame. I even contributed a few bits and pieces to the 3rd edition. (I am thanked in the footnotes, one of which simply says, "Jason, again.") I want you to build a nice little present for Paul, which could also live on as an open source project and a kit that people could build. Watch Paul's [Interview with Ladyada](https://www.youtube.com/watch?v=iCI3B5eT9NA) to get a sense for the guy.
+In graduate school I worked with Paul Horowitz, of [Art of Electronics](https://artofelectronics.net/) fame. I even contributed a few bits and pieces to the 3rd edition. (I am thanked in the footnotes, one of which simply says, "Jason, again.") This started by [asking Claude](CLAUDE_CODE_CHAT.md), "I want you to build a nice little present for Paul, which could also live on as an open source project and a kit that people could build." Watch Paul's [Interview with Ladyada](https://www.youtube.com/watch?v=iCI3B5eT9NA) to get a sense for the guy.
 
 **Only Prompts:**
 As an experiment, the entire PCB, along with additions to Paul's original circuit were designed in a few
-hours of [prompts to Claude Opus 5 Max](CLAUDE_CODE_CHAT.md). I only typed prompts. 
+hours of [prompts to Claude Opus 5 Max](CLAUDE_CODE_CHAT.md). I only typed prompts.
 I only used KiCAD to look at the output of Claude's [python scripts](scripts/), which generated everything else.
 
 ![The board](docs/images/lorenz-render-iso.png)
