@@ -251,3 +251,6 @@ fp-info-cache
 
 # Unzipped gerbers back from JLCPCB
 out/lorenz/lorenz-gerbers_Y11/
+
+# scripts/lamp_search.py keeps its intermediate stages here while it runs
+docs/lamp2/search_stages.pkl

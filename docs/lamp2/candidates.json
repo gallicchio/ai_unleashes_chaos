@@ -1,0 +1,1326 @@
+{
+ "anim_dt": 0.01,
+ "anim_t": 160.0,
+ "speeds": {
+  "fast!": 0.0022,
+  "nice!": 0.102,
+  "slow!": 0.472,
+  "slower!": 0.572
+ },
+ "sectors": [
+  "pink",
+  "red",
+  "orange",
+  "amber",
+  "yellow-green",
+  "green",
+  "spring",
+  "cyan",
+  "azure",
+  "blue",
+  "violet",
+  "magenta"
+ ],
+ "candidates": [
+  {
+   "n": 1,
+   "lamp": {
+    "part": "CA",
+    "vref": 3.75,
+    "src": [
+     1,
+     0,
+     2
+    ],
+    "rs": [
+     1500.0,
+     24000.0,
+     2200.0
+    ],
+    "ro": [
+     8200.0,
+     null,
+     36000.0
+    ],
+    "rail": [
+     "+12V",
+     "GND",
+     "-12V"
+    ],
+    "src2": [
+     0,
+     null,
+     null
+    ],
+    "rs2": [
+     8200.0,
+     null,
+     null
+    ]
+   },
+   "topo": "C",
+   "dropin": false,
+   "plus1": false,
+   "desc": "common anode at +3.75 V; R=-y via 1.5k & x via 8.2k (+8.2k to +12V), G=x via 24k, B=z via 2.2k (+36k to -12V)",
+   "robust": {
+    "med": 0.784,
+    "p20": 0.741,
+    "vivid": 0.896,
+    "even": 0.877
+   },
+   "divider": {
+    "rail": "+12V",
+    "r_gnd": 15000,
+    "r_rail": 33000,
+    "v": 3.75
+   },
+   "n_res": 6,
+   "name": "violet to red | green to azure",
+   "say": "On the +x wing it runs violet to red; on the -x wing, green to azure; through the crossings, blue to orange.",
+   "hue_speed": 423.0,
+   "vref_sens": [
+    0.833,
+    0.788
+   ],
+   "slow!": {
+    "score": 0.8477653495106331,
+    "vivid": 0.8941057783429173,
+    "even": 0.9481712008190253,
+    "lit": 0.9985686735756734,
+    "sat": 0.8393667795930454,
+    "sectors": [
+     0.0859,
+     0.1203,
+     0.0662,
+     0.0542,
+     0.0733,
+     0.1061,
+     0.0647,
+     0.0454,
+     0.1005,
+     0.121,
+     0.0961,
+     0.0663
+    ]
+   },
+   "i_peak": [
+    1.8,
+    0.13,
+    0.75
+   ],
+   "i_mean": [
+    0.455,
+    0.059,
+    0.092
+   ],
+   "die_lit": [
+    0.814,
+    0.989,
+    0.535
+   ],
+   "bright": 33.8,
+   "v_rev": 0.0,
+   "i_offset": [
+    1.49,
+    0.0,
+    0.44
+   ],
+   "i_blend": [
+    0.45,
+    0.0,
+    0.0
+   ],
+   "nice!": {
+    "score": 0.4694289721070737,
+    "vivid": 0.7473879466779257,
+    "even": 0.6280927785812502,
+    "lit": 1.0,
+    "sat": 0.6692787490013862,
+    "sectors": [
+     0.1022,
+     0.0463,
+     0.0026,
+     0.0,
+     0.0007,
+     0.0414,
+     0.059,
+     0.0529,
+     0.1171,
+     0.1685,
+     0.1917,
+     0.2175
+    ]
+   }
+  },
+  {
+   "n": 2,
+   "lamp": {
+    "part": "CA",
+    "vref": 3.9,
+    "src": [
+     1,
+     0,
+     2
+    ],
+    "rs": [
+     1200.0,
+     18000.0,
+     1200.0
+    ],
+    "ro": [
+     7500.0,
+     null,
+     27000.0
+    ],
+    "rail": [
+     "+12V",
+     "GND",
+     "-12V"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "topo": "B",
+   "dropin": false,
+   "plus1": false,
+   "desc": "common anode at +3.90 V; R=-y via 1.2k (+7.5k to +12V), G=x via 18k, B=z via 1.2k (+27k to -12V)",
+   "robust": {
+    "med": 0.779,
+    "p20": 0.752,
+    "vivid": 0.908,
+    "even": 0.854
+   },
+   "divider": {
+    "rail": "+12V",
+    "r_gnd": 16000,
+    "r_rail": 33000,
+    "v": 3.918
+   },
+   "n_res": 5,
+   "name": "violet to red | green to azure",
+   "say": "On the +x wing it runs violet to red; on the -x wing, green to azure; through the crossings, blue to orange.",
+   "hue_speed": 410.0,
+   "vref_sens": [
+    0.813,
+    0.807
+   ],
+   "slow!": {
+    "score": 0.8430384125855991,
+    "vivid": 0.9073070973045823,
+    "even": 0.929165455764744,
+    "lit": 0.9992414222479692,
+    "sat": 0.8528017711403886,
+    "sectors": [
+     0.075,
+     0.1226,
+     0.0688,
+     0.0496,
+     0.0704,
+     0.135,
+     0.0713,
+     0.0448,
+     0.1029,
+     0.1202,
+     0.0839,
+     0.0555
+    ]
+   },
+   "i_peak": [
+    2.5,
+    0.19,
+    1.29
+   ],
+   "i_mean": [
+    0.606,
+    0.086,
+    0.137
+   ],
+   "die_lit": [
+    0.782,
+    1.0,
+    0.495
+   ],
+   "bright": 53.6,
+   "v_rev": 0.07,
+   "i_offset": [
+    1.67,
+    0.0,
+    0.59
+   ],
+   "i_blend": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "nice!": {
+    "score": 0.5187815568390404,
+    "vivid": 0.7774458972621329,
+    "even": 0.667289593611582,
+    "lit": 1.0,
+    "sat": 0.6908921348489957,
+    "sectors": [
+     0.0839,
+     0.0543,
+     0.0047,
+     0.0,
+     0.0007,
+     0.0529,
+     0.075,
+     0.0648,
+     0.1349,
+     0.1721,
+     0.179,
+     0.1777
+    ]
+   }
+  },
+  {
+   "n": 3,
+   "lamp": {
+    "part": "CA",
+    "vref": 4.0,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     470.0,
+     27000.0,
+     6800.0
+    ],
+    "ro": [
+     null,
+     null,
+     56000.0
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "+12V"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "topo": "B",
+   "dropin": false,
+   "plus1": true,
+   "desc": "common anode at +4.00 V; R=z via 470R, G=x via 27k, B=-y via 6.8k (+56k to +12V)",
+   "robust": {
+    "med": 0.769,
+    "p20": 0.718,
+    "vivid": 0.897,
+    "even": 0.852
+   },
+   "divider": {
+    "rail": "+12V",
+    "r_gnd": 12000,
+    "r_rail": 24000,
+    "v": 4.0
+   },
+   "n_res": 4,
+   "name": "azure to magenta | red to green",
+   "say": "On the +x wing it runs azure to magenta; on the -x wing, red to green; through the crossings, azure to red.",
+   "hue_speed": 417.0,
+   "vref_sens": [
+    0.808,
+    0.782
+   ],
+   "slow!": {
+    "score": 0.8317506909517254,
+    "vivid": 0.8987322678989607,
+    "even": 0.9254710447819754,
+    "lit": 0.9943946449420178,
+    "sat": 0.8548755695707342,
+    "sectors": [
+     0.0795,
+     0.1225,
+     0.076,
+     0.0373,
+     0.0482,
+     0.1257,
+     0.075,
+     0.0557,
+     0.1082,
+     0.1182,
+     0.0695,
+     0.0844
+    ]
+   },
+   "i_peak": [
+    4.06,
+    0.13,
+    0.38
+   ],
+   "i_mean": [
+    0.659,
+    0.062,
+    0.068
+   ],
+   "die_lit": [
+    0.625,
+    1.0,
+    0.642
+   ],
+   "bright": 45.1,
+   "v_rev": 0.68,
+   "i_offset": [
+    0.0,
+    0.0,
+    0.23
+   ],
+   "i_blend": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "nice!": {
+    "score": 0.47316236015541424,
+    "vivid": 0.7196274743039961,
+    "even": 0.657510138301826,
+    "lit": 1.0,
+    "sat": 0.6620848859515663,
+    "sectors": [
+     0.09,
+     0.0947,
+     0.0664,
+     0.0511,
+     0.0744,
+     0.0678,
+     0.0025,
+     0.0001,
+     0.0117,
+     0.0843,
+     0.2235,
+     0.2335
+    ]
+   }
+  },
+  {
+   "n": 4,
+   "lamp": {
+    "part": "CC",
+    "vref": -1.71,
+    "src": [
+     0,
+     1,
+     2
+    ],
+    "rs": [
+     2200.0,
+     3600.0,
+     22000.0
+    ],
+    "ro": [
+     15000.0,
+     24000.0,
+     null
+    ],
+    "rail": [
+     "-12V",
+     "+12V",
+     "GND"
+    ],
+    "src2": [
+     2,
+     0,
+     1
+    ],
+    "rs2": [
+     1800.0,
+     3000.0,
+     4300.0
+    ]
+   },
+   "topo": "C",
+   "dropin": false,
+   "plus1": false,
+   "desc": "common cathode at -1.71 V; R=x via 2.2k & z via 1.8k (+15k to -12V), G=-y via 3.6k & x via 3k (+24k to +12V), B=z via 22k & -y via 4.3k",
+   "robust": {
+    "med": 0.764,
+    "p20": 0.676,
+    "vivid": 0.934,
+    "even": 0.814
+   },
+   "divider": {
+    "rail": "-12V",
+    "r_gnd": 3000,
+    "r_rail": 18000,
+    "v": -1.714
+   },
+   "n_res": 8,
+   "name": "red to orange | cyan to violet",
+   "say": "On the +x wing it runs red to orange; on the -x wing, cyan to violet; through the crossings, amber to green.",
+   "hue_speed": 604.0,
+   "vref_sens": [
+    0.761,
+    0.774
+   ],
+   "slow!": {
+    "score": 0.8328332870826085,
+    "vivid": 0.9413331077012838,
+    "even": 0.8847381232732485,
+    "lit": 0.9740909446763232,
+    "sat": 0.9151846024719731,
+    "sectors": [
+     0.0547,
+     0.1154,
+     0.1413,
+     0.1569,
+     0.1082,
+     0.1156,
+     0.0428,
+     0.0468,
+     0.0701,
+     0.0476,
+     0.0456,
+     0.0549
+    ]
+   },
+   "i_peak": [
+    2.4,
+    0.43,
+    0.49
+   ],
+   "i_mean": [
+    0.538,
+    0.083,
+    0.041
+   ],
+   "die_lit": [
+    0.809,
+    0.927,
+    0.36
+   ],
+   "bright": 39.7,
+   "v_rev": 0.0,
+   "i_offset": [
+    0.8,
+    0.53,
+    0.0
+   ],
+   "i_blend": [
+    1.62,
+    0.66,
+    0.23
+   ],
+   "nice!": {
+    "score": 0.2734255818960861,
+    "vivid": 0.5675007036115614,
+    "even": 0.4818065954033397,
+    "lit": 1.0,
+    "sat": 0.6400984972242942,
+    "sectors": [
+     0.0063,
+     0.0359,
+     0.3319,
+     0.2894,
+     0.0654,
+     0.0086,
+     0.0043,
+     0.0121,
+     0.0576,
+     0.091,
+     0.0835,
+     0.014
+    ]
+   }
+  },
+  {
+   "n": 5,
+   "lamp": {
+    "part": "CC",
+    "vref": -2.45,
+    "src": [
+     1,
+     2,
+     1
+    ],
+    "rs": [
+     8200.0,
+     1600.0,
+     3300.0
+    ],
+    "ro": [
+     null,
+     9100.0,
+     220000.0
+    ],
+    "rail": [
+     "GND",
+     "-12V",
+     "+12V"
+    ],
+    "src2": [
+     0,
+     null,
+     null
+    ],
+    "rs2": [
+     680.0,
+     null,
+     null
+    ]
+   },
+   "topo": "C",
+   "dropin": false,
+   "plus1": false,
+   "desc": "common cathode at -2.45 V; R=-y via 8.2k & x via 680R, G=z via 1.6k (+9.1k to -12V), B=-y via 3.3k (+220k to +12V)",
+   "robust": {
+    "med": 0.763,
+    "p20": 0.715,
+    "vivid": 0.881,
+    "even": 0.864
+   },
+   "divider": {
+    "rail": "-12V",
+    "r_gnd": 10000,
+    "r_rail": 39000,
+    "v": -2.449
+   },
+   "n_res": 6,
+   "name": "red to yellow-green | spring to violet",
+   "say": "On the +x wing it runs red to yellow-green; on the -x wing, spring to violet; through the crossings, red to yellow-green.",
+   "hue_speed": 491.0,
+   "vref_sens": [
+    0.773,
+    0.791
+   ],
+   "slow!": {
+    "score": 0.8059177759485419,
+    "vivid": 0.8851184179000573,
+    "even": 0.910519722163935,
+    "lit": 0.9924956461066886,
+    "sat": 0.8652225002037086,
+    "sectors": [
+     0.0555,
+     0.1843,
+     0.0718,
+     0.0798,
+     0.1245,
+     0.0528,
+     0.0973,
+     0.0696,
+     0.0618,
+     0.0723,
+     0.0733,
+     0.0569
+    ]
+   },
+   "i_peak": [
+    3.49,
+    1.5,
+    0.79
+   ],
+   "i_mean": [
+    1.165,
+    0.29,
+    0.123
+   ],
+   "die_lit": [
+    0.848,
+    0.711,
+    0.611
+   ],
+   "bright": 124.0,
+   "v_rev": 0.0,
+   "i_offset": [
+    0.0,
+    1.56,
+    0.06
+   ],
+   "i_blend": [
+    0.49,
+    0.0,
+    0.0
+   ],
+   "nice!": {
+    "score": 0.3205495523871135,
+    "vivid": 0.7006091404487195,
+    "even": 0.45752978926568244,
+    "lit": 1.0,
+    "sat": 0.6644304079492844,
+    "sectors": [
+     0.0038,
+     0.0335,
+     0.1655,
+     0.2875,
+     0.0296,
+     0.0,
+     0.0133,
+     0.2419,
+     0.1757,
+     0.0371,
+     0.0085,
+     0.0038
+    ]
+   }
+  },
+  {
+   "n": 6,
+   "lamp": {
+    "part": "CA",
+    "vref": 4.0,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     560.0,
+     33000.0,
+     8200.0
+    ],
+    "ro": [
+     null,
+     null,
+     75000.0
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "+12V"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "topo": "B",
+   "dropin": false,
+   "plus1": true,
+   "desc": "common anode at +4.00 V; R=z via 560R, G=x via 33k, B=-y via 8.2k (+75k to +12V)",
+   "robust": {
+    "med": 0.754,
+    "p20": 0.695,
+    "vivid": 0.898,
+    "even": 0.84
+   },
+   "divider": {
+    "rail": "+12V",
+    "r_gnd": 12000,
+    "r_rail": 24000,
+    "v": 4.0
+   },
+   "n_res": 4,
+   "name": "azure to magenta | red to green",
+   "say": "On the +x wing it runs azure to magenta; on the -x wing, red to green; through the crossings, azure to red.",
+   "hue_speed": 420.0,
+   "vref_sens": [
+    0.804,
+    0.758
+   ],
+   "slow!": {
+    "score": 0.8223391543911122,
+    "vivid": 0.8957588891143697,
+    "even": 0.9180362755921438,
+    "lit": 0.9971903529329287,
+    "sat": 0.8464609704915816,
+    "sectors": [
+     0.085,
+     0.1105,
+     0.0631,
+     0.0323,
+     0.0431,
+     0.101,
+     0.0696,
+     0.0605,
+     0.1279,
+     0.1322,
+     0.0772,
+     0.0975
+    ]
+   },
+   "i_peak": [
+    3.43,
+    0.11,
+    0.33
+   ],
+   "i_mean": [
+    0.561,
+    0.051,
+    0.067
+   ],
+   "die_lit": [
+    0.625,
+    1.0,
+    0.7
+   ],
+   "bright": 37.2,
+   "v_rev": 0.68,
+   "i_offset": [
+    0.0,
+    0.0,
+    0.17
+   ],
+   "i_blend": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "nice!": {
+    "score": 0.40690068834640164,
+    "vivid": 0.6855419646147104,
+    "even": 0.5935459962324681,
+    "lit": 1.0,
+    "sat": 0.6299474115201642,
+    "sectors": [
+     0.0944,
+     0.0753,
+     0.0436,
+     0.0332,
+     0.0487,
+     0.0633,
+     0.0038,
+     0.0,
+     0.0124,
+     0.1004,
+     0.2696,
+     0.2553
+    ]
+   }
+  },
+  {
+   "n": 7,
+   "lamp": {
+    "part": "CA",
+    "vref": 3.8,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     390.0,
+     27000.0,
+     27000.0
+    ],
+    "ro": [
+     null,
+     null,
+     null
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "GND"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "topo": "A",
+   "dropin": true,
+   "plus1": false,
+   "desc": "common anode at +3.80 V; R=z via 390R, G=x via 27k, B=-y via 27k",
+   "robust": {
+    "med": 0.651,
+    "p20": 0.6,
+    "vivid": 0.833,
+    "even": 0.771
+   },
+   "divider": {
+    "rail": "+12V",
+    "r_gnd": 15000,
+    "r_rail": 33000,
+    "v": 3.75
+   },
+   "n_res": 3,
+   "name": "azure to pink | red to spring",
+   "say": "On the +x wing it runs azure to pink; on the -x wing, red to spring; through the crossings, cyan to pink.",
+   "hue_speed": 463.0,
+   "vref_sens": [
+    0.699,
+    0.677
+   ],
+   "slow!": {
+    "score": 0.7085515317736744,
+    "vivid": 0.8313280046091742,
+    "even": 0.8523128390301012,
+    "lit": 0.9756540365198305,
+    "sat": 0.7982585053642869,
+    "sectors": [
+     0.142,
+     0.0962,
+     0.0273,
+     0.0173,
+     0.0271,
+     0.0779,
+     0.1122,
+     0.1276,
+     0.1452,
+     0.0889,
+     0.061,
+     0.0774
+    ]
+   },
+   "i_peak": [
+    4.36,
+    0.12,
+    0.14
+   ],
+   "i_mean": [
+    0.559,
+    0.055,
+    0.05
+   ],
+   "die_lit": [
+    0.531,
+    0.996,
+    0.928
+   ],
+   "bright": 40.5,
+   "v_rev": 0.88,
+   "i_offset": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "i_blend": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "nice!": {
+    "score": 0.27187322127164854,
+    "vivid": 0.518185979556519,
+    "even": 0.5246634065713758,
+    "lit": 1.0,
+    "sat": 0.5393553516825634,
+    "sectors": [
+     0.2275,
+     0.0722,
+     0.0064,
+     0.0023,
+     0.0018,
+     0.0244,
+     0.0911,
+     0.0047,
+     0.0358,
+     0.0829,
+     0.1553,
+     0.2957
+    ]
+   }
+  },
+  {
+   "n": 8,
+   "lamp": {
+    "part": "CC",
+    "vref": -2.2,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     1800.0,
+     1000.0,
+     470.0
+    ],
+    "ro": [
+     null,
+     null,
+     null
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "GND"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "topo": "A",
+   "dropin": false,
+   "plus1": false,
+   "desc": "common cathode at -2.20 V; R=z via 1.8k, G=x via 1k, B=-y via 470R",
+   "robust": {
+    "med": 0.637,
+    "p20": 0.6,
+    "vivid": 0.953,
+    "even": 0.667
+   },
+   "divider": {
+    "rail": "-12V",
+    "r_gnd": 27000,
+    "r_rail": 120000,
+    "v": -2.204
+   },
+   "n_res": 3,
+   "name": "yellow-green to green | blue to violet",
+   "say": "On the +x wing it runs yellow-green to green; on the -x wing, blue to violet; through the crossings, magenta to amber.",
+   "hue_speed": 453.0,
+   "vref_sens": [
+    0.663,
+    0.651
+   ],
+   "slow!": {
+    "score": 0.6621096562365849,
+    "vivid": 0.9680144663067307,
+    "even": 0.6839873568860333,
+    "lit": 0.979790192088443,
+    "sat": 0.9798234505516165,
+    "sectors": [
+     0.1015,
+     0.1283,
+     0.0682,
+     0.0688,
+     0.1643,
+     0.0841,
+     0.0003,
+     0.0,
+     0.0027,
+     0.1253,
+     0.1506,
+     0.1059
+    ]
+   },
+   "i_peak": [
+    2.82,
+    1.45,
+    4.32
+   ],
+   "i_mean": [
+    1.545,
+    0.195,
+    0.384
+   ],
+   "die_lit": [
+    1.0,
+    0.434,
+    0.395
+   ],
+   "bright": 133.2,
+   "v_rev": 0.29,
+   "i_offset": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "i_blend": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "nice!": {
+    "score": 0.2890727941700797,
+    "vivid": 0.8348116964069785,
+    "even": 0.34627305225147925,
+    "lit": 0.999948275363004,
+    "sat": 0.8227559156015829,
+    "sectors": [
+     0.0007,
+     0.002,
+     0.0255,
+     0.1066,
+     0.2194,
+     0.0243,
+     0.0,
+     0.0,
+     0.0001,
+     0.0917,
+     0.4524,
+     0.0772
+    ]
+   }
+  },
+  {
+   "n": 9,
+   "lamp": {
+    "part": "CC",
+    "vref": -1.9,
+    "src": [
+     0,
+     2,
+     1
+    ],
+    "rs": [
+     560.0,
+     10000.0,
+     1200.0
+    ],
+    "ro": [
+     null,
+     null,
+     null
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "GND"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "topo": "A",
+   "dropin": false,
+   "plus1": false,
+   "desc": "common cathode at -1.90 V; R=x via 560R, G=z via 10k, B=-y via 1.2k",
+   "robust": {
+    "med": 0.591,
+    "p20": 0.554,
+    "vivid": 0.982,
+    "even": 0.601
+   },
+   "divider": {
+    "rail": "-12V",
+    "r_gnd": 6200,
+    "r_rail": 33000,
+    "v": -1.898
+   },
+   "n_res": 3,
+   "name": "orange | cyan to azure",
+   "say": "On the +x wing it runs orange; on the -x wing, cyan to azure; through the crossings, amber to spring.",
+   "hue_speed": 357.0,
+   "vref_sens": [
+    0.607,
+    0.603
+   ],
+   "slow!": {
+    "score": 0.6265264999357467,
+    "vivid": 0.9861486765762378,
+    "even": 0.635326614350844,
+    "lit": 0.9878368765644021,
+    "sat": 0.9846583295817525,
+    "sectors": [
+     0.0004,
+     0.042,
+     0.1886,
+     0.1473,
+     0.1105,
+     0.155,
+     0.0989,
+     0.0677,
+     0.1582,
+     0.0314,
+     0.0,
+     0.0
+    ]
+   },
+   "i_peak": [
+    3.42,
+    0.41,
+    1.52
+   ],
+   "i_mean": [
+    0.706,
+    0.182,
+    0.104
+   ],
+   "die_lit": [
+    0.568,
+    0.997,
+    0.318
+   ],
+   "bright": 70.3,
+   "v_rev": 0.59,
+   "i_offset": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "i_blend": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "nice!": {
+    "score": 0.3193667654927961,
+    "vivid": 0.8483352651874673,
+    "even": 0.3764629134240006,
+    "lit": 0.9999419600970443,
+    "sat": 0.8148087101470319,
+    "sectors": [
+     0.0001,
+     0.0132,
+     0.218,
+     0.2194,
+     0.0156,
+     0.0,
+     0.0054,
+     0.1966,
+     0.2881,
+     0.043,
+     0.0006,
+     0.0
+    ]
+   }
+  },
+  {
+   "n": 10,
+   "lamp": {
+    "part": "CA",
+    "vref": 3.7,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     470.0,
+     15000.0,
+     33000.0
+    ],
+    "ro": [
+     null,
+     null,
+     null
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "GND"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "topo": "A",
+   "dropin": true,
+   "plus1": false,
+   "desc": "common anode at +3.70 V; R=z via 470R, G=x via 15k, B=-y via 33k",
+   "robust": {
+    "med": 0.578,
+    "p20": 0.513,
+    "vivid": 0.826,
+    "even": 0.685
+   },
+   "divider": {
+    "rail": "+12V",
+    "r_gnd": 12000,
+    "r_rail": 27000,
+    "v": 3.692
+   },
+   "n_res": 3,
+   "name": "azure to violet | green",
+   "say": "On the +x wing it runs azure to violet; on the -x wing, green; through the crossings, spring to azure.",
+   "hue_speed": 321.0,
+   "vref_sens": [
+    0.603,
+    0.631
+   ],
+   "slow!": {
+    "score": 0.6170240582591353,
+    "vivid": 0.8153495512977932,
+    "even": 0.756760161671785,
+    "lit": 0.9913196750716843,
+    "sat": 0.7993913257991678,
+    "sectors": [
+     0.0507,
+     0.062,
+     0.0361,
+     0.0236,
+     0.0365,
+     0.1882,
+     0.2355,
+     0.1177,
+     0.1031,
+     0.0675,
+     0.0436,
+     0.0354
+    ]
+   },
+   "i_peak": [
+    3.44,
+    0.21,
+    0.11
+   ],
+   "i_mean": [
+    0.392,
+    0.09,
+    0.038
+   ],
+   "die_lit": [
+    0.482,
+    0.981,
+    0.908
+   ],
+   "bright": 32.7,
+   "v_rev": 0.98,
+   "i_offset": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "i_blend": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "nice!": {
+    "score": 0.28768700403277914,
+    "vivid": 0.45197786027140174,
+    "even": 0.6365068498267372,
+    "lit": 1.0,
+    "sat": 0.5236011595072738,
+    "sectors": [
+     0.0629,
+     0.0467,
+     0.0479,
+     0.0467,
+     0.0695,
+     0.3087,
+     0.1341,
+     0.0093,
+     0.1376,
+     0.065,
+     0.0214,
+     0.0502
+    ]
+   }
+  }
+ ]
+}

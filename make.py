@@ -208,7 +208,7 @@ def clean():
           + (f", {kept} were already absent" if kept else "")
           + ".\nEverything else in the repository is source: scripts/, docs/*.md,\n"
           "README.md, CLAUDE_CODE_CHAT.md, LICENSE, .gitignore and the\n"
-          "docs/history/ and docs/lamp/ pictures.  ./make.py rebuilds the rest.")
+          "docs/history/, docs/lamp/ and docs/lamp2/.  ./make.py rebuilds the rest.")
     return 0
 
 

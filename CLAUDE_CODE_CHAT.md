@@ -2117,3 +2117,310 @@ is still the cheap way out — and the placements must go up as
 Nothing on the board, and nothing to re-send: the design is untouched and the
 gerbers still rebuild byte-identically. I added only the two pictures above,
 under `docs/history/response-11/`, cropped from JLCPCB's own preview.
+
+## Prompt 12
+
+I received the boards from JLCPCB. They worked, including the RGB LED, the variable `r` knob, and the X synchronization. But the LED is mostly blue with some green and the extremely rare "something else". It's almost never that interesting.
+
+* Check that the configuration of the revA that was given to JLCPCB actually uses the scheme we decided on. If not, why not?
+* Check that your treatment of the LEDs, especially the red LED is correct: in terms of voltage to current to brightness to perceived brightness to hue and saturation. Why does the board, as manufactured, not look as interesting as the simulation?
+* I want to do another revision of these boards, but I want the LED to be more interesting. Scan through your parameters again, maybe in a more thorough way, to find the configuration where all hues are most equally populated and the color is usually saturated. I'm mostly interested in saturated hues --- colors that are close to white or black are less interesting.
+
+Rank options based on these metrics and present me with several different-looking candidates again to choose from.
+
+## Response 12
+
+Short answers first:
+
+* **Rev A is exactly the lamp we chose** — option 038, assembled correctly.
+* **My model of the LED was wrong, and wrong in the flattering direction.**
+  Red was the worst of it: it turns on later than I modelled, and it is
+  dimmer per milliamp at these currents. Green and blue are brighter per
+  milliamp than I modelled. Corrected, the model predicts what you are
+  seeing: blue and green, and about nine red-tinged flickers a minute, each
+  too short to register.
+* **There are much better wirings**, and one of them is rev A's own wiring
+  with one more resistor. You can try it on the boards you have. Ten
+  candidates play in real time here:
+  **<https://claude.ai/artifact/YJeV4rosx9WrNAAR4AmcUE>**, and the same page
+  is `docs/lamp2/index.html`.
+
+### Rev A is the scheme we chose
+
+Read straight out of the board file that made the gerbers:
+
+| D1 pin | die | net | through | to |
+|---|---|---|---|---|
+| 1 | common anode | U2B output, a follower | — | 12k/33k from +12 V = **+3.20 V** |
+| 2 | blue cathode | Net-(D1-B) | R14 = **1.5k** | **−y** |
+| 3 | green cathode | Net-(D1-G) | R13 = **3.9k** | **x** |
+| 4 | red cathode | Net-(D1-R) | R15 = **470R** | **z** |
+
+The BOM line is C2962095, MHPA3528CRGBCT, common anode. The pad positions
+match the datasheet's top view. All of that is option 038.
+
+The lamp itself also rules out an assembly mistake. Turned 180°, the anode
+would sit on x through 3.9k: only red could ever light. The
+common-cathode twin would put its red anode straight on the reference and
+its common cathode on z, so again only red could light, at the bottom of
+each loop. A lamp that shows blue and green, in the pattern you describe,
+can only be the right part fitted the right way round.
+
+I looked at the bench videos in `video/` (untracked; I have not added them
+to git). One thing in them matters for anyone judging the lamp. In
+`20260924_100246` the scope is at 5 ms/div with about 2 ms per orbit: that
+board is on `fast!`. At `fast!` the lamp can only show its average colour,
+and for rev A that is blue. A new DIP switch usually ships all-off, which is
+`fast!` (my inference; I didn't check this part's shipping state), and the
+steady blue in the unboxing close-up fits that. In `094151` the board is on a
+slower setting, and the lamp's reflection in the scope screen goes blue,
+then green, then blue — your description exactly.
+
+### Where my LED model was wrong
+
+Down the chain you listed:
+
+**Voltage → current.** Wrong for all three, worst for blue. I used ideality
+factors of 3.2 (red) and 5 (green, blue). That had every die conducting 0.3–0.45 V
+too early:
+
+| | at 10 µA | at 0.1 mA | at 1 mA | at 20 mA |
+|---|---|---|---|---|
+| red, rev A model → corrected | 1.17 → 1.53 V | 1.36 → **1.64** V | 1.56 → 1.75 V | 2.00 → 2.01 V |
+| green | 1.72 → 2.25 V | 2.02 → **2.40** V | 2.33 → 2.56 V | 3.00 → 3.00 V |
+| blue | 1.77 → 2.38 V | 2.07 → **2.52** V | 2.38 → 2.67 V | 3.05 → 3.04 V |
+
+The corrected curves are typical of AlGaInP and InGaN at low current. They
+still put each die's 20 mA voltage inside the datasheet's min–max column.
+They are not measurements of this part: its datasheet's curves stop at
+1 mA. So every candidate below is judged against a spread around them, not
+against these numbers alone.
+
+**Current → light.** This is the big one, and I owe you a correction on top of
+the physics. I modelled light as `(I/20 mA)^γ` with γ = 1.05 for red and
+1.15 for green and blue. `DESIGN_NOTES.md` said γ came from the datasheet's
+relative-intensity curve. **It did not.** That curve is a straight line
+(γ = 1) and stops at 1 mA. The numbers were my own assumption, and for green
+and blue they point the wrong way:
+
+* InGaN (green, blue) is at its most efficient around 2 A/cm², about a
+  milliamp for a die this size, and droops above that. At the lamp's
+  currents it gives *more* light per milliamp than at 20 mA.
+* AlGaInP (red) is still gaining efficiency at 20 mA. It loses it at low
+  current, to SRH and surface recombination at the edges of a small die.
+
+Light per milliamp, against the same die at 20 mA:
+
+| | 0.1 mA | 0.3 mA | 1 mA | 3 mA |
+|---|---|---|---|---|
+| red, rev A model → corrected | 0.77 → **0.30** | 0.81 → 0.50 | 0.86 → 0.71 | 0.91 → 0.85 |
+| green | 0.45 → **1.36** | 0.53 → 1.53 | 0.64 → 1.52 | 0.75 → 1.38 |
+| blue | 0.45 → **1.04** | 0.53 → 1.21 | 0.64 → 1.28 | 0.75 → 1.23 |
+
+So at half a milliamp, green and blue are two to three times brighter
+*relative to red* than I told you.
+
+**Light → perceived brightness.** Right in principle, but it left something
+out. I used luminance, and saturated lights look brighter than their
+luminance says (the Helmholtz–Kohlrausch effect). By Ware and Cowan's
+formula this lamp's blue looks 1.7× brighter, its red 1.5× and its green
+1.2×, which is one more nudge towards blue.
+
+**Perceived brightness → hue and saturation.** The colour science held up:
+each die's computed dominant wavelength is within 3 nm of its datasheet. The
+*goal* was wrong. I scored the rev A gallery on hue coverage × brightness
+balance, which rewards all three dies being on together. That is the recipe
+for cyan and white, not saturated colour.
+
+**And one link you didn't list: time.** The eye averages colour over a few
+tens of milliseconds. The gallery pictures drew every 4.7 ms sample as its
+own pixel, 145 seconds in one glance. A 50 ms flash became a visible stripe,
+and a hundred rare flashes were all on screen at once.
+
+**Especially red**, as you suspected. The rev A red die is fed from z
+through 470R with its anode at 3.2 V, so it can only light at the bottom of
+a loop:
+
+| z (15 = 1.5 V) | time spent below it | red at that z, rev A model | red at that z, corrected |
+|---|---|---|---|
+| 15 | 17 % | 0.45 mA, 6.2 mcd | 0.11 mA, **0.6 mcd** |
+| 12 | 8 % | 0.94 mA, 13.6 mcd | 0.58 mA, 5.8 mcd |
+| 10 | 4.5 % | 1.30 mA, 19.2 mcd | 0.96 mA, 10.7 mcd |
+
+At the typical bottom of a loop, red is ten times dimmer than I modelled.
+Even at the deepest dips it no longer wins: when z < 10, the median
+corrected intensities are red 15 mcd, green 23 mcd and blue 11 mcd. That
+flash is a pale cyan-white, where the old model had red 24, green 12 and
+blue 8.5 — pink.
+
+Which correction does the damage? Here are rev A's numbers with one
+correction at a time:
+
+| model | red's share of the light | warm flashes |
+|---|---|---|
+| rev A's model | 9.7 % | 38 a minute, ~50 ms each |
+| + corrected I-V only | 6.9 % | 35 a minute |
+| + corrected efficiency only | 3.9 % | none |
+| + corrected wavelengths and bins only | 9.7 % | 46 a minute |
+| all corrected | **2.7 %** | **9 a minute, ~20 ms each** |
+
+The efficiency curve is the main culprit, and the early turn-on is second.
+
+Sources for the physics:
+[InGaN efficiency peaking at ~2 A/cm²](https://arxiv.org/pdf/1705.09557);
+[AlGaInP losing efficiency at low current density, to SRH and surface recombination](https://doi.org/10.3390/cryst15070604)
+(see also [this](https://www.nature.com/articles/s41598-021-83933-3));
+and Don Klipstein's bench notes, which say InGaAlP LEDs *"have significantly
+reduced efficiency at low currents of a few mA or less"*
+([ledc.html](https://donklipstein.com/ledc.html)).
+
+### Why the board is duller than the picture
+
+The same 40 seconds of the attractor, at `slow!`, as the eye keeps it.
+First under the model I chose rev A with, then under the corrected one.
+The bars show where the vivid moments fall around the hue circle. The dashed
+line is equal time for every hue.
+
+![rev A, then and now](docs/history/response-12/reva-then-and-now.png)
+
+The first strip shows pink, white and violet every few seconds. That is
+what made 038 look like "an occasional fast swirl through the colour wheel".
+Even the old model gave it only about four of twelve hues. The swirl was 3 %
+of the time, and the picture showed it all at once. The corrected strip is
+your board: azure 43 %, blue 23 %, green-to-cyan 33 %, and 1 % of anything
+else.
+
+### The new search
+
+The corrected model is `scripts/lamp_model.py`, with rev A's model kept
+beside it as `REVA`. Everything is judged after the eye's filter, at `slow!`:
+
+* **vivid**: the fraction of the time the lamp is neither near black nor near
+  white. Near black means perceived brightness below a sixth of its own
+  bright end. Near white means less than three quarters of the way to the
+  most saturated colour the dies can make in that hue. That edge is
+  reached exactly when no more than two dies are lit.
+* **hues**: how evenly the vivid moments fill the twelve 30° sectors of the
+  OKLab hue circle, which is the most evenly spaced of the simple colour
+  spaces. 12 means every hue gets equal time; rev A fills about 4.
+* **score** = vivid × hues / 12.
+
+I judged about 6.7 million wirings in four families:
+
+* **Rev A's topology** (one reference, one resistor per die): all 3.3 million
+  wirings exhaustively. That is both lamp parts × the 27 ways to give x,
+  −y and z to the dies × references in 0.1 V steps × every E6 resistor per
+  die, with the best then polished on E12.
+* **Rev A plus one resistor** from the blue die to +12 V: a 1.7 million grid.
+* **A threshold of each die's own**, set by a resistor to a rail, and
+  **blends of two signals** on a die: about 1.8 million, by evolutionary
+  search from many starts.
+
+Every finalist was then re-judged against 24 simulated LEDs. They are drawn
+from what the datasheet allows: each colour's brightness bin (a factor of
+two), ±0.08 V of forward voltage, and the uncertainty in those efficiency
+curves. Each was run at r = 26, 28 and 31, and ranked on the median. Nothing
+that only works for my nominal LED made the list. I set aside designs that
+run a die above 5 mA or stand more than 2 mA in an offset resistor. Every
+finalist was also re-scored with the 78L12 4 % high and 4 % low, which moves
+the reference with it; none moved by more than about 0.05.
+
+**Rev A scores 0.33 on this test. The best candidates score 0.78.**
+
+### The candidates
+
+The five most different, from the ten on the page (40 s each at `slow!`,
+nominal LED):
+
+![candidates](docs/history/response-12/candidates.png)
+
+All ten, ranked by median score over the simulated real LEDs:
+
+| # | what changes | median (20th pct) | vivid | hues of 12 | at `nice!` | what you see: +x wing · −x wing |
+|---|---|---|---|---|---|---|
+| 1 | blends: 6 resistors on the dies | 0.78 (0.74) | 89 % | 11.4 | 0.47 | violet→red · green→azure |
+| 2 | own thresholds: 5 resistors | 0.78 (0.75) | 91 % | 11.1 | **0.52** | violet→red · green→azure |
+| 3 | **rev A + one resistor** | 0.77 (0.72) | 90 % | 11.1 | 0.47 | azure→magenta · red→green |
+| 4 | common cathode, blends, 8 resistors | 0.76 (0.68) | 94 % | 10.6 | 0.27 | red→orange · cyan→violet |
+| 5 | common cathode, blends, 6 resistors | 0.76 (0.71) | 89 % | 10.9 | 0.32 | red→yellow-green · spring→violet |
+| 6 | rev A + one resistor, gentler | 0.75 (0.69) | 90 % | 11.0 | 0.41 | azure→magenta · red→green |
+| 7 | **drop-in**: rev A values only | 0.65 (0.60) | 83 % | 10.2 | 0.27 | azure→pink · red→spring |
+| 8 | common cathode, 3 resistors | 0.64 (0.60) | 97 % | 8.2 | 0.29 | yellow-green→green · blue→violet |
+| 9 | common cathode, 3 resistors | 0.59 (0.55) | 99 % | 7.6 | 0.32 | orange · cyan→azure |
+| 10 | drop-in | 0.58 (0.51) | 82 % | 9.1 | 0.29 | azure→violet · green |
+
+A few things the table shows:
+
+* **The top six are statistically the same.** The spread across real LEDs
+  (20th percentile to median) is wider than the gaps between them. So choose
+  among them on looks and simplicity, not on the third decimal.
+* **More resistors buy very little.** Blending two signals on a die (1, 4, 5)
+  gains about 0.01 over a threshold of its own (2), which gains 0.01 over
+  rev A plus one resistor (3).
+* **Common cathode leans warm.** Candidates 4 and 5 give red through
+  yellow-green more time than the cool hues, and 8 never shows spring, cyan
+  or azure at all. All the common-cathode candidates need the MHPC3528 part,
+  with the board's pin 1 and pin 4 nets swapped and the reference taken
+  from −12 V.
+* **`nice!` blurs all of them.** At 102 ms the orbits pass too fast for the
+  eye, and even the best scores only about 0.5. The lamp is a `slow!` and
+  `slower!` feature. Candidate 2 holds up best at `nice!`.
+
+### What I would do
+
+**Try candidate 3 on a rev A board first.** It keeps rev A's wiring —
+red from z, green from x, blue from −y. It scores within 0.02 of the best,
+and it needs no new traces:
+
+| | rev A | candidate 3 |
+|---|---|---|
+| R15 (red) | 470R | 470R, unchanged |
+| R13 (green) | 3.9k | **27k** |
+| R14 (blue) | 1.5k | **6.8k** |
+| R16 / R17 (reference) | 12k / 33k = 3.20 V | 12k / **24k** = **4.00 V** |
+| new | — | **56k from D1 pin 2** (the lamp end of R14) **to +12 V** |
+
+The +12 V probe pad is the obvious place for the far end of the 56k.
+
+What it does: red now floods in at the bottom of every loop, not just the
+deepest one. Blue and green are turned down to match it. The extra resistor
+makes blue harder to turn on without touching the other two. Blue then
+belongs to the +x wing and green to the −x wing, where rev A had them mixing
+into cyan on both. On the +x wing it runs azure through violet to magenta;
+on the −x wing, red through yellow to green.
+
+That rework is also the best test of the corrected model. If the board then
+looks like candidate 3 on the page at the same speed setting, the model has
+earned its keep. If not, tell me what you see and I will refit it from the
+board.
+
+If you would rather not bodge anything, candidate 7 is pure value changes:
+R15 → 390R, R13 → 27k, R14 → 27k, R16 → 15k. It lands at 0.65, twice
+rev A's score.
+
+For rev B itself, my pick is **3**: one more 0805 and new values, with
+everything else about the board unchanged. If you would rather have the most
+robust lamp, and the one that survives `nice!` best, **2** is the choice.
+It moves red to −y and blue to z, which means swapping two of the lamp's
+feeds and adding two resistors. Pick a number, or tell me what you see on
+the reworked board, and I will put it on the board and rev it to B.
+
+### What changed in the repo
+
+Nothing on the board. The gerbers, BOM and CPL rebuild byte-identically,
+and `./make.py` is green.
+
+* `scripts/lamp_model.py`: the corrected LED model, rev A's kept as
+  `REVA`, and 22 self-checks (it was 13). New checks: each die's 20 mA
+  voltage lands inside the datasheet column; InGaN gives more light per mA
+  at 1 mA than at 20 and AlGaInP less; saturation reads 1 on every
+  two-die mix; the eye filter passes a steady light.
+* `scripts/lamp_core.py` (simulating and judging a wiring),
+  `lamp_search.py`, `lamp_search_mix.py`, `lamp_search_reva.py` (the
+  searches), `lamp_gallery2.py` and `lamp_page.py` (the page).
+* `docs/lamp2/`: the page, and every ranked design as JSON.
+* `docs/DESIGN_NOTES.md`: rev A's lamp section now says what the boards
+  showed. The false claim about γ is marked and corrected. There are new
+  sections on the corrected model and on this search.
+* The old gallery in `docs/lamp/` is left as it was, as the record of what
+  038 was chosen from.

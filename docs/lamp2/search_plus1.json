@@ -1,0 +1,556 @@
+{
+ "rows": [
+  {
+   "lamp": {
+    "part": "CA",
+    "vref": 4.0,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     360.0,
+     22000.0,
+     5600.0
+    ],
+    "ro": [
+     null,
+     null,
+     47000.0
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "+12V"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "desc": "common anode at +4.00 V; R=z via 360R, G=x via 22k, B=-y via 5.6k (+47k to +12V)",
+   "topo": "B",
+   "score_med": 0.7696033716532661,
+   "score_p20": 0.7186241047972385,
+   "vivid_med": 0.8939464152954419,
+   "even_med": 0.8572384714565162,
+   "lit_med": 0.9983489782378461,
+   "sat_med": 0.8562812321349319,
+   "bright_med": 53.8039931059926,
+   "ipk_max": 5.447551622009226
+  },
+  {
+   "lamp": {
+    "part": "CA",
+    "vref": 4.0,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     470.0,
+     27000.0,
+     6800.0
+    ],
+    "ro": [
+     null,
+     null,
+     56000.0
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "+12V"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "desc": "common anode at +4.00 V; R=z via 470R, G=x via 27k, B=-y via 6.8k (+56k to +12V)",
+   "topo": "B",
+   "score_med": 0.7690582351418578,
+   "score_p20": 0.7177681576215262,
+   "vivid_med": 0.8968430256869835,
+   "even_med": 0.8521942083530013,
+   "lit_med": 0.9989163380348381,
+   "sat_med": 0.8581228855385293,
+   "bright_med": 40.78810881826223,
+   "ipk_max": 4.210795334311034
+  },
+  {
+   "lamp": {
+    "part": "CA",
+    "vref": 4.0,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     390.0,
+     22000.0,
+     5600.0
+    ],
+    "ro": [
+     null,
+     null,
+     47000.0
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "+12V"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "desc": "common anode at +4.00 V; R=z via 390R, G=x via 22k, B=-y via 5.6k (+47k to +12V)",
+   "topo": "B",
+   "score_med": 0.7684326717859197,
+   "score_p20": 0.7122960816385966,
+   "vivid_med": 0.8942499734590279,
+   "even_med": 0.850855016512895,
+   "lit_med": 0.9995659521540591,
+   "sat_med": 0.8551821716788793,
+   "bright_med": 50.190127397190594,
+   "ipk_max": 5.042833423496188
+  },
+  {
+   "lamp": {
+    "part": "CA",
+    "vref": 4.0,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     360.0,
+     22000.0,
+     5100.0
+    ],
+    "ro": [
+     null,
+     null,
+     43000.0
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "+12V"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "desc": "common anode at +4.00 V; R=z via 360R, G=x via 22k, B=-y via 5.1k (+43k to +12V)",
+   "topo": "B",
+   "score_med": 0.7680809275949828,
+   "score_p20": 0.7195286482455094,
+   "vivid_med": 0.8990024471456164,
+   "even_med": 0.8495428944172537,
+   "lit_med": 0.9987788488141259,
+   "sat_med": 0.8593323512355355,
+   "bright_med": 54.35339824841272,
+   "ipk_max": 5.447551622009226
+  },
+  {
+   "lamp": {
+    "part": "CA",
+    "vref": 4.0,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     360.0,
+     20000.0,
+     5100.0
+    ],
+    "ro": [
+     null,
+     null,
+     43000.0
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "+12V"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "desc": "common anode at +4.00 V; R=z via 360R, G=x via 20k, B=-y via 5.1k (+43k to +12V)",
+   "topo": "B",
+   "score_med": 0.7673888112634233,
+   "score_p20": 0.7102063385667962,
+   "vivid_med": 0.8932284000806449,
+   "even_med": 0.8506611965639057,
+   "lit_med": 0.999758733724945,
+   "sat_med": 0.8546413012058036,
+   "bright_med": 54.88402048276449,
+   "ipk_max": 5.447551622009226
+  },
+  {
+   "lamp": {
+    "part": "CA",
+    "vref": 4.0,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     470.0,
+     27000.0,
+     6200.0
+    ],
+    "ro": [
+     null,
+     null,
+     51000.0
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "+12V"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "desc": "common anode at +4.00 V; R=z via 470R, G=x via 27k, B=-y via 6.2k (+51k to +12V)",
+   "topo": "B",
+   "score_med": 0.7666621840988639,
+   "score_p20": 0.7114233151325717,
+   "vivid_med": 0.9005884947025129,
+   "even_med": 0.8449546504843353,
+   "lit_med": 0.9993269432842515,
+   "sat_med": 0.8610645656154046,
+   "bright_med": 41.26594658403916,
+   "ipk_max": 4.210795334311034
+  },
+  {
+   "lamp": {
+    "part": "CA",
+    "vref": 4.0,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     360.0,
+     22000.0,
+     4700.0
+    ],
+    "ro": [
+     null,
+     null,
+     39000.0
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "+12V"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "desc": "common anode at +4.00 V; R=z via 360R, G=x via 22k, B=-y via 4.7k (+39k to +12V)",
+   "topo": "B",
+   "score_med": 0.7664723699365075,
+   "score_p20": 0.7163327733673812,
+   "vivid_med": 0.9028308633581665,
+   "even_med": 0.8435761391280007,
+   "lit_med": 0.9989056708249019,
+   "sat_med": 0.8631460103637565,
+   "bright_med": 54.93477798280195,
+   "ipk_max": 5.447551622009226
+  },
+  {
+   "lamp": {
+    "part": "CA",
+    "vref": 4.0,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     390.0,
+     24000.0,
+     5600.0
+    ],
+    "ro": [
+     null,
+     null,
+     47000.0
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "+12V"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "desc": "common anode at +4.00 V; R=z via 390R, G=x via 24k, B=-y via 5.6k (+47k to +12V)",
+   "topo": "B",
+   "score_med": 0.7661331739892656,
+   "score_p20": 0.7215260303890434,
+   "vivid_med": 0.89908657660349,
+   "even_med": 0.8521712827555827,
+   "lit_med": 0.99859147550898,
+   "sat_med": 0.8594853047976536,
+   "bright_med": 49.74210690735338,
+   "ipk_max": 5.042833423496188
+  },
+  {
+   "lamp": {
+    "part": "CA",
+    "vref": 4.0,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     360.0,
+     20000.0,
+     4700.0
+    ],
+    "ro": [
+     null,
+     null,
+     39000.0
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "+12V"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "desc": "common anode at +4.00 V; R=z via 360R, G=x via 20k, B=-y via 4.7k (+39k to +12V)",
+   "topo": "B",
+   "score_med": 0.7658012362193938,
+   "score_p20": 0.7128998716466565,
+   "vivid_med": 0.8973145568801022,
+   "even_med": 0.848217740756998,
+   "lit_med": 0.9997452177676949,
+   "sat_med": 0.8585448521344303,
+   "bright_med": 55.47324591606107,
+   "ipk_max": 5.447551622009226
+  },
+  {
+   "lamp": {
+    "part": "CA",
+    "vref": 4.0,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     390.0,
+     24000.0,
+     5100.0
+    ],
+    "ro": [
+     null,
+     null,
+     43000.0
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "+12V"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "desc": "common anode at +4.00 V; R=z via 390R, G=x via 24k, B=-y via 5.1k (+43k to +12V)",
+   "topo": "B",
+   "score_med": 0.7642195661808593,
+   "score_p20": 0.7132440300231477,
+   "vivid_med": 0.9032223729148037,
+   "even_med": 0.8416251900205146,
+   "lit_med": 0.9989920227883387,
+   "sat_med": 0.8625723365635684,
+   "bright_med": 50.481547425745376,
+   "ipk_max": 5.042833423496188
+  },
+  {
+   "lamp": {
+    "part": "CA",
+    "vref": 4.0,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     390.0,
+     22000.0,
+     5100.0
+    ],
+    "ro": [
+     null,
+     null,
+     43000.0
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "+12V"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "desc": "common anode at +4.00 V; R=z via 390R, G=x via 22k, B=-y via 5.1k (+43k to +12V)",
+   "topo": "B",
+   "score_med": 0.7626738813303366,
+   "score_p20": 0.7094433993463239,
+   "vivid_med": 0.8980593226747872,
+   "even_med": 0.8455797728939849,
+   "lit_med": 0.9997385807696446,
+   "sat_med": 0.858354559101384,
+   "bright_med": 50.93095231594438,
+   "ipk_max": 5.042833423496188
+  },
+  {
+   "lamp": {
+    "part": "CA",
+    "vref": 4.0,
+    "src": [
+     2,
+     0,
+     1
+    ],
+    "rs": [
+     430.0,
+     24000.0,
+     5600.0
+    ],
+    "ro": [
+     null,
+     null,
+     47000.0
+    ],
+    "rail": [
+     "GND",
+     "GND",
+     "+12V"
+    ],
+    "src2": [
+     null,
+     null,
+     null
+    ],
+    "rs2": [
+     null,
+     null,
+     null
+    ]
+   },
+   "desc": "common anode at +4.00 V; R=z via 430R, G=x via 24k, B=-y via 5.6k (+47k to +12V)",
+   "topo": "B",
+   "score_med": 0.761698339215743,
+   "score_p20": 0.7095071466383839,
+   "vivid_med": 0.8983113836385257,
+   "even_med": 0.8460124331859551,
+   "lit_med": 0.9997993346706101,
+   "sat_med": 0.8585570234029964,
+   "bright_med": 45.865556373467946,
+   "ipk_max": 4.589035980995634
+  }
+ ]
+}

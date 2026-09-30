@@ -113,12 +113,19 @@ Comfortable inside +/-12 V rails.
    | green | x | x < +0.6 V, most of the -x wing | 0.7 mA, 36 mcd | 87 % |
    | blue | -y | -y < +0.6 V, most of the +x wing | 2.2 mA, 39 mcd | 84 % |
 
-   The three peak brightnesses are within 8 % of each other, so no single
-   colour dominates: blue and green mix through the wings and red flashes in
-   at the bottom of each excursion.  That is option 038 of the hundred wirings
-   rendered in `docs/lamp/` -- mostly deep blue, with a fast swirl through the
-   colour wheel whenever the trajectory changes wings.  U2B sources 3.7 mA at
-   the peak and 1.2 mA on average.
+   That table is what rev A's lamp model predicted, and it is option 038 of
+   the hundred wirings rendered in `docs/lamp/`: three peak brightnesses
+   within 8 % of each other, blue and green mixing through the wings and red
+   flashing in at the bottom of each excursion.  U2B sources 3.7 mA at the
+   peak and 1.2 mA on average.
+
+   **The boards disagreed.**  Rev A's lamp is mostly blue with some green,
+   and anything else is rare.  The model had the red die turning on too early
+   and, worse, had the two InGaN dies (green, blue) losing efficiency at low
+   current when they gain it, while the AlGaInP red loses it.  At the half a
+   milliamp this lamp runs at, green and blue are two to three times brighter
+   *relative to red* than the table says, and red's flashes are swamped.  See
+   "What the rev A boards showed" below.
 
    The part is **MHPA3528CRGBCT** (LCSC C2962095), common anode: pin 1 is the
    anode, pin 2 blue, pin 3 green, pin 4 red.  Its common-*cathode* twin
@@ -236,9 +243,12 @@ Rather than guess, the board's colour is computed from the data sheet:
 * **I-V per die**, as an ideal diode with a series resistance, back-solved so
   that each die passes exactly its data-sheet 20 mA at its data-sheet forward
   voltage:  `i_s = 0.020 exp(-(Vf20 - 0.020 Rs) / (n VT))`.
-* **Luminous intensity**, `mcd = Iv20 (i / 20 mA)^gamma`, with gamma from the
-  data sheet's own relative-intensity curve -- it is not linear, which is why
-  equal-current resistors do not give equal brightness.
+* **Luminous intensity**, `mcd = Iv20 (i / 20 mA)^gamma`, with gamma = 1.05
+  for red and 1.15 for green and blue.  *(Corrected after the boards came
+  back: this section said gamma came from the data sheet's own
+  relative-intensity curve.  It did not.  That curve is a straight line,
+  gamma = 1, and it stops at 1 mA.  Worse, gamma > 1 for green and blue is
+  the wrong direction for InGaN.  See "What the rev A boards showed".)*
 * **Spectrum**, a Gaussian from each die's peak wavelength and FWHM.
 * **Colour**, by integrating that spectrum against the **CIE 1931 2-degree
   observer** (the real table, embedded at 5 nm) to get XYZ, then the D65 sRGB
@@ -300,11 +310,89 @@ current are 26 of the 100 options but 7 of the 9 favourites.  Ranked by
   which is what makes the colour a mix rather than one die with hints of the
   others.
 
-What you see: mostly deep blue, with a fast swirl through the colour wheel
-every time the trajectory changes wings, and a red flash at the bottom of each
-z excursion.  Turning the r knob changes it -- at the counter-clockwise stop
-the lamp stops changing colour altogether, because the attractor has collapsed
-to a fixed point.
+What the model said you would see: mostly deep blue, with a fast swirl
+through the colour wheel every time the trajectory changes wings, and a red
+flash at the bottom of each z excursion.  Turning the r knob changes it -- at
+the counter-clockwise stop the lamp stops changing colour altogether, because
+the attractor has collapsed to a fixed point.
+
+### What the rev A boards showed
+
+The boards were built exactly as above -- netlist, part and orientation all
+check out, and a lamp fitted any other way could not show blue and green at
+all.  But the lamp is mostly blue with some green, and anything else is rare.
+The model was wrong at two links of the chain, and `scripts/lamp_model.py`
+now carries both the model rev A was chosen with (`REVA`) and a corrected one
+(`MHPA3528`):
+
+| | rev A's model | corrected |
+|---|---|---|
+| red at 0.1 mA | 1.36 V | 1.64 V |
+| green at 0.1 mA | 2.02 V | 2.40 V |
+| blue at 0.1 mA | 2.07 V | 2.52 V |
+| red light per mA at 1 mA, against 20 mA | 0.86x | 0.71x |
+| green, the same | 0.64x | 1.52x |
+| blue, the same | 0.64x | 1.28x |
+
+* **Voltage to current.**  Ideality factors of 3.2 and 5 had every die
+  conducting 0.3-0.45 V too early.  The corrected curves are typical of the
+  two materials at 0.1 mA, and still land each die's 20 mA voltage inside
+  the datasheet's min-max column.
+* **Current to light.**  InGaN (green, blue) peaks in efficiency at a few
+  A/cm^2 -- about a milliamp for a die this size -- and droops above it, so
+  at the lamp's currents it is *more* efficient than at 20 mA.  AlGaInP
+  (red) is still gaining efficiency at 20 mA and loses it below a few mA.
+  The corrected model uses the ABC model for InGaN and SRH-plus-radiative for
+  AlGaInP.  Of all the corrections this one matters most: on its own it
+  takes red from 10 % of rev A's light to 4 %.
+* **Light to brightness.**  A saturated blue looks about 1.7 times brighter
+  than its luminance says, red 1.5, green 1.2 (the Helmholtz-Kohlrausch
+  effect, Ware and Cowan's formula).  The judge now uses that.
+* **Brightness in time.**  The eye averages colour over a few tens of
+  milliseconds.  The corrected red flashes last about 20 ms, so they are
+  averaged away; the rev A pictures, which drew every 4.7 ms sample as a
+  pixel, showed them all.
+
+Together: red went from 9.7 % of rev A's light to 2.7 %, and its warm flashes
+from 38 a minute at about 50 ms each to 9 a minute at about 20 ms.  Under
+the corrected model rev A's lamp spends its vivid moments 43 % azure, 23 %
+blue, 33 % green-to-cyan and 1 % anything else -- which is what the boards
+do.
+
+The colour science itself held up: each die's computed dominant wavelength
+is within 3 nm of its datasheet.  What also has to change is the goal.  The
+rule that chose rev A rewarded all three dies contributing, which is the
+recipe for mixtures -- cyan and white -- and not for saturated hues.
+
+### The rev B search
+
+`scripts/lamp_search.py`, `lamp_search_mix.py` and `lamp_search_reva.py`
+search again under the corrected model, and `scripts/lamp_gallery2.py`
+writes the finalists to `docs/lamp2/index.html`.  Each wiring is judged on:
+
+* **vivid**: the fraction of the time the lamp is neither near black
+  (perceived brightness under a sixth of its own bright end) nor near white
+  (under three quarters of the way to the most saturated colour the dies
+  can make in that hue, a limit reached exactly when no more than two dies
+  are lit);
+* **hues**: how evenly those vivid moments spread over the twelve 30-degree
+  sectors of the OKLab hue circle, as exp(entropy) / 12;
+* **score** = vivid x hues, after the eye's 20 ms two-stage filter at
+  `slow!`.
+
+About 6.7 million wirings were judged: every rev-A-style wiring
+(3.3 million, exhaustively, on E6 resistors, then polished on E12), rev A
+plus one resistor (1.7 million, a grid), and dies with thresholds of their
+own or blends of two signals (1.8 million, by evolutionary search).  Every
+finalist was then re-judged against 24 LEDs drawn from what the datasheet
+allows -- brightness bins, forward voltage, and the uncertainty in the
+efficiency curves -- at r = 26, 28 and 31, and ranked on the median.
+Designs that stand more than 2 mA in an offset resistor or run a die above
+5 mA were set aside.
+
+Rev A scores 0.33 on that test.  The best rev B candidates score 0.77-0.78,
+and one of them is rev A's own wiring with one more resistor.  See
+`docs/lamp2/` for all ten finalists, playing in real time.
 
 ## Part selection (JLCPCB stock checked 2026-09-15)
 
