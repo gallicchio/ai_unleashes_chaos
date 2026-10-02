@@ -7,7 +7,7 @@ scratch in about forty seconds.
 
 The copper is split: the USB input has its own ground plane in the
 bottom-left corner, isolated from the analog ground by the converter and
-bridged only by R21, C25 and JP1.  Do not scratch across the 1 mm gap.
+bridged only by R18, C25 and JP1.  Do not scratch across the 1 mm gap.
 
 ## What to upload
 
@@ -15,7 +15,8 @@ bridged only by R21, C25 and JP1.  Do not scratch across the 1 mm gap.
 |---|---|
 | `out/lorenz/lorenz-gerbers.zip` | the *Add gerber file* box |
 | `out/lorenz/lorenz-bom.csv` | the BOM box (JLCPCB column layout) |
-| `out/lorenz/lorenz-cpl.csv` | the CPL / pick-and-place box |
+| `out/lorenz/lorenz-cpl_jlc_corrected.csv` | the CPL / pick-and-place box, at JLCPCB |
+| `out/lorenz/lorenz-cpl.csv` | the CPL / pick-and-place box, anywhere else |
 
 ## Board options to pick
 

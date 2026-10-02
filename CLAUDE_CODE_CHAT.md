@@ -2424,3 +2424,181 @@ and `./make.py` is green.
   sections on the corrected model and on this search.
 * The old gallery in `docs/lamp/` is left as it was, as the record of what
   038 was chosen from.
+
+## Prompt 13
+
+I cannot do the rework since I gave the two assembled boards to Paul. For revB, go with your top scoring LED design. Are there any other changes that we've discussed making for revB? If so, make them too. Do checks to make absolutely sure that your changes didn't break anything that was working. When revB is ready to upload to JLCPB, I'll do that and order several for assembly.
+
+## Response 13
+
+*The board and schematic for rev B, as uploaded.  The schematic links to its PDF.*
+
+| front | | back |
+|---|---|---|
+| ![front](docs/history/response-13/render-top.png) | ![iso](docs/history/response-13/render-iso.png) | ![back](docs/history/response-13/render-bottom.png) |
+
+[![schematic](docs/history/response-13/schematic.png)](docs/history/response-13/schematic.pdf)
+
+**Rev B is ready to upload.**  It is rev A with the top-scoring lamp, the few
+other changes we discussed, and nothing else.  `./make.py` is green, and I
+checked rev B against rev A file by file to show that everything else is
+unchanged.
+
+### What to upload
+
+Exactly as for rev A:
+
+| upload | file |
+|---|---|
+| gerbers | `out/lorenz/lorenz-gerbers.zip` |
+| BOM | `out/lorenz/lorenz-bom.csv` |
+| CPL | `out/lorenz/lorenz-cpl_jlc_corrected.csv` |
+
+Same board options as before: 2 layers, 1.6 mm, 1 oz, tented vias.  Your
+remark file `out/lorenz/lorenz-jlcpcb-PCBA-remark.txt` is still right
+word for word: D1 is the same part on the same footprint, in the same place
+at the same angle.  Two notes for the order:
+
+* **Don't upload `out/lorenz/lorenz-gerbers_Y11.zip`.**  That is JLCPCB's
+  own CAM package for rev A, which you committed when we checked their files.
+  It sits next to the real one with a similar name.
+* **Say again that the order code goes on the back,** as for rev A.
+
+Parts come to **$74.32 a board**, a cent more than rev A.  Five boards fully
+assembled is about **$501**, ten about **$929**; `docs/MANUFACTURING.md` has
+the breakdown.  Everything is in stock today.  The scarcest part is the BNC
+jack at about 157 boards' worth, then the DC/DC module at 196 and the MPY634
+at 424.
+
+### The lamp: candidate 1
+
+You asked for the top scorer.  First I re-scored the leaders against 96
+fresh simulated LEDs, at five settings of the r knob, to make sure the order
+held.  It did, just: candidate 1 scored 0.805 and candidate 2 0.804, which is
+a statistical tie, and both are clear of the rest.  So rev B carries
+**candidate 1**:
+
+| die | fed from | resistor | notes |
+|---|---|---|---|
+| red | −y | R15 = 1.5k | the main feed |
+| | x | **R22 = 8.2k** (new) | blends in about a fifth as much x |
+| | +12 V | **R23 = 8.2k** (new) | moves red's threshold on its own |
+| green | x | R13 = 24k | |
+| blue | z | R14 = 2.2k | |
+| | −12 V | **R24 = 36k** (new) | moves blue's threshold on its own |
+| common anode | U2B | R16 = **15k**, R17 = 33k | +3.75 V (rev A: 12k, +3.20 V) |
+
+R23 and R24 are the reason it is saturated.  They move red's and blue's
+thresholds independently of the shared anode, so the dies take turns instead
+of all being on at once.  At `slow!` the +x wing runs violet through magenta
+to red, the −x wing green through cyan to azure.  The colour is vivid about
+90 % of the time and fills 11 of 12 hue sectors.  At `fast!`, which is how a
+new DIP switch usually arrives (all off), you only see the average, a steady
+violet.  The gallery page now marks it "built on rev B":
+<https://claude.ai/artifact/YJeV4rosx9WrNAAR4AmcUE>.
+
+**D1 itself is untouched**: same footprint, same place, same rotation.
+JLCPCB's preview still cannot draw that part, so the one thing rev A proved
+by coming back right is the thing I left alone.  The six resistors sit in a
+column beside it, grouped green, blue, red to match D1's pads.  Each one
+reads designator, part, value across its own row:
+
+![lamp corner](docs/history/response-13/lamp-corner.png)
+
+On the schematic I redrew the lamp as six rows feeding three short buses,
+one per die.  The +12 V and −12 V legs end on their own rail symbols, marked
+"moves red's threshold" and "moves blue's threshold".  The die symbol now
+draws blue, red, green down the page, so the feeds from the three
+integrators still come down the margin without crossing.
+
+### The other changes we had discussed
+
+* **"rev B" and today's date**, front and back, and in the schematic's title
+  block.
+* **J1's silkscreen.**  In Response 11 I found that JLCPCB pulls all
+  silkscreen 0.2 mm back from the board edge, which clipped the two short
+  outline stubs at the front of the USB-C, 0.15 mm from the edge.  Not worth
+  a revision on its own, but we are revising anyway: the outline now stops
+  0.45 mm short, and the closest silkscreen on the board is 0.42 mm from any
+  edge.
+* **Stock re-checked today** at LCSC for every part that isn't plentiful.
+  The five new resistor codes are all on JLCPCB's Basic parts list, so
+  they carry no setup fee; the BOM upload will confirm it line by line.
+
+Three other things from Response 11 are order options, not design changes,
+so I left them alone:
+
+* **Lead-free HASL.**  It handled the 0.5 mm-pitch USB-C fine on rev A.
+* **The order code on the back.**  See above.
+* **JP1's mask dam.**  Their CAM removed it; the jumper still works as
+  intended.
+
+### Checks that nothing else moved
+
+Rev A works, so I compared rev B against rev A's own files item by item:
+
+| what | result |
+|---|---|
+| netlist, lamp parts taken out | **all 204 other pins wired identically** |
+| parts | R22–R24 added; R13–R16 changed value; TP6 renamed +3.75V; nothing removed |
+| placement | only the lamp's resistors moved, plus C18 by 2 mm to make room; D1 identical |
+| routing | every routed net identical except the lamp's, the supplies it shares, and /SJ_Y, which takes a route 1.2 mm lower over its last 20 mm into U1 pin 6 (same layer, 0.2 mm longer) |
+| board outline, non-plated holes | byte-identical |
+| plated holes | every component hole identical; 8 fewer vias |
+| BOM / CPL | differ only in the lamp's lines and C18; D1 still at (83, 43.5) and 0° |
+| ERC / DRC with schematic parity | 0 / 0 |
+| circuit checks | 147, all passing; equations unchanged (s = 10, r = 21.3–37.0, b = 2.674) |
+| the lamp | new check: reads the lamp out of the netlist, confirms it is candidate 1 resistor by resistor, and simulates it: **0.82** at `slow!`, against rev A's 0.33; every die peaks under 2 mA, as does U2B, and no die sees more than 0.2 V reverse |
+| fresh clone, built from scratch with scipy blocked | all 23 fab deliverables byte-identical to the commit |
+
+The build now fails if the lamp on the board isn't the chosen wiring, or if
+it scores below 0.70.
+
+### Three faults found, and fixed
+
+Two were already in rev A:
+
+* **The schematic checker had a blind spot.**  KiCad reverses the
+  justification of a field on a 90°-rotated symbol, and the checker didn't
+  know that.  My first rev B drawing printed six resistors' names on top of
+  their values, and the checker passed it.  It now models the reversal, and
+  rev A's sheet still passes under the stricter check.
+* **Rev A's assembler notes gave D1's pin order backwards.**  They said
+  "anticlockwise" for pins 1, 2, 3, 4.  Seen from above, the pads go
+  bottom-left, top-left, top-right, bottom-right, which is clockwise.
+  JLCPCB placed rev A from the pin-1 triangle, so it did no harm, and rev B's
+  notes are corrected.  The pads themselves were always right.
+
+One was mine from Response 12:
+
+* **The build had started to need scipy.**  My corrected LED model made the
+  colour self-test import scipy, and the README only asks for numpy and
+  Pillow.  The eye filter is plain numpy now, checked against the recursion
+  it implements.  The fresh-clone build above ran with scipy deliberately
+  unavailable.
+
+Smaller things:
+
+* **Op-amp labels.**  Each op-amp's bare "LF412" label is hidden, as the
+  multipliers' "MPY634" is.  "LF412 op-amp" is printed beside each, and
+  U2's bare label had been landing on the end of the lamp's bottom row.
+* **CPL row in the upload table.**  It now names the JLCPCB-corrected CPL.
+* **Barrier bleed resistor.**  It is R18, not R21, wherever the generated
+  documents said otherwise.
+
+### What changed in the repo
+
+* `scripts/gen_sch.py`, `gen_symbols.py`, `pcb_place.py`, `pcb_silk.py`,
+  `gen_pcb.py`: the rev B lamp on the sheet and the board.
+* `scripts/parts.py`: rev B, the date, five new resistor codes, and stock.
+* `scripts/check_circuit.py`: the lamp checks rewritten around the netlist's
+  own lamp, plus the simulation.
+* `scripts/check_schematic.py`: models KiCad's justification reversal.
+* `scripts/gen_footprints.py`: J1's silkscreen trim.
+* `scripts/lamp_model.py`, `lamp_core.py`: numpy-only eye filter, and a
+  numpy RK4 integrator for the build.
+* `scripts/gen_docs.py`, `gen_outputs.py`: the manufacturing doc and the
+  assembler notes.
+* `docs/DESIGN_NOTES.md`, `docs/DESIGN_REVIEW.md`, `README.md`: rev B's
+  lamp, and this review.
+* All generated outputs rebuilt.  Not pushed; the commits are local.

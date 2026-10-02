@@ -359,7 +359,7 @@ def main():
          "both CC lines pulled down, so a USB-C source will turn 5 V on")
 
     # --- the isolation barrier -------------------------------------------
-    # The two grounds must meet at R21, C25 and JP1 and nowhere else; a single
+    # The two grounds must meet at R18, C25 and JP1 and nowhere else; a single
     # stray symbol would quietly undo the isolation and nothing would look
     # wrong on the drawing.
     bridges = set()
