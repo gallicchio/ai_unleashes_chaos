@@ -4,8 +4,8 @@ The BOM, the CPL and the cost estimate are all generated from this table, so
 there is exactly one place to change a part.
 """
 
-REV = "A"
-BOARD_DATE = "2026-09-15"
+REV = "B"
+BOARD_DATE = "2026-10-02"
 
 # lcsc            : JLCPCB / LCSC order code
 # jlc_type        : "basic" | "preferred" | "extended"  (assembly setup fee)
@@ -16,14 +16,14 @@ PARTS = {
     # ---- the circuit proper -------------------------------------------
     "LF412": dict(
         value="LF412", mpn="LF412CDR", lcsc="C15322", jlc_type="extended",
-        process="SMT", stock=1037, price=0.906,
+        process="SMT", stock=7873, price=0.906,
         footprint="Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
         desc="Dual JFET-input op-amp (Paul's original part)",
         alt=["TL072CDT / C6961 (JLCPCB Basic, $0.16) - same pinout, "
              "slightly higher bias current"]),
     "MPY634": dict(
         value="MPY634", mpn="MPY634KU/1K", lcsc="C1523457", jlc_type="extended",
-        process="SMT", stock=874, price=30.586,
+        process="SMT", stock=848, price=30.586,
         footprint="Package_SO:SOIC-16W_7.5x10.3mm_P1.27mm",
         desc="Four-quadrant analog multiplier, W=(X1-X2)(Y1-Y2)/10 (Paul's part)",
         alt=["AD633ARZ / C431243 - identical transfer function but SOIC-8, "
@@ -33,12 +33,12 @@ PARTS = {
     "C_1206": dict(footprint="Capacitor_SMD:C_1206_3216Metric", process="SMT"),
     "SW_DIP6": dict(
         value="SW_DIP_x06", mpn="DSIC06LSGET", lcsc="C54952", jlc_type="extended",
-        process="SMT", stock=2140, price=0.571,
+        process="SMT", stock=1805, price=0.571,
         footprint="lorenz:SW_DIP_SPSTx06_KingTek_DSIC06_P2.54mm",
         desc="6-way SMD DIP switch, 2.54 mm pitch - integrator speed select"),
     "BNC": dict(
         value="BNC", mpn="BNC-KYWE-295-W4-N", lcsc="C41416668", jlc_type="extended",
-        process="THT", stock=410, price=1.549,
+        process="THT", stock=628, price=1.549,
         footprint="lorenz:BNC_KYWE_RightAngle",
         desc="50 ohm BNC jack, right angle, 4 ground posts on 8x8 mm",
         alt=["HL2-BNC-KYWE / C48606310 (180 in stock)",
@@ -51,7 +51,7 @@ PARTS = {
         desc="USB-C receptacle, power only (16 pin)"),
     "DCDC": dict(
         value="A0515S-2WR2", mpn="A0515S-2WR2", lcsc="C19272710", jlc_type="extended",
-        process="THT", stock=255, price=1.595,
+        process="THT", stock=196, price=1.595,
         footprint="lorenz:DCDC_SIP_A05xxS_1W_2W",
         desc="Isolated 5V -> +/-15V 2W DC/DC module",
         alt=["A0515S-2WR2L / C20622616 (233 in stock)",
@@ -74,15 +74,16 @@ PARTS = {
     # for red, green and blue.
     "LED_RGB": dict(
         value="RGB", mpn="MHPA3528CRGBCT", lcsc="C2962095", jlc_type="extended",
-        process="SMT", stock=9796, price=0.065,
+        process="SMT", stock=9720, price=0.065,
         footprint="lorenz:LED_RGB_PLCC4_3.5x2.8mm",
-        desc="Common-anode RGB lamp, PLCC-4: red = z, green = x, blue = -y",
+        desc="Common-anode RGB lamp, PLCC-4: red from -y (and x), green "
+             "from x, blue from z",
         alt=["MHPC3528CRGBCT / C2962096 is the same part with a common "
              "*cathode*: same footprint, same dies, but pins 1 and 4 swap "
              "roles, so the board would have to change with it"]),
     "POT": dict(
         value="20k", mpn="3386P-1-203LF", lcsc="C116287", jlc_type="extended",
-        process="THT", stock=767, price=0.4458,
+        process="THT", stock=648, price=0.4458,
         footprint="lorenz:Potentiometer_Bourns_3386P_Vertical",
         desc="20k single-turn cermet trimmer, 9.5 mm square, top adjust.  "
              "Two are fitted: RV1 sets r, as a rheostat with terminal 1 tied "
@@ -168,6 +169,17 @@ PASSIVES = {
                   price=0.0025, stock=3140647),
     "12k":   dict(lcsc="C17444", mpn="0805W8F1202T5E", jlc_type="basic",
                   price=0.0021, stock=456483),
+    # rev B's lamp (checked at LCSC and on JLCPCB's Basic list, 2026-10-02)
+    "15k":   dict(lcsc="C17475", mpn="0805W8F1502T5E", jlc_type="basic",
+                  price=0.0021, stock=481800),
+    "8.2k":  dict(lcsc="C17828", mpn="0805W8F8201T5E", jlc_type="basic",
+                  price=0.0021, stock=105200),
+    "24k":   dict(lcsc="C17575", mpn="0805W8F2402T5E", jlc_type="basic",
+                  price=0.0021, stock=326300),
+    "36k":   dict(lcsc="C4360", mpn="0805W8F3602T5E", jlc_type="basic",
+                  price=0.0029, stock=137500),
+    "2.2k":  dict(lcsc="C17520", mpn="0805W8F2201T5E", jlc_type="basic",
+                  price=0.0021, stock=2963000),
     "33k":   dict(lcsc="C17633", mpn="0805W8F3302T5E", jlc_type="basic",
                   price=0.0028, stock=570100),
     "2.2nF": dict(lcsc="C28260", mpn="CL21C222JBFNNNE", jlc_type="basic",

@@ -696,3 +696,49 @@ both trimmers and the sync resistors down the edge they vacated.  The back
 side had to move with it: the three drilled parts down that edge punch through
 the equations block, so the equations dropped from 2.4 mm to 2.0 mm and the
 constants split over two lines, and neither now reaches past x = 14.
+
+# Prompt 13: rev B, and proving nothing else moved
+
+Rev B changes the lamp to candidate 1 of `docs/lamp2` and trims J1's
+silkscreen clear of the edge.  Everything else was meant to stay exactly as
+rev A, which came back from JLCPCB working, so the review was mostly a
+comparison against rev A's own files.
+
+## What was compared, and what came out
+
+* **Netlist.**  With the lamp's parts taken out, all 204 remaining pins
+  connect exactly as in rev A.  The lamp now attaches to +12 V, -12 V, x, -y
+  and z through R13-R15 and R22-R24, and to nothing else.
+* **Parts.**  Three new resistors (R22, R23, R24), new values on R13-R16 and
+  a new name on TP6, all JLCPCB Basic parts; nothing removed.
+* **Placement.**  Only the lamp's resistors and C18 moved, C18 by 2 mm to
+  clear the lamp's bottom row.  D1's footprint, position and rotation are
+  rev A's, which its boards proved JLCPCB fits correctly.
+* **Routing.**  The router re-routed the nets the lamp touches.  Of the
+  rest, every net is identical to rev A except /SJ_Y, which takes a route
+  1.2 mm lower over its last 20 mm into U1 pin 6: same layer, same
+  neighbourhood, 0.2 mm longer.
+* **Fab files.**  Board outline and non-plated holes byte-identical;
+  every plated component hole the same; 8 fewer vias.  BOM and CPL differ
+  only in the lamp's lines and C18.
+* **The lamp itself.**  `check_circuit.py` now reads the lamp back out of the
+  netlist, checks it is the chosen wiring resistor by resistor, and
+  simulates it with the corrected LED model: 0.82 at `slow!`, where rev A
+  scores 0.33.  Die peaks at most 1.8 mA, no die reverse-biased by more
+  than 0.2 V, U2B sourcing at most 1.9 mA.
+
+## Two old faults found on the way
+
+* **The schematic checker could not see a clash on a rotated part.**  KiCad
+  draws a field on a 90-degree symbol with its justification reversed.  The
+  checker read the justification literally, so the first rev B drawing
+  printed six resistors' names on top of their values and passed.  It now
+  models the reversal; rev A's sheet still passes under it.
+* **Rev A's assembler notes gave D1's pin order the wrong way round:**
+  "anticlockwise" where the pads run clockwise.  JLCPCB placed rev A from the
+  pin-1 triangle, so no harm came of it, but rev B's notes are corrected.
+
+And one fault of Response 12's: its LED model made the build's colour
+self-test import scipy, which the README does not ask anyone to install.
+The eye filter is now plain numpy, checked against the recursion it
+implements, and the build needs only what it needed before.

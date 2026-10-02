@@ -78,6 +78,8 @@ def collect(path):
                     if p.atom(0) == "Reference"), "?")
         if ref.startswith("#"):
             continue
+        sat = s.first("at")
+        srot = int(float(sat.atom(2))) if len(sat.atoms()) > 2 else 0
         for p in s.kids("property"):
             if p.atom(0) not in ("Reference", "Value"):
                 continue
@@ -87,9 +89,19 @@ def collect(path):
             size, just, hidden = eff(p)
             if hidden:
                 continue
+            # KiCad draws a field at its stored angle plus the symbol's, and
+            # turns anything upside down the right way up -- which swaps
+            # its left and right justification.  A field stored at 90 on a
+            # symbol turned 90 is drawn level, but justified the other way.
+            fang = int(float(at.atom(2))) if len(at.atoms()) > 2 else 0
+            total = (srot + fang) % 360
+            if total == 180:
+                just = just.replace("left", "@").replace("right", "left") \
+                    .replace("@", "right")
             items.append((f"{ref}.{p.atom(0)} {p.atom(1)!r}",
                           text_box(float(at.atom(0)), float(at.atom(1)),
-                                   p.atom(1), size, just)))
+                                   p.atom(1), size, just,
+                                   rot=total if total in (90, 270) else 0)))
     return W, H, items
 
 

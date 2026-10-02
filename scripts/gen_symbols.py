@@ -201,18 +201,20 @@ def led_rgb():
     Pin order follows the MHPA3528CRGBCT drawing: 1 = the common anode,
     2 = blue cathode, 3 = green cathode, 4 = red cathode.
 
-    They are *drawn* red, blue, green down the page, which is not the pin
-    order.  That is deliberate: on the sheet the three feeds come down the
-    right margin from the three integrators, and the only way for none of
-    them to cross is for the topmost integrator to take the outermost lane
-    and so land on the bottom die.  Change which signal drives which colour
-    and this order changes with it.
+    They are *drawn* blue, red, green down the page, which is not the pin
+    order.  That is deliberate: on the sheet the feeds come down the right
+    margin from the three integrators, and the only way for none of them to
+    cross is for the topmost integrator to take the outermost lane and so
+    land on the bottom die.  In rev B blue is fed from z (the lowest
+    integrator, the innermost lane), red mostly from -y, and green from x
+    (the outermost lane), so blue sits at the top and green at the bottom.
+    Change which signal drives which colour and this order changes with it.
     """
     body = []
     # the shared anode bar, on the right, and its pin
     body.append(poly([(2.54, 6.35), (2.54, -6.35)], width=0.4))
     body.append(poly([(2.54, 0), (5.08, 0)]))
-    for (num, name, y) in (("4", "R", 5.08), ("2", "B", 0.0), ("3", "G", -5.08)):
+    for (num, name, y) in (("2", "B", 5.08), ("4", "R", 0.0), ("3", "G", -5.08)):
         # current runs right to left: anode bar -> triangle -> cathode bar
         body.append(poly([(2.54, y + 1.27), (2.54, y - 1.27), (0.0, y),
                           (2.54, y + 1.27)], fill="background"))

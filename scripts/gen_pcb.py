@@ -615,7 +615,8 @@ def add_silk(board):
     # the first legend to claim a spot keeps it.
     def order(f):
         ref = f.GetReference()
-        return (0 if ref[:2] in SILK.FIELD_ANCHOR else 1, ref)
+        anchored = ref in SILK.FIELD_ANCHOR or ref[:2] in SILK.FIELD_ANCHOR
+        return (0 if anchored else 1, ref)
 
     for fp in sorted(board.GetFootprints(), key=order):
         ref = fp.GetReference()
@@ -623,7 +624,8 @@ def add_silk(board):
             fp.Reference().SetVisible(False)
             fp.Value().SetVisible(False)
             continue
-        anchor = SILK.FIELD_ANCHOR.get(ref[:2], {})
+        # a whole designator wins over its two-letter prefix
+        anchor = SILK.FIELD_ANCHOR.get(ref, SILK.FIELD_ANCHOR.get(ref[:2], {}))
         if not place_field(fp.Reference(), space, fp, 1.0, True,
                            anchor.get("Reference")):
             missing.append(f"{ref} reference")

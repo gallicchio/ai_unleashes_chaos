@@ -34,12 +34,14 @@ attractor's "owl's face" appears within a second of power-up.
   r ≈ 24.1–24.7 and Lorenz's own 28, to a tight fast orbit at 37. Its wiper is
   tied to one end of the track on purpose: grit under a wiper then means
   *maximum resistance*, never an open circuit.
-* **A chaos lamp.** One RGB LED whose colour is the state vector, with the
-  reference, the die mapping and all three resistors chosen by modelling the
-  LEDs against the CIE 1931 observer, rendering 660 wirings of it and
-  [publishing the hundred most different](docs/lamp/) to flip through.
-  Mostly deep blue, with a swirl through the colour wheel every time the
-  trajectory changes wings.
+* **A chaos lamp.** One RGB LED whose colour is the state vector. Red
+  follows −y, green x and blue z, and two more resistors pull red's and
+  blue's thresholds apart so the dies take turns instead of mixing to
+  white: it is vivid nine-tenths of the time and visits every hue about
+  equally. Rev A's lamp was picked from [660 rendered wirings](docs/lamp/)
+  with an LED model the boards then proved wrong — it came out mostly blue —
+  so rev B's was chosen again with a corrected model, from 6.7 million
+  wirings; [the ten finalists play in real time](docs/lamp2/).
 * **A real isolated ground split.** The DC/DC converter's isolation is
   actually used: analog ground and USB ground are separate pours with a 1 mm
   gap, bridged only by 1 M, 2.2 nF and a solder jumper, so no mains-referenced
@@ -53,8 +55,9 @@ attractor's "owl's face" appears within a second of power-up.
 **Everything here is generated.** There is no hand-edited schematic or board:
 `./make.py` writes the symbols, footprints, 3D models, schematic, placement,
 routing, silkscreen, gerbers, BOM and CPL from Python, and then checks them.
-141 circuit assertions read the exported netlist back and re-derive the
-equations from the resistors that are really attached; the QR codes on the
+147 circuit assertions read the exported netlist back and re-derive the
+equations from the resistors that are really attached, and simulate the lamp
+the netlist really builds; the QR codes on the
 back are decoded out of the gerbers they were plotted into; and a clean clone
 rebuilds every deliverable byte-identically.
 

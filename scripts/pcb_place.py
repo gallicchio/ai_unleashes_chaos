@@ -85,7 +85,9 @@ PLACE = {
 
     # ---- op-amps: U1 carries x and -y, U2 carries z and the lamp buffer --
     "U1": (72.0, 19.0, 0), "C16": (65.0, 15.0, 90), "C17": (65.0, 23.0, 90),
-    "U2": (72.0, 69.0, 0), "C18": (65.0, 65.0, 90), "C19": (65.0, 73.0, 90),
+    # C18 sits a little left of where rev A had it, out of the way of the
+    # lamp's bottom row and its legend.
+    "U2": (72.0, 69.0, 0), "C18": (63.0, 66.0, 90), "C19": (65.0, 73.0, 90),
 
     # ---- output: op-amp, probe pad, series resistor, jack, in a line -----
     "TP1": (80.0, 19.0, 0), "R8":  (85.5, 19.0, 0), "J2": (93.0, 19.0, 0),
@@ -93,10 +95,20 @@ PLACE = {
     "TP3": (80.0, 69.0, 0), "R10": (85.5, 69.0, 0), "J4": (93.0, 69.0, 0),
 
     # ---- the chaos lamp, between two jacks, fed from the left ------------
-    "R13": (70.0, 48.0, 0), "R14": (70.0, 55.0, 0), "R15": (70.0, 62.0, 0),
+    # One resistor per row, grouped by die in the order of D1's own pads --
+    # green, blue, red from the top -- and turned so that the end on the die
+    # faces the lamp.  D1 itself stays exactly where rev A had it, at the
+    # rotation rev A's boards proved: JLCPCB has no drawing of this part, so
+    # its placement is the one thing here that is better left alone.
+    "R13": (70.0, 46.5, 180),   # green <- x
+    "R14": (70.0, 50.5, 180),   # blue  <- z
+    "R24": (70.0, 53.5, 180),   # blue  <- -12 V, its threshold
+    "R15": (70.0, 57.5, 180),   # red   <- -y
+    "R22": (70.0, 60.5, 180),   # red   <- x
+    "R23": (70.0, 63.5, 180),   # red   <- +12 V, its threshold
     "D1":  (83.0, 56.5, 0),
-    "TP6": (88.0, 60.0, 0),     # the +3.2 V anode rail, beside the lamp
-    # the +3.2 V reference, in the band the switch used to occupy: R17 down
+    "TP6": (88.0, 60.0, 0),     # the +3.75 V anode rail, beside the lamp
+    # the +3.75 V reference, in the band the switch used to occupy: R17 down
     # from +12 V, then R16 and C24 in parallel to ground
     "R17": (50.0, 59.0, 0), "R16": (55.0, 59.0, 90), "C24": (59.0, 59.0, 90),
 

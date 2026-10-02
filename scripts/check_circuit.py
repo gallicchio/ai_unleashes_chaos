@@ -383,11 +383,10 @@ def main():
     need(nl.net("J1", "SH") == "GNDU",
          "the USB shell stays on the USB side, where the cable screen belongs")
 
-    # --- the chaos lamp: three signals, one common anode -----------------
+    # --- the chaos lamp: one common anode, three dies, each fed from a blend -
     # There is no separate power lamp.  The lamp needs +12 V (the op-amps and
     # the reference), and therefore the converter and the USB input, so it
-    # lights only when the whole chain is up -- which three discrete LEDs on
-    # three rails told you less well and in three more places.
+    # lights only when the whole chain is up.
     vled = nl.net("D1", 1)
     need(vled == nl.net("U2", 7) and vled == nl.net("U2", 6),
          "D1's common anode is driven by U2B wired as a unity follower")
@@ -401,49 +400,110 @@ def main():
         legs[ends[1] if ends[0] == ref_node else ends[0]] = ohms(nl.value[r])
     need(set(legs) == {"GND", "+12V"},
          f"the divider hangs between +12 V and ground (found {sorted(legs)})")
-    va = 12.0 * legs.get("GND", 0.0) / sum(legs.values())
-    need(2.9 < va < 3.5,
-         f"the anode sits at {va:.2f} V: above the red die's forward drop at "
-         "every z, and below the peak of every signal, so each colour has a "
-         "threshold inside its own swing")
+    va = 12.0 * legs.get("GND", 0.0) / max(sum(legs.values()), 1.0)
     caps = {r for (r, p) in nl.nets[ref_node] if r.startswith("C")}
     need(caps == {"C24"}, "C24 filters the reference before the buffer")
 
-    # Each colour, its drive resistor, its source, and the range that source
-    # covers over the whole sweep of the r knob (r = 21.3 measured at the
-    # bottom, r = 37.0 at the top).  A die conducts when its cathode -- the
-    # signal -- falls a forward drop below the anode, so the peak current is
-    # set by the signal's *minimum*, and the reverse voltage by its maximum.
-    colours = [("4", "R15", "z", 1.75, 0.28, 6.00, "red"),
-               ("3", "R13", "x", 2.60, -2.10, 2.20, "green"),
-               ("2", "R14", "-y", 2.60, -2.95, 3.15, "blue")]
-    i_total = 0.0
-    for (pin, res, src, vf, vmin, vmax, name) in colours:
+    # Read the lamp back out of the netlist, die by die: every resistor on a
+    # cathode, and what is at its far end -- one of the three outputs, or a
+    # rail.  That is the lamp the board will build, whatever the drawing says.
+    src_index = {"x": 0, "-y": 1, "z": 2}
+    rails = ("+12V", "-12V", "GND")
+    built = {}
+    for die, pin in (("R", "4"), ("G", "3"), ("B", "2")):
         cath = nl.net("D1", pin)
-        need(nl.net(res, 1) == src or nl.net(res, 2) == src,
-             f"{res} feeds D1's {name} die from {src}")
-        need(cath in (nl.net(res, 1), nl.net(res, 2)),
-             f"{res} lands on D1 pin {pin} ({name})")
-        thresh = va - vf
-        i_pk = (va - vmin - vf) / ohms(nl.value[res]) * 1e3
-        i_total += i_pk
-        need(vmin < thresh < vmax and 0.15 < i_pk < 3.0,
-             f"{name}: {res} = {nl.value[res]}, lights below {src} = "
-             f"{thresh:+.2f} V, {i_pk:.2f} mA at the extreme")
-        v_rev = max(0.0, vmax - va)
-        need(v_rev < 5.0,
-             f"{name} never sees more than {v_rev:.1f} V in reverse when "
-             f"{src} tops out at {vmax:+.1f} V (the part is rated 5 V)")
-    need(i_total < 8.0,
-         f"the lamp draws at most {i_total:.1f} mA, which U2B can source and "
-         "the 2 W converter will not notice")
-    # the lamp must tap the output node, not the summing junction and not the
-    # far side of the series resistor
-    for (res, src, series) in (("R13", "x", "R8"), ("R14", "-y", "R9"),
-                               ("R15", "z", "R10")):
-        need(nl.net(series, 1) == src,
-             f"{res} and {series} share the op-amp output node, so no lamp "
-             f"current flows in the 100 ohm going to the BNC")
+        found = []
+        for (r, p) in sorted(nl.nets.get(cath, ())):
+            if r == "D1":
+                continue
+            ok_part = r.startswith("R")
+            need(ok_part, f"only resistors hang on D1's {die} cathode "
+                          f"(found {r})")
+            if ok_part:
+                found.append((nl.other_pin(r, p), ohms(nl.value[r]), r))
+        sig = [f for f in found if f[0] in src_index]
+        rail_legs = [f for f in found if f[0] in rails]
+        need(len(sig) + len(rail_legs) == len(found) and 1 <= len(sig) <= 2
+             and len(rail_legs) <= 1,
+             f"D1's {die} cathode is fed from {', '.join(f'{f[0]} via {f[2]}' for f in found)}")
+        built[die] = (sig, rail_legs)
+    # ...and, for each signal leg, the tap has to be the op-amp's output node:
+    # not its summing junction, and not the far side of the 100 ohm resistor.
+    for die, (sig, _) in built.items():
+        for (net, _, r) in sig:
+            series = {"x": "R8", "-y": "R9", "z": "R10"}[net]
+            need(nl.net(series, 1) == net,
+                 f"{r} and {series} share the {net} output node, so no lamp "
+                 "current flows in the 100 ohm going to the BNC")
+
+    # The wiring this board is meant to have: candidate 1 of docs/lamp2,
+    # the best of the rev B search (scripts/lamp_search_mix.py).
+    chosen = {"R": ({("-y", 1500.0), ("x", 8200.0)}, {("+12V", 8200.0)}),
+              "G": ({("x", 24000.0)}, set()),
+              "B": ({("z", 2200.0)}, {("-12V", 36000.0)})}
+    for die, (sig, rail_legs) in built.items():
+        got = ({(n, v) for (n, v, _) in sig}, {(n, v) for (n, v, _) in rail_legs})
+        need(got == chosen[die],
+             f"the {dict(R='red', G='green', B='blue')[die]} die is wired as "
+             "chosen: " + ", ".join(f"{n} {v/1000:g}k" for (n, v) in
+                                    sorted(got[0] | got[1])))
+    need(abs(va - 3.75) < 0.02,
+         f"the anode sits at {va:.2f} V, the chosen design's 3.75 V")
+
+    # Judge it the way the search judged it: the corrected LED model, the
+    # board's own Lorenz system, the eye's filter -- with a fixed-step
+    # integrator in plain numpy, so this needs nothing the build did not.
+    try:
+        import numpy as np
+        import lamp_core as LC
+        import lamp_model as LM
+        have_np = True
+    except ImportError:
+        have_np = False
+    need(have_np, "numpy is available to simulate the lamp")
+    if have_np and all(built[d][0] for d in "RGB"):
+        def leg(d, i):
+            sig = built[d][0]
+            return sig[i] if len(sig) > i else None
+        lamp = LC.Lamp(
+            "CA", va,
+            [src_index[leg(d, 0)[0]] for d in "RGB"],
+            [leg(d, 0)[1] for d in "RGB"],
+            ro=[built[d][1][0][1] if built[d][1] else None for d in "RGB"],
+            rail=[built[d][1][0][0] if built[d][1] else "GND" for d in "RGB"],
+            src2=[src_index[leg(d, 1)[0]] if leg(d, 1) else None for d in "RGB"],
+            rs2=[leg(d, 1)[1] if leg(d, 1) else None for d in "RGB"])
+        dies = LM.MHPA3528
+        sig_v = LC.signals(28.0, 200.0, seed=31, integrator="rk4")
+        mcd, cur = lamp.light(sig_v, dies, "slow!")
+        j = LC.judge(mcd, LC.dies_xyz(dies), LM.Gamut(dies))
+        score, vivid, even = float(j["score"]), float(j["vivid"]), float(j["even"])
+        need(score >= 0.70,
+             f"the lamp as wired scores {score:.2f} at slow! (vivid "
+             f"{100*vivid:.0f} % of the time, {12*even:.1f} of 12 hue "
+             "sectors); the search found 0.80, rev A scores 0.33")
+        ipk = [float(c.max()) * 1e3 for c in cur]
+        need(max(ipk) <= 5.0,
+             "no die runs above 5 mA: peaks " +
+             ", ".join(f"{k} {v:.1f}" for k, v in zip("RGB", ipk)) + " mA")
+        u2b = float(np.max(sum(cur))) * 1e3
+        need(u2b <= 8.0, f"U2B sources at most {u2b:.1f} mA into the lamp")
+        v_rev = lamp.reverse_volts(LC.signals(31.0, 100.0, seed=32,
+                                              integrator="rk4"))
+        need(v_rev < 4.5, f"no die sees more than {v_rev:.1f} V in reverse "
+                          "even at r = 31 (the part is rated 5 V)")
+        # the threshold resistors stand between a signal and a rail; keep
+        # what they draw from the op-amps small
+        worst = 0.0
+        for k, d in enumerate("RGB"):
+            if lamp.ro[k] is not None:
+                # with the die dark, the cathode sits at the network's own
+                # open-circuit voltage, and R_o carries the difference
+                vth, _ = lamp.thevenin(k, sig_v)
+                vo = LC.RAILS[lamp.rail[k]]
+                worst = max(worst, float(np.abs(vth - vo).max())
+                            / lamp.ro[k] * 1e3)
+        need(worst <= 2.0, f"the threshold resistors draw at most {worst:.2f} mA")
 
     # --- the synchronisation input ---------------------------------------
     # A BNC, a weight knob and one resistor into the dy/dt summing junction.

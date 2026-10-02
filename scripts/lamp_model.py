@@ -362,18 +362,34 @@ class Gamut:
         return np.clip(s, 0.0, 1.0)
 
 
+def _smooth1(x, a, block=512):
+    """y[n] = a y[n-1] + (1 - a) x[n] along the last axis, starting settled
+    on x[0].  Numpy only -- the build needs nothing beyond numpy -- done a
+    block at a time as one matrix product per block, which is exact and
+    about as fast as a compiled filter."""
+    k = np.arange(block)
+    m = np.tril((1.0 - a) * a ** np.maximum(k[:, None] - k[None, :], 0))
+    out = np.empty_like(x)
+    carry = x[..., :1].copy()
+    for b0 in range(0, x.shape[-1], block):
+        xb = x[..., b0:b0 + block]
+        n = xb.shape[-1]
+        yb = xb @ m[:n, :n].T + carry * a ** np.arange(1, n + 1)
+        out[..., b0:b0 + n] = yb
+        carry = yb[..., -1:]
+    return out
+
+
 def eye_filter(sig, dt_s, tau_s=0.020, stages=2):
     """What the eye keeps of a light that changes: two first-order stages
     of `tau_s` each, applied along the last axis to a *linear* quantity
     (intensity), sampled every `dt_s` seconds.  Colour flicker faster than
     about 8 Hz is averaged away, which is why a 30 ms red flash can be a
     stripe in a rendered picture and invisible on the bench."""
-    from scipy.signal import lfilter
     a = float(np.exp(-dt_s / tau_s))
     out = np.asarray(sig, dtype=float)
     for _ in range(stages):
-        zi = out[..., :1] * a
-        out, _ = lfilter([1.0 - a], [1.0, -a], out, axis=-1, zi=zi)
+        out = _smooth1(out, a)
     return out
 
 
@@ -475,12 +491,25 @@ def _selftest():
     print("  saturation is 1 for each die and each two-die mix, 0 for white")
     ok += 1
 
-    # 9. the eye filter keeps a steady light steady
-    flat = eye_filter(np.ones(500), 0.002)
-    assert abs(flat[-1] - 1.0) < 1e-9
-    step = eye_filter(np.r_[np.zeros(100), np.ones(400)], 0.002)
+    # 9. the eye filter keeps a steady light steady, and is the recursion
+    #    it claims to be, across the blocks it is computed in
+    flat = eye_filter(np.ones(1500), 0.002)
+    assert np.all(np.abs(flat - 1.0) < 1e-9)
+    step = eye_filter(np.r_[np.zeros(100), np.ones(1400)], 0.002)
     assert 0.2 < step[100 + 20] < 0.8
-    print("  the eye filter passes a steady light and takes ~40 ms to follow a step")
+    x = np.random.default_rng(1).random((2, 1300))
+    a = float(np.exp(-0.002 / 0.020))
+    ref = x.copy()
+    for _ in range(2):
+        y = np.empty_like(ref)
+        prev = ref[:, 0].copy()
+        for n in range(ref.shape[1]):
+            prev = a * prev + (1 - a) * ref[:, n]
+            y[:, n] = prev
+        ref = y
+    assert np.max(np.abs(eye_filter(x, 0.002) - ref)) < 1e-12
+    print("  the eye filter passes a steady light, takes ~40 ms to follow a step,")
+    print("  and matches the plain recursion to 1e-12 across its blocks")
     ok += 1
     print(f"{ok} colour-model checks passed")
     return 0

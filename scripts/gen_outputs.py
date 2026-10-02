@@ -230,7 +230,8 @@ D1 -- MHPA3528CRGBCT, common-anode RGB LED, PLCC-4.
   Your placement preview may have no drawing for this part.  Pin 1 is the
   ANODE.  On the board it is the corner the filled silkscreen triangle points
   at, at the bottom left of the part in {stem}-assembly-top.pdf, which prints
-  1:1.  Anticlockwise from there: 1 anode, 2 blue, 3 green, 4 red.
+  1:1.  Clockwise from there, seen from above: 1 anode, 2 blue (top left),
+  3 green (top right), 4 red (bottom right).
   If that is not enough to place it with confidence, leave D1 off and we will
   hand-solder it; nothing else on the board depends on it.
 

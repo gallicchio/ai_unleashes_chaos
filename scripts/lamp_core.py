@@ -33,14 +33,18 @@ RAILS = {"GND": 0.0, "+12V": 12.0, "-12V": -12.0}
 _CACHE = {}
 
 
-def signals(r=28.0, t_units=400.0, seed=0):
+def signals(r=28.0, t_units=400.0, seed=0, integrator="dop853"):
     """The three op-amp outputs, in volts, every DT time units, after the
     start-up transient has died away.  Different seeds start from different
-    points, so two runs are two independent stretches of the attractor."""
-    key = (round(r, 4), t_units, seed)
+    points, so two runs are two independent stretches of the attractor.
+
+    The searches use scipy's DOP853.  The build uses "rk4", a fixed-step
+    integrator in numpy alone, so that ./make.py needs nothing it did not
+    need before; the two give different trajectories -- it is chaos -- but
+    the same statistics, which is all the lamp is judged on."""
+    key = (round(r, 4), t_units, seed, integrator)
     if key in _CACHE:
         return _CACHE[key]
-    from scipy.integrate import solve_ivp
     rng = np.random.default_rng(seed)
     y0 = np.array([1.0, 1.0, 20.0]) + rng.normal(0, 0.5, 3)
 
@@ -50,13 +54,30 @@ def signals(r=28.0, t_units=400.0, seed=0):
 
     warm = 60.0
     n = int(round(t_units / DT))
-    t_eval = warm + DT * np.arange(n)
-    sol = solve_ivp(f, (0.0, t_eval[-1]), y0, t_eval=t_eval, method="DOP853",
-                    rtol=1e-9, atol=1e-9)
-    x, y, z = sol.y
-    out = np.stack([x, -y, z]) * VOLTS_PER_UNIT
-    _CACHE[key] = out
-    return out
+    if integrator == "rk4":
+        h, sub = DT / 4.0, 4
+        v = y0.astype(float)
+        out = np.empty((3, n))
+        steps = int(round(warm / h))
+        for i in range(steps + n * sub):
+            k1 = np.array(f(0, v))
+            k2 = np.array(f(0, v + h / 2 * k1))
+            k3 = np.array(f(0, v + h / 2 * k2))
+            k4 = np.array(f(0, v + h * k3))
+            v = v + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+            j = i + 1 - steps
+            if j > 0 and j % sub == 0:
+                out[:, j // sub - 1] = v
+        x, y, z = out
+    else:
+        from scipy.integrate import solve_ivp
+        t_eval = warm + DT * np.arange(n)
+        sol = solve_ivp(f, (0.0, t_eval[-1]), y0, t_eval=t_eval,
+                        method="DOP853", rtol=1e-9, atol=1e-9)
+        x, y, z = sol.y
+    res = np.stack([x, -y, z]) * VOLTS_PER_UNIT
+    _CACHE[key] = res
+    return res
 
 
 class Lamp:

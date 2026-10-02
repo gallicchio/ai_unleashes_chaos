@@ -32,9 +32,9 @@ bridged only by R21, C25 and JP1.  Do not scratch across the 1 mm gap.
 
 ## Cost
 
-The board has **186 SMT joints** and **35 through-hole joints** on
-28 BOM lines (14 JLCPCB Basic, 14 Extended).
-Parts alone are **$74.31 per board**, of which
+The board has **192 SMT joints** and **35 through-hole joints** on
+30 BOM lines (16 JLCPCB Basic, 14 Extended).
+Parts alone are **$74.32 per board**, of which
 $61.17 is the pair of MPY634 multipliers.
 
 **2 boards, two layers, fully assembled including through-hole**
@@ -42,32 +42,32 @@ $61.17 is the pair of MPY634 multipliers.
 | line | cost |
 |---|---|
 | bare PCBs | $2.00 |
-| parts ($74.31 x 2) | $148.62 |
-| assembly: setup $8.00 + stencil $1.50 + 372 SMT joints + 14 extended parts + 70 THT joints | $73.13 |
+| parts ($74.32 x 2) | $148.63 |
+| assembly: setup $8.00 + stencil $1.50 + 384 SMT joints + 14 extended parts + 70 THT joints | $73.15 |
 | shipping (DHL, worldwide) | $22.00 |
-| **total** | **$245.75**  ($122.88 each) |
+| **total** | **$245.79**  ($122.89 each) |
 
 **5 boards, two layers, fully assembled including through-hole**
 
 | line | cost |
 |---|---|
 | bare PCBs | $2.00 |
-| parts ($74.31 x 5) | $371.55 |
-| assembly: setup $8.00 + stencil $1.50 + 930 SMT joints + 14 extended parts + 175 THT joints | $105.58 |
+| parts ($74.32 x 5) | $371.58 |
+| assembly: setup $8.00 + stencil $1.50 + 960 SMT joints + 14 extended parts + 175 THT joints | $105.63 |
 | shipping (DHL, worldwide) | $22.00 |
-| **total** | **$501.14**  ($100.23 each) |
+| **total** | **$501.22**  ($100.24 each) |
 
 **10 boards, two layers, fully assembled including through-hole**
 
 | line | cost |
 |---|---|
 | bare PCBs | $4.00 |
-| parts ($74.31 x 10) | $743.11 |
-| assembly: setup $8.00 + stencil $1.50 + 1860 SMT joints + 14 extended parts + 350 THT joints | $159.66 |
+| parts ($74.32 x 10) | $743.17 |
+| assembly: setup $8.00 + stencil $1.50 + 1920 SMT joints + 14 extended parts + 350 THT joints | $159.76 |
 | shipping (DHL, worldwide) | $22.00 |
-| **total** | **$928.77**  ($92.88 each) |
+| **total** | **$928.93**  ($92.89 each) |
 
-Four layers would cost about $524.14 for five ($104.83 each) -- the only change is the bare-board price --
+Four layers would cost about $524.22 for five ($104.84 each) -- the only change is the bare-board price --
 and buys almost nothing here: tracks cover 1.2 % of the back copper, so
 the pour on the two-layer board is already 98.8 % of an unbroken ground
 plane.  That is why this project ships one board.
@@ -136,14 +136,16 @@ preview showing it overhang the edge is showing it correctly.
 
 ### Still unverified
 
-One rotation has never actually been seen, because JLCPCB has no
+One rotation cannot be seen in their preview, because JLCPCB has no
 drawing of the part to turn:
 
 * **C2962095** -- D1, the RGB lamp -- JLCPCB has no drawing of this part, so it appears as an unknown-part checkerboard and its rotation cannot be read off the preview at all.
 
-It is left uncorrected.  D1 is the one part on this board where a
-preview you cannot read costs you something, so it gets its own
-paragraph below and its own line in the assembler's notes.
+It is left uncorrected, and rev A proved that right: its boards came
+back from JLCPCB with D1 fitted correctly from exactly this file, the
+same footprint at the same place and angle as on this board.  It still
+gets its own paragraph below and its own line in the assembler's
+notes, because their preview will still show a checkerboard.
 
 ## Check these before you pay
 
@@ -211,7 +213,9 @@ and capacitor) cannot go wrong.  These can:
 
 ## Parts, stock and alternates
 
-Stock was checked at JLCPCB on 2026-09-15, the date on the silkscreen.
+Stock was last checked on 2026-10-02, the date on the silkscreen, at LCSC for every part held in the thousands or fewer; the
+plentiful passives were checked when rev A was frozen.  JLCPCB's own
+assembly stock is what counts, and their BOM upload shows it per line.
 
 | ref | value | LCSC | JLC | unit | stock then | notes |
 |---|---|---|---|---|---|---|
@@ -220,27 +224,29 @@ Stock was checked at JLCPCB on 2026-09-15, the date on the silkscreen.
 | C11,C16,C17,C18,C19,C20,C21,C22,C23,C24,C26,C27,C28,C29 | 100nF | C49678 | basic | $0.0190 | 18,183,154 | X7R 50V, 0805 - bypass |
 | C2,C5,C8 | 100nF | C170182 | extended | $0.1870 | 193,311 | C0G/NP0 50V, 1206 |
 | C3,C6,C9 | 470nF | C277483 | extended | $0.0320 | 190,079 | X7R 50V, 1206 |
-| D1 | RGB | C2962095 | extended | $0.0650 | 9,796 | Common-anode RGB lamp, PLCC-4: red = z, green = x, blue = -y |
+| D1 | RGB | C2962095 | extended | $0.0650 | 9,720 | Common-anode RGB lamp, PLCC-4: red from -y (and x), green from x, blue from z |
 | F1 | 500mA | C17313 | extended | $0.0680 | 142,624 | Resettable PTC on the USB input |
 | J1 | USB-C | C165948 | extended | $0.1860 | 230,097 | USB-C receptacle, power only (16 pin) |
-| J2,J3,J4,J5 | BNC | C41416668 | extended | $1.5490 | 410 | 50 ohm BNC jack, right angle, 4 ground posts on 8x8 mm |
+| J2,J3,J4,J5 | BNC | C41416668 | extended | $1.5490 | 628 | 50 ohm BNC jack, right angle, 4 ground posts on 8x8 mm |
 | R1,R2,R19 | 100k | C149504 | basic | $0.0060 | 4,893,299 |  |
 | R11,R12 | 5.1k | C27834 | basic | $0.0060 | 3,917,491 |  |
-| R13 | 3.9k | C17614 | basic | $0.0015 | 296,958 |  |
-| R14 | 1.5k | C4310 | basic | $0.0015 | 585,325 |  |
-| R15 | 470R | C17710 | basic | $0.0025 | 3,140,647 |  |
-| R16 | 12k | C17444 | basic | $0.0021 | 456,483 |  |
+| R13 | 24k | C17575 | basic | $0.0021 | 326,300 |  |
+| R14 | 2.2k | C17520 | basic | $0.0021 | 2,963,000 |  |
+| R15 | 1.5k | C4310 | basic | $0.0015 | 585,325 |  |
+| R16 | 15k | C17475 | basic | $0.0021 | 481,800 |  |
 | R17 | 33k | C17633 | basic | $0.0028 | 570,100 |  |
+| R22,R23 | 8.2k | C17828 | basic | $0.0021 | 105,200 |  |
+| R24 | 36k | C4360 | basic | $0.0029 | 137,500 |  |
 | R3 | 27k | C17593 | basic | $0.0013 | 238,446 |  |
 | R4,R6 | 10k | C17414 | basic | $0.0040 | 53,835,303 |  |
 | R5,R18,R20 | 1M | C17514 | basic | $0.0050 | 2,688,974 |  |
 | R7 | 374k | C2933427 | extended | $0.0040 | 18,582 |  |
 | R8,R9,R10 | 100R | C17408 | basic | $0.0040 | 10,085,527 |  |
-| RV1,RV2 | 20k | C116287 | extended | $0.4458 | 767 | 20k single-turn cermet trimmer, 9.5 mm square, top adjust.  Two are fitted: RV1 sets r, as a rheostat with terminal 1 tied to the wiper so grit means maximum resistance and never an open; RV2 sets the sync weight, as a plain divider across the incoming signal so the weight is linear in the knob and reaches zero |
-| SW1 | SW_DIP_x06 | C54952 | extended | $0.5710 | 2,140 | 6-way SMD DIP switch, 2.54 mm pitch - integrator speed select |
-| U1,U2 | LF412 | C15322 | extended | $0.9060 | 1,037 | Dual JFET-input op-amp (Paul's original part) |
-| U3,U4 | MPY634 | C1523457 | extended | $30.5860 | 874 | Four-quadrant analog multiplier, W=(X1-X2)(Y1-Y2)/10 (Paul's part) |
-| U5 | A0515S-2WR2 | C19272710 | extended | $1.5950 | 255 | Isolated 5V -> +/-15V 2W DC/DC module |
+| RV1,RV2 | 20k | C116287 | extended | $0.4458 | 648 | 20k single-turn cermet trimmer, 9.5 mm square, top adjust.  Two are fitted: RV1 sets r, as a rheostat with terminal 1 tied to the wiper so grit means maximum resistance and never an open; RV2 sets the sync weight, as a plain divider across the incoming signal so the weight is linear in the knob and reaches zero |
+| SW1 | SW_DIP_x06 | C54952 | extended | $0.5710 | 1,805 | 6-way SMD DIP switch, 2.54 mm pitch - integrator speed select |
+| U1,U2 | LF412 | C15322 | extended | $0.9060 | 7,873 | Dual JFET-input op-amp (Paul's original part) |
+| U3,U4 | MPY634 | C1523457 | extended | $30.5860 | 848 | Four-quadrant analog multiplier, W=(X1-X2)(Y1-Y2)/10 (Paul's part) |
+| U5 | A0515S-2WR2 | C19272710 | extended | $1.5950 | 196 | Isolated 5V -> +/-15V 2W DC/DC module |
 | U6 | 78L12 | C8615 | extended | $0.0990 | 52,154 | +12 V linear regulator (SOT-89: 1=OUT 2=GND 3=IN) |
 | U7 | 79L12 | C8626 | extended | $0.1180 | 11,413 | -12 V linear regulator (SOT-89: 1=GND 2=IN 3=OUT) |
 
@@ -266,17 +272,19 @@ Stock was checked at JLCPCB on 2026-09-15, the date on the silkscreen.
 **3386P-1-203LF** (C116287)
   - 3386P-1-103LF / C116281 (10k, 1700 in stock) with R3 raised to 33k gives r = 23 to 30 -- a narrower sweep that never leaves the chaotic region
 
-The BNC jacks are the thinnest line: about 400 in stock and four per
-board, so roughly 100 boards' worth.  All three listed alternates are the same
-'BNC-KYWE' body -- a 10 x 10 mm flange, four ground posts on an 8 x 8 mm
-square and a centre pin -- so the footprint takes any of them, but
-measure the drawing before you substitute.
+The thinnest line is the BNC-KYWE-295-W4-N: 628 in stock and 4 per board, so about 157 boards' worth; next is the A0515S-2WR2 at about 196.
+All three listed BNC alternates are the same 'BNC-KYWE' body -- a
+10 x 10 mm flange, four ground posts on an 8 x 8 mm square and a
+centre pin -- so the footprint takes any of them, but measure the
+drawing before you substitute.
 
 ## Bringing the board up
 
 1. Plug in USB-C.  The chaos lamp should light within a second: it
    hangs on +12 V through U2B and on all three integrator outputs, so
-   it only comes on once the whole board works.
+   it only comes on once the whole board works.  A new DIP switch
+   usually arrives all off, which is *fast!*: there the lamp can only
+   show its average colour, a steady violet.
 2. Measure the rails at C14 and C15: +12.0 V and -12.0 V, a few tens of
    millivolts of ripple at most.  The board draws about 20 mA a rail.
 3. Set SW1 to *nice!* -- switches 4, 5 and 6 on, 1, 2 and 3 off.
@@ -289,7 +297,11 @@ measure the drawing before you substitute.
    *slower!* (all six on).  Poles 1-3 switch in the 470 nF and poles
    4-6 the 100 nF, so the six sliders read left to right as a
    two-digit binary number: 00, 01, 10, 11.
-7. Turn RV1 clockwise to raise r and anticlockwise to lower it.  About
+7. To watch the lamp, use *slow!* or *slower!*.  It visits every hue
+   about equally: on one wing violet through magenta to red, on the
+   other green through cyan to azure, the colour travelling about twice
+   round the wheel a second.  At *nice!* the eye blurs most of that.
+8. Turn RV1 clockwise to raise r and anticlockwise to lower it.  About
    a third of the way round from the anticlockwise stop the attractor
    collapses into one wing and the lamp settles on a colour; back the
    other way and it starts wandering again.

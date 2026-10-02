@@ -194,15 +194,17 @@ def main():
     a("")
     a("### Still unverified")
     a("")
-    a("One rotation has never actually been seen, because JLCPCB has no")
+    a("One rotation cannot be seen in their preview, because JLCPCB has no")
     a("drawing of the part to turn:")
     a("")
     for code, why in sorted(parts.JLC_UNVERIFIED.items()):
         a(f"* **{code}** -- {why}.")
     a("")
-    a("It is left uncorrected.  D1 is the one part on this board where a")
-    a("preview you cannot read costs you something, so it gets its own")
-    a("paragraph below and its own line in the assembler's notes.")
+    a("It is left uncorrected, and rev A proved that right: its boards came")
+    a("back from JLCPCB with D1 fitted correctly from exactly this file, the")
+    a("same footprint at the same place and angle as on this board.  It still")
+    a("gets its own paragraph below and its own line in the assembler's")
+    a("notes, because their preview will still show a checkerboard.")
     a("")
     a("## Check these before you pay")
     a("")
@@ -272,7 +274,10 @@ def main():
     a("")
     a("## Parts, stock and alternates")
     a("")
-    a("Stock was checked at JLCPCB on 2026-09-15, the date on the silkscreen.")
+    a(f"Stock was last checked on {parts.BOARD_DATE}, the date on the "
+      "silkscreen, at LCSC for every part held in the thousands or fewer; the")
+    a("plentiful passives were checked when rev A was frozen.  JLCPCB's own")
+    a("assembly stock is what counts, and their BOM upload shows it per line.")
     a("")
     a("| ref | value | LCSC | JLC | unit | stock then | notes |")
     a("|---|---|---|---|---|---|---|")
@@ -302,17 +307,33 @@ def main():
             for alt in p["alt"]:
                 a(f"  - {alt}")
             a("")
-    a("The BNC jacks are the thinnest line: about 400 in stock and four per")
-    a("board, so roughly 100 boards' worth.  All three listed alternates are the same")
-    a("'BNC-KYWE' body -- a 10 x 10 mm flange, four ground posts on an 8 x 8 mm")
-    a("square and a centre pin -- so the footprint takes any of them, but")
-    a("measure the drawing before you substitute.")
+    # which part runs out first, in boards' worth
+    per_board = {}
+    for r in rows:
+        per_board[r["LCSC Part #"]] = len(r["Designator"].split(","))
+    worth = []
+    for key, p in parts.PARTS.items():
+        code, stock = p.get("lcsc"), p.get("stock")
+        if code in per_board and isinstance(stock, int):
+            worth.append((stock // per_board[code], p["mpn"], stock,
+                          per_board[code]))
+    worth.sort()
+    w0 = worth[0]
+    a(f"The thinnest line is the {w0[1]}: {w0[2]:,} in stock and {w0[3]} per "
+      f"board, so about {w0[0]:,} boards' worth; next is the {worth[1][1]} at "
+      f"about {worth[1][0]:,}.")
+    a("All three listed BNC alternates are the same 'BNC-KYWE' body -- a")
+    a("10 x 10 mm flange, four ground posts on an 8 x 8 mm square and a")
+    a("centre pin -- so the footprint takes any of them, but measure the")
+    a("drawing before you substitute.")
     a("")
     a("## Bringing the board up")
     a("")
     a("1. Plug in USB-C.  The chaos lamp should light within a second: it")
     a("   hangs on +12 V through U2B and on all three integrator outputs, so")
-    a("   it only comes on once the whole board works.")
+    a("   it only comes on once the whole board works.  A new DIP switch")
+    a("   usually arrives all off, which is *fast!*: there the lamp can only")
+    a("   show its average colour, a steady violet.")
     a("2. Measure the rails at C14 and C15: +12.0 V and -12.0 V, a few tens of")
     a("   millivolts of ripple at most.  The board draws about 20 mA a rail.")
     a("3. Set SW1 to *nice!* -- switches 4, 5 and 6 on, 1, 2 and 3 off.")
@@ -325,7 +346,11 @@ def main():
     a("   *slower!* (all six on).  Poles 1-3 switch in the 470 nF and poles")
     a("   4-6 the 100 nF, so the six sliders read left to right as a")
     a("   two-digit binary number: 00, 01, 10, 11.")
-    a("7. Turn RV1 clockwise to raise r and anticlockwise to lower it.  About")
+    a("7. To watch the lamp, use *slow!* or *slower!*.  It visits every hue")
+    a("   about equally: on one wing violet through magenta to red, on the")
+    a("   other green through cyan to azure, the colour travelling about twice")
+    a("   round the wheel a second.  At *nice!* the eye blurs most of that.")
+    a("8. Turn RV1 clockwise to raise r and anticlockwise to lower it.  About")
     a("   a third of the way round from the anticlockwise stop the attractor")
     a("   collapses into one wing and the lamp settles on a colour; back the")
     a("   other way and it starts wandering again.")

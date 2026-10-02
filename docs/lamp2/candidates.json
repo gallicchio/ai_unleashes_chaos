@@ -61,6 +61,7 @@
    "topo": "C",
    "dropin": false,
    "plus1": false,
+   "revb": true,
    "desc": "common anode at +3.75 V; R=-y via 1.5k & x via 8.2k (+8.2k to +12V), G=x via 24k, B=z via 2.2k (+36k to -12V)",
    "robust": {
     "med": 0.784,
@@ -191,6 +192,7 @@
    "topo": "B",
    "dropin": false,
    "plus1": false,
+   "revb": false,
    "desc": "common anode at +3.90 V; R=-y via 1.2k (+7.5k to +12V), G=x via 18k, B=z via 1.2k (+27k to -12V)",
    "robust": {
     "med": 0.779,
@@ -213,9 +215,9 @@
     0.807
    ],
    "slow!": {
-    "score": 0.8430384125855991,
+    "score": 0.8430384125855999,
     "vivid": 0.9073070973045823,
-    "even": 0.929165455764744,
+    "even": 0.9291654557647449,
     "lit": 0.9992414222479692,
     "sat": 0.8528017711403886,
     "sectors": [
@@ -321,6 +323,7 @@
    "topo": "B",
    "dropin": false,
    "plus1": true,
+   "revb": false,
    "desc": "common anode at +4.00 V; R=z via 470R, G=x via 27k, B=-y via 6.8k (+56k to +12V)",
    "robust": {
     "med": 0.769,
@@ -391,9 +394,9 @@
     0.0
    ],
    "nice!": {
-    "score": 0.47316236015541424,
+    "score": 0.47316236015541385,
     "vivid": 0.7196274743039961,
-    "even": 0.657510138301826,
+    "even": 0.6575101383018255,
     "lit": 1.0,
     "sat": 0.6620848859515663,
     "sectors": [
@@ -451,6 +454,7 @@
    "topo": "C",
    "dropin": false,
    "plus1": false,
+   "revb": false,
    "desc": "common cathode at -1.71 V; R=x via 2.2k & z via 1.8k (+15k to -12V), G=-y via 3.6k & x via 3k (+24k to +12V), B=z via 22k & -y via 4.3k",
    "robust": {
     "med": 0.764,
@@ -581,6 +585,7 @@
    "topo": "C",
    "dropin": false,
    "plus1": false,
+   "revb": false,
    "desc": "common cathode at -2.45 V; R=-y via 8.2k & x via 680R, G=z via 1.6k (+9.1k to -12V), B=-y via 3.3k (+220k to +12V)",
    "robust": {
     "med": 0.763,
@@ -606,8 +611,8 @@
     "score": 0.8059177759485419,
     "vivid": 0.8851184179000573,
     "even": 0.910519722163935,
-    "lit": 0.9924956461066886,
-    "sat": 0.8652225002037086,
+    "lit": 0.9924956461066887,
+    "sat": 0.8652225002037082,
     "sectors": [
      0.0555,
      0.1843,
@@ -651,9 +656,9 @@
     0.0
    ],
    "nice!": {
-    "score": 0.3205495523871135,
+    "score": 0.32054955238711363,
     "vivid": 0.7006091404487195,
-    "even": 0.45752978926568244,
+    "even": 0.4575297892656826,
     "lit": 1.0,
     "sat": 0.6644304079492844,
     "sectors": [
@@ -711,6 +716,7 @@
    "topo": "B",
    "dropin": false,
    "plus1": true,
+   "revb": false,
    "desc": "common anode at +4.00 V; R=z via 560R, G=x via 33k, B=-y via 8.2k (+75k to +12V)",
    "robust": {
     "med": 0.754,
@@ -733,9 +739,9 @@
     0.758
    ],
    "slow!": {
-    "score": 0.8223391543911122,
+    "score": 0.8223391543911128,
     "vivid": 0.8957588891143697,
-    "even": 0.9180362755921438,
+    "even": 0.9180362755921446,
     "lit": 0.9971903529329287,
     "sat": 0.8464609704915816,
     "sectors": [
@@ -781,9 +787,9 @@
     0.0
    ],
    "nice!": {
-    "score": 0.40690068834640164,
-    "vivid": 0.6855419646147104,
-    "even": 0.5935459962324681,
+    "score": 0.40690068834640136,
+    "vivid": 0.6855419646147103,
+    "even": 0.5935459962324677,
     "lit": 1.0,
     "sat": 0.6299474115201642,
     "sectors": [
@@ -841,6 +847,7 @@
    "topo": "A",
    "dropin": true,
    "plus1": false,
+   "revb": false,
    "desc": "common anode at +3.80 V; R=z via 390R, G=x via 27k, B=-y via 27k",
    "robust": {
     "med": 0.651,
@@ -911,9 +918,9 @@
     0.0
    ],
    "nice!": {
-    "score": 0.27187322127164854,
-    "vivid": 0.518185979556519,
-    "even": 0.5246634065713758,
+    "score": 0.27187322127164837,
+    "vivid": 0.5181859795565189,
+    "even": 0.5246634065713756,
     "lit": 1.0,
     "sat": 0.5393553516825634,
     "sectors": [
@@ -971,6 +978,7 @@
    "topo": "A",
    "dropin": false,
    "plus1": false,
+   "revb": false,
    "desc": "common cathode at -2.20 V; R=z via 1.8k, G=x via 1k, B=-y via 470R",
    "robust": {
     "med": 0.637,
@@ -1101,6 +1109,7 @@
    "topo": "A",
    "dropin": false,
    "plus1": false,
+   "revb": false,
    "desc": "common cathode at -1.90 V; R=x via 560R, G=z via 10k, B=-y via 1.2k",
    "robust": {
     "med": 0.591,
@@ -1171,9 +1180,9 @@
     0.0
    ],
    "nice!": {
-    "score": 0.3193667654927961,
+    "score": 0.31936676549279625,
     "vivid": 0.8483352651874673,
-    "even": 0.3764629134240006,
+    "even": 0.3764629134240008,
     "lit": 0.9999419600970443,
     "sat": 0.8148087101470319,
     "sectors": [
@@ -1231,6 +1240,7 @@
    "topo": "A",
    "dropin": true,
    "plus1": false,
+   "revb": false,
    "desc": "common anode at +3.70 V; R=z via 470R, G=x via 15k, B=-y via 33k",
    "robust": {
     "med": 0.578,
@@ -1253,11 +1263,11 @@
     0.631
    ],
    "slow!": {
-    "score": 0.6170240582591353,
-    "vivid": 0.8153495512977932,
-    "even": 0.756760161671785,
-    "lit": 0.9913196750716843,
-    "sat": 0.7993913257991678,
+    "score": 0.6170240582591351,
+    "vivid": 0.8153495512977933,
+    "even": 0.7567601616717846,
+    "lit": 0.9913196750716845,
+    "sat": 0.7993913257991677,
     "sectors": [
      0.0507,
      0.062,

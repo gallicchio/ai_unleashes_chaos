@@ -97,40 +97,53 @@ Comfortable inside +/-12 V rails.
    | JP1 | solder jumper, open | bridge it to give the isolation up |
 
 5. **U2B drives the chaos lamp's reference.**  Paul also used only 1.5 of his
-   two LF412s; this board spends the spare half on something useful.  A 12k /
-   33k divider from +12 V makes **+3.20 V**, U2B buffers it, and that becomes
-   the common *anode* of one RGB lamp whose three cathodes are driven from z,
-   x and -y through 470 ohm, 3.9k and 1.5k.
+   two LF412s; this board spends the spare half on something useful.  A 15k /
+   33k divider from +12 V makes **+3.75 V**, U2B buffers it, and that becomes
+   the common *anode* of one RGB lamp.  Holding the anode above the signals is
+   what lets signals that swing either side of zero drive an LED at all: a die
+   conducts when the voltage at its cathode falls a forward drop below the
+   anode.
 
-   Holding the anode above every signal's maximum is what makes signals that
-   swing either side of zero drive an LED at all: each die conducts when its
-   own signal falls a forward drop *below* +3.2 V, so the lamp is brightest
-   where the signal is most negative.
+   In rev B each cathode sees a small resistor network rather than one
+   resistor:
 
-   | die | from | lights when | peak | lit |
-   |---|---|---|---|---|
-   | red | z | z < +1.4 V, the bottom of each excursion | 2.5 mA, 38 mcd | 28 % of the time |
-   | green | x | x < +0.6 V, most of the -x wing | 0.7 mA, 36 mcd | 87 % |
-   | blue | -y | -y < +0.6 V, most of the +x wing | 2.2 mA, 39 mcd | 84 % |
+   | die | fed from | through | what it is for |
+   |---|---|---|---|
+   | red | -y | R15 = 1.5k | the main feed: 73 % of what the cathode sees |
+   | | x | R22 = 8.2k | blends in about a fifth as much x, which shifts where in each orbit red peaks |
+   | | +12 V | R23 = 8.2k | lifts red's cathode 1.6 V, so red lights over the +x wing and fades on the -x wing |
+   | green | x | R13 = 24k | lights over most of the orbit, brightest on the -x wing; 24k because green is the most efficient die per milliamp |
+   | blue | z | R14 = 2.2k | the bottom of every loop, either wing |
+   | | -12 V | R24 = 36k | lowers blue's cathode 0.7 V, which moves its threshold up the z swing |
 
-   That table is what rev A's lamp model predicted, and it is option 038 of
-   the hundred wirings rendered in `docs/lamp/`: three peak brightnesses
-   within 8 % of each other, blue and green mixing through the wings and red
-   flashing in at the bottom of each excursion.  U2B sources 3.7 mA at the
-   peak and 1.2 mA on average.
+   R23 and R24 are what make rev B saturated: they move red's and blue's
+   thresholds independently of the shared anode, so the dies take turns
+   instead of all being on at once.  Simulated with the corrected LED model,
+   red is lit 75 % of the time (peak 1.8 mA), green 91 % (peak 0.13 mA) and
+   blue 41 % (peak 0.7 mA).  Weighted for how bright each colour looks, the
+   three peaks come out within a factor of two of each other.  U2B sources 1.9 mA at the
+   peak and 0.6 mA on average, and R23 draws at most 1.5 mA from +12 V.
 
-   **The boards disagreed.**  Rev A's lamp is mostly blue with some green,
-   and anything else is rare.  The model had the red die turning on too early
-   and, worse, had the two InGaN dies (green, blue) losing efficiency at low
-   current when they gain it, while the AlGaInP red loses it.  At the half a
-   milliamp this lamp runs at, green and blue are two to three times brighter
-   *relative to red* than the table says, and red's flashes are swamped.  See
-   "What the rev A boards showed" below.
+   What you see at `slow!`: on the +x wing the colour runs violet through
+   magenta to red, on the -x wing green through cyan to azure, and through
+   the crossings blue to orange.  It is vivid -- neither near white nor near
+   black -- about 90 % of the time, and its vivid moments fill 11 of the 12
+   30-degree hue sectors about equally.  At `fast!` the eye sees only the
+   average, a steady violet.
+
+   **Rev A's lamp was different, and duller than predicted.**  It was option
+   038 of `docs/lamp/` -- 12k/33k for +3.20 V, z to red through 470 ohm, x to
+   green through 3.9k, -y to blue through 1.5k -- chosen with an LED model the
+   boards proved wrong: it came out mostly blue with some green.  See "What the
+   rev A boards showed" and "The rev B search" below; rev B is candidate 1 of
+   that search.
 
    The part is **MHPA3528CRGBCT** (LCSC C2962095), common anode: pin 1 is the
-   anode, pin 2 blue, pin 3 green, pin 4 red.  Its common-*cathode* twin
-   MHPC3528CRGBCT is the same dies in the same package with pins 1 and 4
-   swapped, so the two are not interchangeable on this board.
+   anode, pin 2 blue, pin 3 green, pin 4 red, numbered clockwise from the
+   bottom left in the top view.  Its common-*cathode* twin MHPC3528CRGBCT is
+   the same dies in the same package with pins 1 and 4 swapped, so the two
+   are not interchangeable on this board.  D1's footprint, position and
+   rotation are exactly rev A's, which rev A's boards proved right.
 
    The lamp taps the op-amp outputs *before* the 100 ohm series resistors, so
    none of its current flows in the BNC output impedance.
@@ -300,7 +313,7 @@ current are 26 of the 100 options but 7 of the 9 favourites.  Ranked by
 `hue coverage x sqrt(balance) x lit`, the nine come in at 1, 4, 5, 7, 11, 16,
 22, 25 and 42 out of 100 -- and 038 comes first.
 
-### What that settled
+### What that settled, for rev A
 
 * **Common anode**, MHPA3528CRGBCT, held at **+3.20 V** by the spare half of
   U2 -- so each die lights on the way *down*, and the lamp is never dark.
@@ -318,7 +331,7 @@ the attractor has collapsed to a fixed point.
 
 ### What the rev A boards showed
 
-The boards were built exactly as above -- netlist, part and orientation all
+The rev A boards were built exactly as option 038 -- netlist, part and orientation all
 check out, and a lamp fitted any other way could not show blue and green at
 all.  But the lamp is mostly blue with some green, and anything else is rare.
 The model was wrong at two links of the chain, and `scripts/lamp_model.py`
@@ -393,6 +406,13 @@ Designs that stand more than 2 mA in an offset resistor or run a die above
 Rev A scores 0.33 on that test.  The best rev B candidates score 0.77-0.78,
 and one of them is rev A's own wiring with one more resistor.  See
 `docs/lamp2/` for all ten finalists, playing in real time.
+
+Rev B is built with **candidate 1**, the top scorer.  Re-judged against 96
+fresh LEDs at five settings of the r knob it scores 0.805 (90 % interval
+0.801-0.809), statistically tied with candidate 2 at 0.804 and clear of the
+rest.  `check_circuit.py` now reads the lamp back out of the netlist, checks
+it is that wiring, and simulates it -- the build fails if the board's own
+lamp scores below 0.70.
 
 ## Part selection (JLCPCB stock checked 2026-09-15)
 

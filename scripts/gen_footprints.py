@@ -238,7 +238,8 @@ def led_rgb():
     "Recommended solder pad" gives four 1.2 x 0.95 mm pads with 2.0 mm between
     the two columns and 0.5 mm between the two rows, so the pad centres land
     on +/-1.6 mm and +/-0.725 mm.  Pin 1 is bottom left in the top view and
-    the numbering runs anticlockwise.  The land pattern is the same for both
+    the numbering runs clockwise -- 2 top left, 3 top right, 4 bottom right --
+    not anticlockwise as on an IC.  The land pattern is the same for both
     of MEIHUA's 3528 lamps; only what sits on each pad differs.  This board
     fits the common-*anode* MHPA3528CRGBCT: 1 = anode, 2 = blue cathode,
     3 = green cathode, 4 = red cathode.
@@ -367,7 +368,12 @@ def trimpot():
 # Editing the footprint on the *board* instead would work too, but then the
 # board no longer matches its library and DRC says so, with reason.
 USBC_SRC = "Connector_USB.pretty/USB_C_Receptacle_HRO_TYPE-C-31-M-12.kicad_mod"
-USBC_SILK_LIMIT = 2.45          # board edge 2.66, less 0.15 rule and 0.06 pen
+# Board edge at +2.66.  Rev A stopped the silk at +2.45, inside KiCad's
+# 0.15 mm rule, but JLCPCB's CAM pulls all silkscreen 0.2 mm back from the
+# routed edge and so clipped the ends.  Stopping 0.45 mm short clears both,
+# and a stub left shorter than 0.3 mm is dropped rather than printed as a dot.
+USBC_SILK_LIMIT = 2.21
+USBC_SILK_MIN = 0.3
 
 
 def usbc(share):
@@ -395,6 +401,10 @@ def usbc(share):
             k = it.first(tag)
             if float(k.atom(1)) > USBC_SILK_LIMIT:
                 k.items = [k.atoms()[0], Sym(f"{USBC_SILK_LIMIT}")]
+        (x1, y1), (x2, y2) = [(float(it.first(t).atom(0)), float(it.first(t).atom(1)))
+                              for t in ("start", "end")]
+        if ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5 < USBC_SILK_MIN:
+            continue
         keep.append(it)
     root.items = keep
 
@@ -409,8 +419,9 @@ def usbc(share):
         xyz("offset", 0), xyz("scale", MM_SCALE), xyz("rotate", 0)]))
     d = root.first("descr")
     if d is not None:
-        d.items = [d.atom(0) + "; silkscreen trimmed at y=+2.45 so it stops "
-                   "at the board edge this project mounts it against"]
+        d.items = [d.atom(0) + f"; silkscreen trimmed at y=+{USBC_SILK_LIMIT} "
+                   "so it stops clear of the board edge this project mounts "
+                   "it against"]
     return name, root
 
 

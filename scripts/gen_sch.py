@@ -407,36 +407,83 @@ def build():
         s.text(m["legend"], JOG_X + 1.9, pw[1] - 2.2, size=1.9)
 
     # ============================== the chaos lamp, driven by x, -y and z ===
-    # Each colour is fed from its own integrator's *output* node, tapped on
-    # the short column between the op-amp and the 100 ohm series resistor and
-    # brought down the right-hand margin.  Drawn this way there is no way to
-    # mistake it for current taken from an op-amp input: the branch leaves the
-    # output on the same side as the BNC, below the jack, and never touches
-    # the return lanes that feed the summing resistors.
+    # Each feed is tapped from its integrator's *output* node, on the short
+    # column between the op-amp and the 100 ohm series resistor, and brought
+    # down the right-hand margin.  Drawn this way there is no way to mistake
+    # it for current taken from an op-amp input: the branch leaves the output
+    # on the same side as the BNC and never touches the return lanes that
+    # feed the summing resistors.
     #
-    # The lamp is common *anode*, held at +3.2 V by U2B, so each die lights
-    # when its own signal goes LOW -- red at the bottom of each z excursion,
-    # green on the -x wing, blue on the +x wing.  Reference and resistors are
-    # option 038 of docs/lamp: the three peaks land within 8 % of each other,
-    # so green and blue mix through the wings (lit 87 % and 84 % of the time)
-    # and red flashes in on the way down (28 %), instead of one die drowning
-    # the other two.  The lamp itself is never dark.
-    LAMP_Y = (269.24, 274.32, 279.4)
+    # Rev B's lamp is candidate 1 of docs/lamp2, the best of 6.7 million
+    # wirings judged for how evenly the colour visits every hue and how
+    # seldom it is near white or black.  The common anode is held at +3.75 V
+    # by U2B, so each die lights when the voltage at its cathode falls a
+    # forward drop below that.  Red is fed mostly from -y with a little x
+    # blended in, green from x, blue from z; R23 and R24 pull red's and
+    # blue's cathodes towards the rails, which moves their thresholds on
+    # their own, so the dies take turns instead of mixing to white.
+    #
+    # Six rows, one resistor each, grouped by die.  The innermost lane (z)
+    # feeds the top row and the outermost (x) the bottom ones, so no feed
+    # crosses another; that is also why the symbol draws its dies blue, red,
+    # green down the page.  A short bus per die gathers its rows.
     LED_CX, BUF_CX, RES_CX_L = 168.91, 148.59, 190.5
-    # topmost row gets the outermost lane, so no two feeds ever cross
-    for (row, lane, ly, ref, val) in zip(rows, (273.05, 269.24, 265.43),
-                                         LAMP_Y[::-1], ("R13", "R14", "R15"),
-                                         ("3.9k", "1.5k", "470R")):
-        y_out = row["y"]
-        s.wire((OUT_X, y_out + 16.51), (lane, y_out + 16.51))
-        s.junction(OUT_X, y_out + 16.51)
-        s.wire((lane, y_out + 16.51), (lane, ly), (194.31, ly))
+    LAMP_Y = (269.24, 274.32, 279.4)          # D1's blue, red and green pins
+    lamp_rows = [
+        # (row y, ref, value, fed from, die)
+        (266.7, "R14", "2.2k", "z", "B"),
+        (270.51, "R24", "36k", "-12V", "B"),
+        (274.32, "R15", "1.5k", "-y", "R"),
+        (278.13, "R22", "8.2k", "x", "R"),
+        (281.94, "R23", "8.2k", "+12V", "R"),
+        (285.75, "R13", "24k", "x", "G"),
+    ]
+    lamp_lane = {"z": 265.43, "-y": 269.24, "x": 273.05}
+    die_pin = {"B": LAMP_Y[0], "R": LAMP_Y[1], "G": LAMP_Y[2]}
+    die_bus = {"B": 179.07, "R": 181.61, "G": 176.53}
+    die_word = {"B": "blue", "R": "red", "G": "green"}
+    out_tap = {row["label"]: row["y"] + 16.51 for row in rows}
+    lane_rows = {}
+    for (ly, ref, val, src, die) in lamp_rows:
+        # rows are 3.81 mm apart, so a resistor's name and value share one
+        # line above it, either side of its middle
         s.place("Device:R_US", ref, val, RES_CX_L, ly, rot=90, footprint=rfp(),
                 fields=passive_fields(val),
-                ref_off=(0, -4.4), val_off=(0, -1.9))
-        s.wire((186.69, ly), (LED_CX + 5.08, ly))
-        s.text(f"{row['label']} -> {row['colour']}", lane + 2.2, ly - 1.4,
-               size=1.5)
+                ref_off=(-2.8, -1.9), val_off=(2.8, -1.9))
+        s.wire((186.69, ly), (die_bus[die], ly))
+        if src in lamp_lane:
+            lane_rows.setdefault(src, []).append(ly)
+            s.text(f"{src} -> {die_word[die]}", 199.39, ly - 1.2, size=1.4)
+        else:
+            # the threshold resistors end on their rail, drawn pointing away
+            s.wire((194.31, ly), (196.85, ly))
+            s.place(f"power:{src}", pwr_ref(), src, 196.85, ly, rot=270,
+                    in_bom=False, on_board=False, hide_ref=True,
+                    val_off=(4.4, 0.0), val_justify="left")
+            s.text(f"moves {die_word[die]}'s threshold", 209.55, ly + 0.5,
+                   size=1.4)
+    for src, ys in lane_rows.items():
+        lane, ty = lamp_lane[src], out_tap[src]
+        s.wire((OUT_X, ty), (lane, ty), (lane, max(ys)), (194.31, max(ys)))
+        s.junction(OUT_X, ty)
+        for ly in ys:
+            if ly != max(ys):
+                s.wire((lane, ly), (194.31, ly))
+                s.junction(lane, ly)
+    for die in ("B", "R", "G"):
+        rows_y = [ly for (ly, _, _, _, d) in lamp_rows if d == die]
+        ys = sorted(set(rows_y + [die_pin[die]]))
+        bx = die_bus[die]
+        if len(ys) > 1:
+            s.wire((bx, ys[0]), (bx, ys[-1]))
+        s.wire((LED_CX + 5.08, die_pin[die]), (bx, die_pin[die]))
+        for ly in ys:
+            # a dot wherever three wires meet: anywhere inside the bus, and
+            # at an end where a row and the pin arrive from opposite sides
+            arms = (ly > ys[0]) + (ly < ys[-1]) + (ly in rows_y) + \
+                (ly == die_pin[die])
+            if arms >= 3:
+                s.junction(bx, ly)
 
     s.place("lorenz:LED_RGB_CA", "D1", "RGB", LED_CX, LAMP_Y[1], mirror="y",
             footprint=fp("LED_RGB"), fields=part_fields("LED_RGB"),
@@ -452,7 +499,7 @@ def build():
     s.wire(b_out, (b_out[0], LAMP_Y[0] - 3.81), (b_neg[0], LAMP_Y[0] - 3.81),
            b_neg)
     s.junction(*b_out)
-    testpoint(160.02, LAMP_Y[1] + 6.35, "+3.2V", rot=180, dx=2.2, dy=1.0)
+    testpoint(160.02, LAMP_Y[1] + 6.35, "+3.75V", rot=180, dx=2.2, dy=1.0)
     s.wire((160.02, LAMP_Y[1]), (160.02, LAMP_Y[1] + 6.35))
     s.junction(160.02, LAMP_Y[1])
 
@@ -466,7 +513,7 @@ def build():
     rail("+12V", NODE_X - 12.7, b_pos[1] - 3.81, to=b_pos[1])
     for (ref, val, cx, lib, key) in (
             ("C24", "100nF", 129.54, "Device:C", "100nF"),
-            ("R16", "12k", 137.16, "Device:R_US", "12k")):
+            ("R16", "15k", 137.16, "Device:R_US", "15k")):
         s.place(lib, ref, val, cx, b_pos[1] + 6.35,
                 footprint=(parts.PARTS["C_0805"]["footprint"] if ref[0] == "C"
                            else rfp()),
@@ -481,13 +528,13 @@ def build():
     for i, line in enumerate((
             "One lamp, three colours, driven from the three outputs.",
             "",
-            "+12 V x 12k / (12k + 33k) = +3.2 V, buffered by U2B -- the half",
-            "of the LF412 Paul never needed -- and held on the lamp's common",
-            "anode.  Each die then lights when its own signal goes low, and",
-            "the three peaks land within 8 % of each other, so the colour",
-            "wanders through mixed hues rather than blinking between",
-            "saturated primaries.  The taps are on the output side of each",
-            "integrator, ahead of the 100 ohm series resistor, so no lamp",
+            "+12 V x 15k / (15k + 33k) = +3.75 V, buffered by U2B -- the",
+            "half of the LF412 Paul never needed -- on the common anode.",
+            "A die lights when its cathode falls a forward drop below it.",
+            "Red follows -y with a fifth of x, green x, blue z.  R23 and",
+            "R24 move red's and blue's thresholds, so the dies take turns",
+            "instead of mixing to white (chosen by simulation, docs/lamp2).",
+            "Taps are ahead of the 100 ohm series resistors, so no lamp",
             "current flows in the BNC output impedance.")):
         if line:
             s.text(line, 19.05, 269.0 + i * 2.7, size=1.4)

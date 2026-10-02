@@ -143,12 +143,14 @@ PART_LABELS = [
     ("R19", 0.0, -2.6, "SYNC IN X adds here", 0.9),
     # The lamp's whole story, next to the lamp: which signal drives which die.
     ("D1", 0.0, -8.4, "CHAOS LAMP", 1.2),
-    ("D1", 0.0, -6.0, "z = red", 1.0),
+    ("D1", 0.0, -6.0, "-y (+x) = red", 1.0),
     ("D1", 0.0, -4.3, "x = green", 1.0),
-    ("D1", 0.0, -2.6, "-y = blue", 1.0),
-    ("R13", -5.6, 0.0, "green", 1.0),
-    ("R14", -5.6, 0.0, "blue", 1.0),
-    ("R15", -5.6, 0.0, "red", 1.0),
+    ("D1", 0.0, -2.6, "z = blue", 1.0),
+    # ...and each die's resistors say which die they feed, once per group.
+    # Green's row is beside the DIP switch, so its name goes above the row.
+    ("R13", -3.5, -2.3, "green", 1.0),
+    ("R14", -7.0, 1.5, "blue", 1.0),
+    ("R22", -7.0, 0.0, "red", 1.0),
 ]
 
 # Where a field would rather sit than wherever the search happens to find room.
@@ -166,12 +168,19 @@ FIELD_ANCHOR = {
     "RV": {"Reference": (-3.4, 7.3), "Value": (3.4, 7.3)},
     # "GND TIE" belongs under the credit line, not over it.
     "JP": {"Reference": (-4.6, -3.6), "Value": (0.9, -3.6)},
+    # The lamp's six resistors are stacked 3-4 mm apart, which leaves no room
+    # above or below them: designator to the left, value to the right, on the
+    # resistor's own line, so each pair is read across the part it names.
+    **{ref: {"Reference": (-3.5, 0.0), "Value": (3.3, 0.0)}
+       for ref in ("R13", "R14", "R24", "R15", "R22", "R23")},
 }
 
 # Parts whose Value field would only repeat the legend beside them.  The two
 # multipliers are the crowded corner of the board and "MPY634" is already
-# printed under each of them in full.
-HIDE_VALUE = {"U3", "U4"}
+# printed under each of them in full; likewise "LF412 op-amp" beside each
+# op-amp, whose bare "LF412" otherwise lands on the end of the lamp's bottom
+# row and reads as part of it.
+HIDE_VALUE = {"U1", "U2", "U3", "U4"}
 
 IC_NOTES = [
     ("U1", "LF412"), ("U2", "LF412"),

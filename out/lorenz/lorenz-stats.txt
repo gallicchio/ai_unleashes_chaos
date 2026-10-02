@@ -1,6 +1,6 @@
 PCB statistics report
 =====================
-- Date: 2026-09-15
+- Date: 2026-10-02
 - Project: lorenz
 - Board name: lorenz
 
@@ -9,21 +9,21 @@ Board
 - Width: 100.0000 mm
 - Height: 100.0000 mm
 - Area: 9992.261 mm²
-- Front copper area: 9322.801 mm²
-- Back copper area: 9507.462 mm²
+- Front copper area: 9228.552 mm²
+- Back copper area: 9524.257 mm²
 - Min track clearance: 0.2500 mm
 - Min track width: 0.3000 mm
 - Min drill diameter: 0.3000 mm
 - Board stackup thickness: 1.6000 mm
 
-- Front footprint area: 2960.403 mm²
+- Front footprint area: 2979.397 mm²
 - Back footprint area: 286.612 mm²
-- Front component density: 29.63 %
+- Front component density: 29.82 %
 - Back component density: 2.87 %
 Pads
 ----
 - Through hole: 54
-- SMD: 188
+- SMD: 194
 - Connector: 0
 - NPTH: 6
 - Castellated: 0
@@ -31,7 +31,7 @@ Pads
 
 Vias
 ----
-- Through vias: 362
+- Through vias: 354
 - Blind vias: 0
 - Buried vias: 0
 - Micro vias: 0
@@ -42,16 +42,16 @@ Components
 |              | Front Side | Back Side | Total |
 |--------------|------------|-----------|-------|
 |THT:          |         10 |         0 |    10 |
-|SMD:          |         59 |         0 |    59 |
+|SMD:          |         62 |         0 |    62 |
 |Unspecified:  |         18 |         0 |    18 |
-|Total:        |         87 |         0 |    87 |
+|Total:        |         90 |         0 |    90 |
 
 Drill holes
 -----------
 
 | Count | Shape |    X Size |    Y Size | Plated | Via/Pad | Start Layer | Stop Layer |
 |-------|-------|-----------|-----------|--------|---------|-------------|------------|
-|   362 | Round | 0.3000 mm | 0.3000 mm |    PTH |     Via |        F.Cu |       B.Cu |
+|   354 | Round | 0.3000 mm | 0.3000 mm |    PTH |     Via |        F.Cu |       B.Cu |
 |    16 | Round | 1.4000 mm | 1.4000 mm |    PTH |     Pad |        F.Cu |       B.Cu |
 |    13 | Round | 0.7000 mm | 0.7000 mm |    PTH |     Pad |        F.Cu |       B.Cu |
 |     6 | Round | 0.8000 mm | 0.8000 mm |    PTH |     Pad |        F.Cu |       B.Cu |

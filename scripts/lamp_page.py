@@ -301,6 +301,7 @@ function show(k) {
   document.getElementById('title').textContent = c.ref ? (c.ref === 'new' ? 'Rev A as built, corrected model' : 'Rev A as the old model drew it') : c.name;
   const b = document.getElementById('badges');
   b.innerHTML = c.ref ? '<span class="badge">reference</span>' :
+    (c.revb ? '<span class="badge go">built on rev B</span> ' : '') +
     (c.dropin ? '<span class="badge go">try it on a rev A board</span>' :
      c.plus1 ? '<span class="badge go">rev A + one resistor</span>' : '<span class="badge new">needs rev B</span>') +
     (c.topo === 'B' && !c.plus1 ? ' <span class="badge">+ offset resistors</span>' : '') +

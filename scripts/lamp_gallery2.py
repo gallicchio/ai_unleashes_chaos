@@ -22,6 +22,12 @@ from lamp_search import E24_ALL
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
+# The wiring rev B was built with (scripts/check_circuit.py holds the board
+# to it): candidate 1, the top scorer.
+REV_B = dict(part="CA", vref=3.75, src=[1, 0, 2], rs=[1500.0, 24000.0, 2200.0],
+             ro=[8200.0, None, 36000.0], rail=["+12V", "GND", "-12V"],
+             src2=[0, None, None], rs2=[8200.0, None, None])
+
 ANIM_DT = 0.01          # time units per animation sample: 4.7 ms at slow!
 ANIM_T = 160.0          # time units of animation: 76 s at slow!
 
@@ -302,7 +308,7 @@ def main():
         div = divider(lamp.vref)
         out.append(dict(
             n=i, lamp=r["lamp"], topo=r["topo"], dropin=r["dropin"],
-            plus1=r["plus1"],
+            plus1=r["plus1"], revb=(r["lamp"] == REV_B),
             desc=lamp.describe(), robust=dict(
                 med=round(r["score_med"], 3), p20=round(r["score_p20"], 3),
                 vivid=round(r["vivid_med"], 3), even=round(r["even_med"], 3)),
