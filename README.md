@@ -2,14 +2,35 @@
 
 [Lorenz Attractor Circuit](https://seti.harvard.edu/unusual_stuff/misc/lorenz.htm) by Paul Horowitz in KiCAD
 
-In graduate school I worked with Paul Horowitz, of [Art of Electronics](https://artofelectronics.net/) fame. I even contributed a few bits and pieces to the 3rd edition. (I am thanked in the footnotes, one of which simply says, "Jason, again.") This started by [asking Claude](CLAUDE_CODE_CHAT.md), "I want you to build a nice little present for Paul, which could also live on as an open source project and a kit that people could build." Watch Paul's [Interview with Ladyada](https://www.youtube.com/watch?v=iCI3B5eT9NA) to get a sense for the guy.
+"Claude, I want you to build a nice little present for Paul Horowitz, which could also live on as an open source project and a kit that people could build."
+
+<!-- GitHub strips <iframe> from READMEs, so a video cannot play in place;
+     this is the thumbnail with a play button, linked to YouTube. -->
+<p align="center">
+  <a href="https://youtu.be/pzk5cd-qo5U" title="Watch on YouTube">
+    <img src="docs/images/thumbnail_video_play.jpg" alt="Watch the video on YouTube" width="720">
+  </a>
+  <br>
+  <a href="https://youtu.be/pzk5cd-qo5U"><b>&#9654; Watch on YouTube</b></a>
+</p>
+
+In graduate school I worked with Paul Horowitz, of [Art of Electronics](https://artofelectronics.net/) fame. I even contributed a few bits and pieces to the 3rd edition. (I am thanked in the footnotes, one of which simply says, "Jason, again.") This project started by [asking Claude](CLAUDE_CODE_CHAT.md) the above question. Watch his reaction above. Also watch Paul's [Interview with Ladyada](https://www.youtube.com/watch?v=iCI3B5eT9NA) to get a sense for the guy.
+
+<p align="center">
+  <a href="https://youtu.be/pzk5cd-qo5U"><img src="docs/images/thumbnail_jason.png" alt="Jason" width="300"></a>
+  <a href="https://youtu.be/pzk5cd-qo5U"><img src="docs/images/thumbnail_paul.png" alt="Paul Horowitz" width="300"></a>
+  <br>
+  <a href="https://youtu.be/pzk5cd-qo5U"><img src="docs/images/thumbnail_single.png" alt="One board drawing the attractor" width="300"></a>
+  <a href="https://youtu.be/pzk5cd-qo5U"><img src="docs/images/thumbnail_sync.png" alt="Two boards synchronised" width="300"></a>
+</p>
+
+![The board](docs/images/lorenz-render-iso.png)
 
 **Only Prompts:**
 As an experiment, the entire PCB, along with additions to Paul's original circuit were designed in a few
 hours of [prompts to Claude Opus 5 Max](CLAUDE_CODE_CHAT.md). I only typed prompts.
 I only used KiCAD to look at the output of Claude's [python scripts](scripts/), which generated everything else.
 
-![The board](docs/images/lorenz-render-iso.png)
 
 ## What it is
 
