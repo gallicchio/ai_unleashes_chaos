@@ -311,6 +311,66 @@ def pdf_to_png(pdf, png, dpi=PNG_DPI, crop=False):
     return True
 
 
+# The rev B boards came back matte black with white silkscreen and HASL pads,
+# so that is how the 3D renders paint them.  The colours live in a board
+# stackup, which the generated .kicad_pcb does not carry; rather than add one
+# there (the fab takes its colour from the order form, not the file), the
+# renders use a scratch copy with this stackup spliced in.  KiCad's stock
+# "Black" mask is translucent and comes out brown over the FR4, so the mask is
+# a near-opaque custom colour: dark enough to read as matte black, just
+# translucent enough that the traces show faintly, as they do on the boards.
+MASK = "#161616F5"
+RENDER_STACKUP = f'''\t\t(stackup
+\t\t\t(layer "F.SilkS" (type "Top Silk Screen") (color "White"))
+\t\t\t(layer "F.Paste" (type "Top Solder Paste"))
+\t\t\t(layer "F.Mask" (type "Top Solder Mask") (color "{MASK}") (thickness 0.01))
+\t\t\t(layer "F.Cu" (type "copper") (thickness 0.035))
+\t\t\t(layer "dielectric 1" (type "core") (thickness 1.51) (material "FR4")
+\t\t\t\t(epsilon_r 4.5) (loss_tangent 0.02))
+\t\t\t(layer "B.Cu" (type "copper") (thickness 0.035))
+\t\t\t(layer "B.Mask" (type "Bottom Solder Mask") (color "{MASK}") (thickness 0.01))
+\t\t\t(layer "B.Paste" (type "Bottom Solder Paste"))
+\t\t\t(layer "B.SilkS" (type "Bottom Silk Screen") (color "White"))
+\t\t\t(copper_finish "HAL lead-free")
+\t\t\t(dielectric_constraints no)
+\t\t)
+'''
+
+
+def render_3d(stem, pcb):
+    """3D renders of the board in its real colours; returns the names made."""
+    renders = (
+        ("render-top", ["--side", "top"]),
+        ("render-bottom", ["--side", "bottom"]),
+        ("render-iso", ["--side", "top", "--perspective",
+                        "--rotate", "-28,0,-18", "--zoom", "0.66"]))
+    # Beside the original, so ${KIPRJMOD} still finds the 3D models.
+    tmp = os.path.join(os.path.dirname(pcb), "_render.kicad_pcb")
+    with open(pcb) as fh:
+        src = fh.read()
+    if "\t(setup\n" not in src:
+        raise SystemExit(f"{pcb}: no (setup) block to put the stackup in")
+    with open(tmp, "w") as fh:
+        fh.write(src.replace("\t(setup\n", "\t(setup\n" + RENDER_STACKUP, 1))
+    made = []
+    try:
+        for name, extra in renders:
+            out = os.path.join(IMAGES, f"{stem}-{name}.png")
+            # "basic" rather than "high": the raytraced setting samples
+            # stochastically, so an unchanged board renders differently every
+            # time and the image churns in git.  The difference is soft
+            # shadows.
+            kienv.cli("pcb", "render", "--width", "1400", "--height", "1150",
+                      "--quality", "basic", "--background", "opaque",
+                      "--use-board-stackup-colors", *extra, "-o", out, tmp)
+            made.append(name)
+    finally:
+        for f in (tmp, tmp[:-len(".kicad_pcb")] + ".kicad_prl"):
+            if os.path.exists(f):
+                os.remove(f)
+    return made
+
+
 def export_images(stem, layers):
     """PNGs of the sheet and both sides, plus 3D renders."""
     pcb, sch = board_files(stem)
@@ -349,20 +409,8 @@ def export_images(stem, layers):
          else skipped).append("schematic")
 
     # 3D.  Both boards look identical from outside, so only render one.
-    renders = () if layers == 4 else (
-        ("render-top", ["--side", "top"]),
-        ("render-bottom", ["--side", "bottom"]),
-        ("render-iso", ["--side", "top", "--perspective",
-                        "--rotate", "-28,0,-18", "--zoom", "0.66"]))
-    for name, extra in renders:
-        out = os.path.join(IMAGES, f"{stem}-{name}.png")
-        # "basic" rather than "high": the raytraced setting samples
-        # stochastically, so an unchanged board renders differently every time
-        # and the image churns in git.  The difference is soft shadows.
-        kienv.cli("pcb", "render", "--width", "1400", "--height", "1150",
-                  "--quality", "basic", "--background", "opaque",
-                  *extra, "-o", out, pcb)
-        made.append(name)
+    if layers != 4:
+        made += render_3d(stem, pcb)
 
     step = os.path.join(d, f"{stem}.step")
     kienv.cli("pcb", "export", "step", "--no-dnp", "--subst-models",
