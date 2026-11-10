@@ -18,10 +18,10 @@
 ![The rev B board drawing the Lorenz attractor on an analog scope](docs/images/20261106_101434_photo_analog_scope.jpg)
 
 <!-- GitHub will not play a video stored in the repository inline in a README,
-     so this is a still from it, linked to the clip itself. -->
+     so this is an animated GIF of it, linked to the clip itself. -->
 <p align="center">
   <a href="docs/images/20261106_154352_video_analog_scope.mp4?raw=true" title="Download the video (9 MB mp4)">
-    <img src="docs/images/20261106_154352_video_analog_scope_still.jpg" alt="Video: the spot on the scope tracing the attractor" width="360">
+    <img src="docs/images/20261106_154352_video_analog_scope.gif" alt="Animation: the spot on the scope tracing the attractor while the lamp changes colour" width="280">
   </a>
   <br>
   <a href="docs/images/20261106_154352_video_analog_scope.mp4?raw=true"><b>&#9654; Download the scope video (9 MB mp4)</b></a>
