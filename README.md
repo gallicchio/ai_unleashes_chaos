@@ -17,6 +17,16 @@
 
 ![The rev B board drawing the Lorenz attractor on an analog scope](docs/images/20261106_101434_photo_analog_scope.jpg)
 
+<!-- GitHub will not play a video stored in the repository inline in a README,
+     so this is a still from it, linked to the clip itself. -->
+<p align="center">
+  <a href="docs/images/20261106_154352_video_analog_scope.mp4" title="Play the video">
+    <img src="docs/images/20261106_154352_video_analog_scope_still.jpg" alt="Video: the spot on the scope tracing the attractor" width="360">
+  </a>
+  <br>
+  <a href="docs/images/20261106_154352_video_analog_scope.mp4"><b>&#9654; Play the scope video</b></a>
+</p>
+
 ![The board](docs/images/lorenz-render-iso.png)
 
 In graduate school I worked with Paul Horowitz, of [Art of Electronics](https://artofelectronics.net/) fame. I even contributed a few bits and pieces to the 3rd edition. (I am thanked in the footnotes, one of which simply says, "Jason, again.") This project started by [asking Claude](CLAUDE_CODE_CHAT.md) the above question. Watch his reaction above. Also watch Paul's [Interview with Ladyada](https://www.youtube.com/watch?v=iCI3B5eT9NA) to get a sense for the guy.
