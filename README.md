@@ -20,11 +20,11 @@
 <!-- GitHub will not play a video stored in the repository inline in a README,
      so this is a still from it, linked to the clip itself. -->
 <p align="center">
-  <a href="docs/images/20261106_154352_video_analog_scope.mp4?raw=true" title="Play the video">
+  <a href="docs/images/20261106_154352_video_analog_scope.mp4?raw=true" title="Download the video (9 MB mp4)">
     <img src="docs/images/20261106_154352_video_analog_scope_still.jpg" alt="Video: the spot on the scope tracing the attractor" width="360">
   </a>
   <br>
-  <a href="docs/images/20261106_154352_video_analog_scope.mp4?raw=true"><b>&#9654; Play the scope video</b></a>
+  <a href="docs/images/20261106_154352_video_analog_scope.mp4?raw=true"><b>&#9654; Download the scope video (9 MB mp4)</b></a>
 </p>
 
 ![The board](docs/images/lorenz-render-iso.png)
