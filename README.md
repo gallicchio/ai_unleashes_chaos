@@ -15,6 +15,8 @@
   <a href="https://youtu.be/pzk5cd-qo5U"><b>&#9654; Watch on YouTube</b></a>
 </p>
 
+![The rev B board drawing the Lorenz attractor on an analog scope](docs/images/20261106_101434_photo_analog_scope.jpg)
+
 ![The board](docs/images/lorenz-render-iso.png)
 
 In graduate school I worked with Paul Horowitz, of [Art of Electronics](https://artofelectronics.net/) fame. I even contributed a few bits and pieces to the 3rd edition. (I am thanked in the footnotes, one of which simply says, "Jason, again.") This project started by [asking Claude](CLAUDE_CODE_CHAT.md) the above question. Watch his reaction above. Also watch Paul's [Interview with Ladyada](https://www.youtube.com/watch?v=iCI3B5eT9NA) to get a sense for the guy.
